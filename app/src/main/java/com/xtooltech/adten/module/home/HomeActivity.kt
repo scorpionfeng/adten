@@ -7,6 +7,7 @@ import com.xtooltech.adten.BR
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.xtooltech.adten.util.PATH_HOME
 import com.xtooltech.adten.databinding.ActivityHomeBinding
+import com.xtooltech.base.util.toast
 
 class HomeViewModel : ViewModel() {
 
@@ -15,7 +16,9 @@ class HomeViewModel : ViewModel() {
 @Route(path = PATH_HOME)
 class HomeActivity : BaseVMActivity<ActivityHomeBinding, HomeViewModel>() {
 
-    override fun initView() {}
+    override fun initView() {
+        toast("I'm home")
+    }
 
     override fun initData() {}
 

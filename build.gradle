@@ -7,12 +7,17 @@ buildscript {
 
     repositories {
         google()
-        jcenter()
+//        jcenter()
+//        jcenter{ url "http://jcenter.bintray.com/"}
         maven { url "http://19.87.1.108:8081/repository/phoenix/" }
+
+        maven{ url'http://maven.aliyun.com/nexus/content/groups/public/' }
+
+        maven{ url'http://maven.aliyun.com/nexus/content/repositories/jcenter'}
         
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.3'
+        classpath 'com.android.tools.build:gradle:3.6.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -20,8 +25,13 @@ buildscript {
 allprojects {
     repositories {
         google()
-        jcenter()
+//        jcenter()
+//        jcenter{ url "http://jcenter.bintray.com/"}
         maven { url "http://19.87.1.108:8081/repository/phoenix/" }
+
+        maven{ url'http://maven.aliyun.com/nexus/content/groups/public/' }
+
+        maven{ url'http://maven.aliyun.com/nexus/content/repositories/jcenter'}
     }
     project.ext {
         compileSdkVersion=28

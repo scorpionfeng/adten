@@ -26,6 +26,11 @@ android {
         enabled = true
     }
 
+    dexOptions {
+        preDexLibraries true
+        maxProcessCount 8
+    }
+
     kotlinOptions { jvmTarget = 1.8 }
 
     kapt {
@@ -35,6 +40,11 @@ android {
         }
 
         generateStubs = true
+
+        useBuildCache = true
+        javacOptions {
+            option("-Xmaxerrs", 500)
+        }
     }
 
     buildTypes {
@@ -68,6 +78,12 @@ dependencies {
 
     implementation 'com.phoenix:base:1.0.0@aar'
     implementation 'com.phoenix:widget:1.0.1'
+
+
+    //动态权限
+    implementation "org.permissionsdispatcher:permissionsdispatcher:4.6.0"
+    kapt "org.permissionsdispatcher:permissionsdispatcher-processor:4.6.0"
+
 
     implementation 'com.github.bumptech.glide:glide:4.11.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

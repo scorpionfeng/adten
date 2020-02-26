@@ -28,12 +28,10 @@ class SplashActivity : BaseRouteActivity() {
 
             ARouter.getInstance().build(PATH_WELCOME).navigation()
 
-            firstEnter=false
-
         }.elseLeft {
                 ARouter.getInstance().build(PATH_HOME).navigation()
         }
-        return 
+        finish()
 
     }
 
