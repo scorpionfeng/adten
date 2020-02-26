@@ -15,3 +15,5 @@ const val PATH_FINDPWD="/module/account/findpwd"
 const val PATH_PROTO="/module/account/findproto"
 
 const val PATH_SECRET="/module/account/secret"
+
+const val PATH_DIY="/module/diy"

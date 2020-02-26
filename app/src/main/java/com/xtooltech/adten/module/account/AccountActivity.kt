@@ -104,11 +104,11 @@ class AccountActivity : BaseVMActivity<ActivityAccountBinding, AccountViewModel>
 
     override fun initData() {
         vm.accountError.observe(this, Observer {
-            account.setError(it,getDrawable(R.drawable.ic_default_image))
+            vb.account.setError(it,resources.getDrawable(R.drawable.ic_default_image))
         })
 
         vm.passwdError.observe(this, Observer {
-            password.setError(it,getDrawable(R.drawable.ic_default_image))
+            vb.password.setError(it,resources.getDrawable(R.drawable.ic_default_image))
         })
     }
 

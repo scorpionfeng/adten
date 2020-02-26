@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">adten</string>
+    <string name="nav_header_desc" translatable="false">Navigation header</string>
+    <string name="nav_header_title">Xtool</string>
+    <string name="nav_header_subtitle">XtoolTech.net</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_vehicles">My VEHICLES</string>
+    <string name="menu_slideshow" translatable="false">Slideshow</string>
+    <string name="menu_settings">SETTINGS</string>
+    <string name="menu_share">Share</string>
+    <string name="menu_support">SUPPORT</string>
 </resources>
