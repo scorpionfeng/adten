@@ -13,7 +13,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".module.scan.ScanActivity"></activity>
+        <activity android:name=".module.account.AccountActivity"></activity>
+        <activity android:name=".module.scan.ScanActivity" />
         <activity android:name=".module.home.HomeActivity" />
         <activity android:name=".module.splash.WelcomeActivity" />
         <activity android:name=".module.splash.SplashActivity">

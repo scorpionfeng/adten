@@ -29,7 +29,7 @@ class SplashActivity : BaseRouteActivity() {
             ARouter.getInstance().build(PATH_WELCOME).navigation()
 
         }.elseLeft {
-                ARouter.getInstance().build(PATH_HOME).navigation()
+                ARouter.getInstance().build(PATH_LOGIN).navigation()
         }
         finish()
 

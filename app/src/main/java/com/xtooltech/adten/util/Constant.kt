@@ -7,3 +7,11 @@ const val PATH_SCAN="/module/scan"
 const val PATH_HOME="/module/home"
 
 const val PATH_WELCOME="/module/welcome"
+
+const val PATH_LOGIN="/module/account/login"
+
+const val PATH_FINDPWD="/module/account/findpwd"
+
+const val PATH_PROTO="/module/account/findproto"
+
+const val PATH_SECRET="/module/account/secret"
