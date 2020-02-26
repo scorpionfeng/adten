@@ -6,15 +6,53 @@ import android.view.View
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.xtooltech.base.BaseVMActivity
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.alibaba.android.arouter.launcher.ARouter
 import com.xtooltech.adten.R
 import com.xtooltech.adten.BR
+import com.xtooltech.adten.common.HttpManager
 import com.xtooltech.adten.databinding.ActivityAccountBinding
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.util.printMessage
 import kotlinx.android.synthetic.main.activity_account.*
+import kotlinx.coroutines.launch
+
+
+
+data class Dtc(
+		var code: Int,// 0
+		var msg: String,//
+		var data: Data
+)
+
+data class Data(
+		var Data: List<DataItem>,
+		var SortFields: String,
+		var PageIndex: Int,// 0
+		var PageSize: Int,// 0
+		var Total: Int// 6
+)
+
+data class DataItem(
+		var unicode: String,// P0036
+		var code: String,// P0036
+		var multilang: List<Multilang>,
+		var Id: String// 5e131d244ed6d80d0064290b
+)
+
+data class Multilang(
+		var lang: String,// zh-CN
+		var sys: String,// WISE15
+		var vehs: List<String>,
+		var descr: String,// 主动冲阀高轨压冲击建立监控
+		var symptoms: List<String>,
+		var dues: List<String>,
+		var msteps: List<String>,
+		var docs: String
+)
+
 
 class AccountViewModel : ViewModel() {
 
@@ -82,6 +120,15 @@ class AccountViewModel : ViewModel() {
              return Patterns.EMAIL_ADDRESS.matcher(username).matches()
          }
          return false
+    }
+
+
+    fun requestNet(view:View){
+        viewModelScope.launch {
+            var service = HttpManager.get().getService()
+            var readDtc = service.readDtc()
+            printMessage("dtc data is $readDtc")
+        }
     }
 
 }
