@@ -1,9 +1,9 @@
 package com.xtooltech.adten.util
 
-const val PKG_NAME="com.xtooltech.adten"
+const val PKG_NAME="com.xtool.ad10"
 
-const val PATH_SCAN="/xtool/scan"
+const val PATH_SCAN="/module/scan"
 
-const val PATH_HOME="/xtool/home"
+const val PATH_HOME="/module/home"
 
-const val PATH_WELCOME="/xtool/welcome"
+const val PATH_WELCOME="/module/welcome"
