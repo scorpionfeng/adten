@@ -7,7 +7,7 @@ import com.xtooltech.adten.App
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-class ProxySp<T>(
+class ProxyPreference<T>(
     private val key: String,
     private val defaultValue: T,
     private val useCommit: Boolean = false
