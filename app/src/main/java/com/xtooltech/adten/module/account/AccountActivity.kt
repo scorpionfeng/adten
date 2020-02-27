@@ -12,7 +12,7 @@ import com.alibaba.android.arouter.facade.annotation.Route
 import com.alibaba.android.arouter.launcher.ARouter
 import com.xtooltech.adten.R
 import com.xtooltech.adten.BR
-import com.xtooltech.adten.common.HttpManager
+import com.xtooltech.adten.common.net.HttpManager
 import com.xtooltech.adten.databinding.ActivityAccountBinding
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.util.printMessage

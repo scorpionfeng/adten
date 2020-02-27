@@ -18,16 +18,16 @@ inline infix fun Boolean.falseLet(falseBlock: Boolean.() -> Unit): Else {
 }
 
 interface Else {
-    infix fun elseLeft(elseBlock: Boolean.() -> Unit)
+    infix fun elseLet(elseBlock: Boolean.() -> Unit)
 }
 
 class DoElse(private val boolean: Boolean) : Else {
-    override infix fun elseLeft(elseBlock: Boolean.() -> Unit) {
+    override infix fun elseLet(elseBlock: Boolean.() -> Unit) {
         elseBlock(boolean)
     }
 }
 
 class NotDoElse(private val boolean: Boolean) : Else {
-    override infix fun elseLeft(elseBlock: Boolean.() -> Unit) {
+    override infix fun elseLet(elseBlock: Boolean.() -> Unit) {
     }
 }

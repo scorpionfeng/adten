@@ -1,8 +1,7 @@
-package com.xtooltech.adten.common
+package com.xtooltech.adten.common.net
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import kotlin.properties.Delegates
 
 class HttpManager private  constructor(){
 
@@ -10,7 +9,7 @@ class HttpManager private  constructor(){
     private lateinit var retrofit:Retrofit
 
     companion object{
-        private  var instance:HttpManager?=null
+        private  var instance: HttpManager?=null
             get() {
                 if (field == null) {
                     field = HttpManager()
@@ -18,7 +17,7 @@ class HttpManager private  constructor(){
                 return field
             }
 
-        fun get():HttpManager{
+        fun get(): HttpManager {
             return instance!!
         }
     }
@@ -32,7 +31,7 @@ class HttpManager private  constructor(){
          apiService = retrofit?.create(ApiService::class.java)
     }
 
-    fun getService():ApiService{
+    fun getService(): ApiService {
         return apiService
     }
 
