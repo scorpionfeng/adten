@@ -11,8 +11,7 @@ import com.google.android.material.navigation.NavigationView
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
 import com.xtooltech.adten.databinding.ActivityHomeBinding
-import com.xtooltech.adten.util.PATH_DIY
-import com.xtooltech.adten.util.PATH_HOME
+import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
@@ -28,6 +27,8 @@ class HomeViewModel : ViewModel() {
 
 @Route(path = PATH_HOME)
 class HomeActivity : BaseVMActivity<ActivityHomeBinding, HomeViewModel>(), NavigationView.OnNavigationItemSelectedListener {
+
+    var adtenid by ProxyPreference("adtenid","")
 
     private val data= listOf(
         MenuItem(1,"仪表盘",R.mipmap.ic_launcher),
@@ -66,6 +67,15 @@ class HomeActivity : BaseVMActivity<ActivityHomeBinding, HomeViewModel>(), Navig
     }
 
     override fun initData() {}
+
+
+    override fun onResume() {
+        super.onResume()
+        adtenid.isEmpty().trueLet {
+            ARouter.getInstance().build(PATH_SCAN).navigation()
+        }
+    }
+
 
     override fun getLayoutId(): Int = R.layout.activity_home
 

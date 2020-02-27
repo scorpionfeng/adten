@@ -36,4 +36,5 @@ class HttpManager private  constructor(){
         return apiService
     }
 
+
 }

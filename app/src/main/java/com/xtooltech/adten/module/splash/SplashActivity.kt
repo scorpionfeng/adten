@@ -11,7 +11,6 @@ class SplashActivity : BaseRouteActivity() {
 
     var firstEnter by ProxyPreference("first_enter",true)
 
-    var btid by ProxyPreference("btid","")
 
 
     override fun getLayoutId(): Int = R.layout.activity_main
