@@ -10,6 +10,7 @@ import com.xtooltech.adten.R
 import com.xtooltech.adten.databinding.ActivityDiyBinding
 import com.xtooltech.adten.module.home.MenuItem
 import com.xtooltech.adten.util.PATH_DIY
+import com.xtooltech.adten.util.PATH_DIY_FLOW
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
 import com.xtooltech.widget.UniversalAdapter
@@ -37,8 +38,15 @@ class DiyActivity : BaseVMActivity<ActivityDiyBinding, DiyViewModel>() {
         menuAdapter.setOnInnerItemClick { _, _, position -> toast("$position").also { printMessage("$position--->") } }
         vb.grid.layoutManager= GridLayoutManager(this,2)
         menuAdapter.setOnItemClick{
-_,_,_->
-            toast("click")
+_,item,_->
+            when(item.id){
+                1-> ARouter.getInstance().build(PATH_DIY_FLOW).navigation()
+                2->""
+                3->""
+                4->""
+                else->""
+            }
+
         }
 
     }

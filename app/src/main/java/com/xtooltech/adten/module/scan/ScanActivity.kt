@@ -14,53 +14,68 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
+import android.os.Handler
 import android.provider.Settings
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
 import com.alibaba.android.arouter.facade.annotation.Route
+import com.kaopiz.kprogresshud.KProgressHUD
+import com.xtooltech.ad10.BleConnection
+import com.xtooltech.ad10.Communication
+import com.xtooltech.ad10.Utils
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
-import com.xtooltech.adten.common.ble.DETECT_RSSI
-import com.xtooltech.adten.common.ble.REQUEST_COARSE_LOCATION
-import com.xtooltech.adten.common.ble.REQUEST_ENABLE_BLUETOOTH
-import com.xtooltech.adten.common.ble.REQUEST_EXTERNAL_STORAGE
+import com.xtooltech.adten.common.ble.*
 import com.xtooltech.adten.databinding.ActivityScanBinding
-import com.xtooltech.adten.module.home.HomeActivity
-import com.xtooltech.adten.util.PATH_SCAN
-import com.xtooltech.adten.util.ProxyPreference
-import com.xtooltech.adten.util.falseLet
-import com.xtooltech.adten.util.trueLet
+import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
+import com.xtooltech.base.util.toast
+import kotlinx.coroutines.launch
 import java.util.*
 
-class ConnectViewModel : ViewModel() {
+class ScanViewModel : ViewModel() {
 
     val deviceName by lazy {
         MutableLiveData<String>()
     }
-
-    fun bleScan(view: View){
+    val status by lazy {
+        MutableLiveData<String>()
     }
+
 
 }
 
 @Route(path = PATH_SCAN)
-class ScanActivity : BaseVMActivity<ActivityScanBinding, ConnectViewModel>() {
+class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleListener {
+
+
+    private val handler = Handler()
+    private lateinit var communication: Communication
+    private lateinit var bleConnection: BleConnection
+    private  lateinit var  hud:KProgressHUD
 
     private var enableBle: Boolean =false
     private lateinit var mScanCallback: Any
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var enableLocation: Boolean=true
     private var enableLocationPermission: Boolean   =true
-    var deviceId by ProxyPreference("deviceId","")
+    var deviceAddress by ProxyPreference(BLE_ADDRESS,"")
     var rssiOn by ProxyPreference(DETECT_RSSI,true)
 
     override fun initView() {
-        deviceId.isEmpty().falseLet {
-            vm.deviceName.value=deviceId
+
+        hud=KProgressHUD.create(this)
+            .setCancellable(false)
+            .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
+            .setAnimationSpeed(2)
+            .setDimAmount(0.5f)
+            .setLabel("正在加载...")
+        deviceAddress.isEmpty().falseLet {
+            vm.deviceName.value=deviceAddress
         }
 
         initBle()
@@ -174,7 +189,10 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ConnectViewModel>() {
         AlertDialog.Builder(this)
             .setMessage(name)
             .setPositiveButton("是") { dialog, which ->
+                vm.deviceName.value=name
+                deviceAddress=address
                 stopScan()
+
             }
             .setNegativeButton("否") { dialog, which ->
                 Thread(Runnable { startScan() }).start()
@@ -244,4 +262,96 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ConnectViewModel>() {
             startScan()
         }.run()
     }
+
+    fun doConnect(view: View) {
+
+       takeIf { deviceAddress.isNotEmpty() }.apply {
+           hud.show()
+//           bleConnection=BleConnection(this,true,deviceAddress)
+//           bleConnection.addBleCallback(this)
+//           communication=Communication(bleConnection)
+//           bleConnection.start()
+
+           BleManger.getIns().connect(this@ScanActivity,this@ScanActivity)
+
+       }
+
+    }
+
+    override fun onBleError(content: String) {
+        printMessage("ble error= $content")
+    }
+
+    override fun onCharacteristicChanged(p0: ByteArray?) {
+        printMessage("接收"+Utils.debugByteData(p0))
+//        BleManger.getIns().append(p0)
+//        communication?.addByteArray(p0)
+
+    }
+
+    override fun onNotFoundUuid() {
+        vm.status.value="连接状态:未找到UUID"
+        showMessageFinish("未找到UUID")
+    }
+
+    override fun onConnected() {
+        toast("已经连接")
+        vm.status.value="连接状态:已连接"
+    }
+
+    override fun onDisconnected() {
+        vm.status.value="连接状态:已断开"
+    }
+
+    override fun onConnectTimeout() {
+        vm.status.value="连接状态:已超时"
+    }
+
+    override fun onFoundUuid(p0: Int) {
+        hud.dismiss()
+        vm.status.value="连接状态:已找到UUID"
+    }
+
+    fun showMessageFinish(message: String?) {
+        hud.dismiss()
+        AlertDialog.Builder(this)
+            .setMessage(message)
+            .setPositiveButton(
+                "确定"
+            ) { dialogInterface, i ->
+                bleConnection.removeBleCallback()
+                bleConnection.stop()
+                finish()
+            }
+            .setOnCancelListener {
+                bleConnection.removeBleCallback()
+                bleConnection.stop()
+                finish()
+            }
+            .show()
+    }
+
+    fun enterPwm(view: View) {
+        hud.setLabel("进入pwm")
+
+        Thread{
+
+            var success = BleManger.getIns().enter()
+
+//            var success = communication?.enterPwmVpw(true)
+            vm.status.postValue("enter pwm is $success")
+        }.start()
+
+    }
+
+    fun enterPwm2(view: View) {
+        lifecycleScope.launch {
+            hud.setLabel("进入pwm2")
+            var succ=communication?.enterPwmVpw(true)
+            vm.status.postValue("enter pwm2 is $succ")
+        }
+
+    }
+
+
 }

@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.xtooltech.base.BaseVMActivity
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.alibaba.android.arouter.launcher.ARouter
+import com.xtooltech.adten.App
 import com.xtooltech.adten.R
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.common.net.HttpManager
@@ -73,8 +74,14 @@ class AccountViewModel : ViewModel() {
         MutableLiveData<String>()
     }
 
+    fun navtoScan(view:View){
+        ARouter.getInstance().build(PATH_SCAN).navigation()
+    }
+
     fun login(view: View){
 
+        App.instance.isGuest=false
+        ARouter.getInstance().build(PATH_HOME).navigation()
 
         account.value?:apply {
             accountError.value="帐号不能为空"

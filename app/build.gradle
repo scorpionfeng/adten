@@ -72,12 +72,18 @@ dependencies {
 
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.2.0'
+
+
+    //Progress HUD
+    implementation 'com.kaopiz:kprogresshud:1.2.0'
 
     kapt "com.alibaba:arouter-compiler:$arouter"
     implementation "com.alibaba:arouter-api:$arouterapi"
 
     implementation 'com.phoenix:base:1.0.0@aar'
     implementation 'com.phoenix:widget:1.0.1'
+    implementation 'com.phoenix:ad10:1.0.0@aar'
 
 
     //动态权限

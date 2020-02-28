@@ -7,6 +7,7 @@ import kotlin.properties.Delegates
 
 class App  :Application(){
 
+     var isGuest:Boolean= true
 
     companion object{
         var instance:App by Delegates.notNull()
