@@ -4,20 +4,20 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import androidx.lifecycle.ViewModel
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.xtooltech.base.BaseVMActivity
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.alibaba.android.arouter.launcher.ARouter
 import com.kaopiz.kprogresshud.KProgressHUD
-import com.xtooltech.adten.R
+import com.xtooltech.ad10.Utils
 import com.xtooltech.adten.BR
+import com.xtooltech.adten.R
 import com.xtooltech.adten.common.ble.BleManger
 import com.xtooltech.adten.databinding.ActivityFlowListBinding
-import com.xtooltech.adten.util.PATH_DIY
 import com.xtooltech.adten.util.PATH_DIY_FLOW
 import com.xtooltech.adten.util.PATH_DIY_FLOW_DETAIL
 import com.xtooltech.adten.util.UtilThread
+import com.xtooltech.adten.util.trueLet
+import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
 import com.xtooltech.widget.UniversalAdapter
@@ -67,17 +67,9 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
         hud.show()
 
 
-        UtilThread.execute{
-            var enterSucc = BleManger.getIns().enter()
-            printMessage("entersucc ?= $enterSucc")
+        getData()
 
-            handler.post{
 
-                toast("succe? ="+enterSucc)
-                hud.dismiss()
-
-            }
-        }
 
         vb.list.adapter=adapter
         vb.list.layoutManager= LinearLayoutManager(this)
@@ -89,6 +81,43 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
 
 
     }
+
+    private fun getData() {
+        UtilThread.execute{
+            var enterSucc = BleManger.getIns().enter()
+            printMessage("entersucc ?= $enterSucc")
+            enterSucc.trueLet {
+
+                var supportPid: MutableList<Byte> = ArrayList()
+                val obdData= ByteArray(2)
+                obdData[0]=0x01
+                obdData[1]=0x20
+
+                var comboCommand = BleManger.getIns().comboCommand(obdData)
+                var sendMultiCommand = comboCommand?.let { BleManger.getIns().sendMultiCommandReceMulti(it,5000,10) }
+                sendMultiCommand?.forEach{
+                    printMessage("return data= "+Utils.debugByteData(it))
+                    it?.indices!!.forEach { i ->
+                      if(i>5 && it[i]>0){
+                          supportPid.add(it[i])
+                      }
+                    }
+                }
+
+                printMessage("support->"+Utils.debugByteData(supportPid.toByteArray()))
+
+            }
+
+            handler.post{
+
+                toast("succe? ="+enterSucc)
+                hud.dismiss()
+
+            }
+        }
+    }
+
+
 
     override fun initData() {
 
