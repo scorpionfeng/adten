@@ -23,8 +23,9 @@ class FlowDetailActivity : BaseVMActivity<ActivityFlowDetailBinding, FlowListVie
 
     val handler: Handler= Handler()
     val destVm=FlowListViewModel.getIns()
-
     val datas=destVm.datas.filter { it.selected }
+
+    var show=true
 
     lateinit var  adapter:UniversalAdapter<FlowItem>
 
@@ -37,6 +38,7 @@ class FlowDetailActivity : BaseVMActivity<ActivityFlowDetailBinding, FlowListVie
 
     override fun initView() {
 
+        show=true
 
         datas.forEach{
             printMessage("it= ${it.title} + ${it.selected}")
@@ -46,7 +48,7 @@ class FlowDetailActivity : BaseVMActivity<ActivityFlowDetailBinding, FlowListVie
         vb.list.layoutManager= LinearLayoutManager(this)
 
 
-            if (datas[0].kind==0) {
+            if (datas.isNotEmpty()) {
                UtilThread.execute(speedRunnable)
             }
 
@@ -58,32 +60,30 @@ class FlowDetailActivity : BaseVMActivity<ActivityFlowDetailBinding, FlowListVie
 
 
         override fun run() {
-            UtilThread.execute{
+            UtilThread.execute {
 
-                datas.forEach {
-                    when(it.kind){
-                        0->{
-                            val speedContent = BleManger.getIns().readSpeed()
-                            datas[0].content=speedContent
-                        }
-                        1->{
-                            val rpmContent =BleManger.getIns().readRpm()
-                            datas[1].content=rpmContent
-                        }
-                        3->{
-                            val temperContent =BleManger.getIns().readTemper()
-                            datas[3].content=temperContent
-                        }
+                while (show) {
+                    datas.forEach {
+                        val value = BleManger.getIns().readCommon(it.kind)
+                        printMessage("kind= ${it.kind}>" + value)
+                        it.content = value
+                    }
+
+                    runOnUiThread {
+                        adapter.notifyDataSetChanged()
+                        handler.postDelayed(this, 500)
+
                     }
                 }
 
-                runOnUiThread{
-                    adapter.notifyDataSetChanged()
-                    handler.postDelayed(this,500)
 
-                }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        show=false
     }
 
 

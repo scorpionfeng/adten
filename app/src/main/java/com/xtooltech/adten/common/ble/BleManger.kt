@@ -5,6 +5,8 @@ import com.xtooltech.ad10.BleCallback
 import com.xtooltech.ad10.BleConnection
 import com.xtooltech.ad10.Communication
 import com.xtooltech.ad10.Utils
+import com.xtooltech.adten.common.obd.DataArray
+import com.xtooltech.adten.common.obd.DataStream
 import com.xtooltech.adten.util.BLE_ADDRESS
 import com.xtooltech.adten.util.ProxyPreference
 import com.xtooltech.adten.util.trueLet
@@ -115,6 +117,56 @@ class BleManger :BleCallback{
     }
 
 
+    fun readSpeedByCommon():String{
+        var speedValue=""
+        val speedCommand = comboCommand(byteArrayOf(0x01, 0x0D))
+        val data = speedCommand?.let { sendSingleReceiveSingleCommand(it,3000) }
+        if (data != null) {
+            val dataArray=DataArray()
+            data.filterIndexed { index, _ -> index > 2 }.forEach{
+                dataArray.add(it.toShort())
+            }
+
+            speedValue=DataStream.commonCalcExpress("0x00,0x00,0x00,0x00,0x00,0x0D",dataArray)
+        }
+        return speedValue
+    }
+
+
+    fun readCommon(cmd:Byte):String{
+        var value=""
+        val command = comboCommand(byteArrayOf(0x01,cmd))
+        val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+        if (data != null) {
+            val dataArray=DataArray()
+            data.filterIndexed { index, _ -> index > 2 }.forEach{
+                dataArray.add(it.toShort())
+            }
+            var cmdString=Integer.toHexString(cmd.toInt())
+            (cmdString.length==1).trueLet { cmdString="0"+cmdString }
+            value=DataStream.commonCalcExpress("0x00,0x00,0x00,0x00,0x00,0x$cmdString",dataArray)
+        }
+        return value
+    }
+
+
+    fun readTemperByCommon():String{
+        var temperValue=""
+        val temperCommand = comboCommand(byteArrayOf(0x01, 0x05))
+        val data = temperCommand?.let { sendSingleReceiveSingleCommand(it,3000) }
+        if (data != null) {
+            val dataArray=DataArray()
+            data.filterIndexed { index, _ -> index > 2 }.forEach{
+                dataArray.add(it.toShort())
+            }
+
+            temperValue=DataStream.commonCalcExpress("0x00,0x00,0x00,0x00,0x00,0x05",dataArray)
+        }
+        return temperValue
+    }
+
+
+
     fun readSpeed():String{
         var speedValue=""
         val speedCommand = comboCommand(byteArrayOf(0x01, 0x0D))
@@ -145,6 +197,7 @@ class BleManger :BleCallback{
         }
         return rmpValue
     }
+
 
 
     fun readTemper():String{
