@@ -5,6 +5,7 @@ import com.xtooltech.adten.util.mergePid
 import com.xtooltech.adten.util.produPid
 import org.junit.Assert
 import org.junit.Test
+import kotlin.experimental.and
 
 internal class FlowListActivityTest{
 
@@ -108,6 +109,82 @@ internal class FlowListActivityTest{
         var dis = v1 * 256 + v2
         println(dis)
         Assert.assertEquals(dis,257)
+
+    }
+
+    /** PCBU转换
+     *
+     * */
+    @Test
+    fun testPcbu(){
+
+        var header="P"
+
+        var v1=0xd1
+        var v2=0x00
+
+        if(v1 in 0..64){
+            header="P"
+        }
+
+        /** 0x40 ~ 0x80 */
+        if(v1 in 63..128){
+            header="C"
+            v1= v1-0x40
+        }
+
+        if(v1 in 127..192){
+            header="B"
+            v1= v1-0x80
+        }
+
+        if(v1 >=0xc0){
+            header="U"
+            v1 -= 0xC0
+        }
+
+        println(header+" "+ String.format("%02X ",v1)+String.format("%02X ",v2))
+
+
+
+    }
+
+
+    @Test
+    fun testAdd(){
+        var a=0x01
+        var result = a + 0x20
+        println(String.format("%02X",result))
+    }
+
+
+    @Test
+    fun testParseCan(){
+           /** 08 07 E8 06 41 00 BE 1F A8 13 00  */
+           var data: ByteArray = byteArrayOf(
+               0x08,
+               0x07,
+               0xE8.toByte(),
+               0x06,
+               0x41,
+               0x00,
+               0xBE.toByte(),
+               0x1f,
+               0xA8.toByte(),
+               0x13,
+               0x00
+           )
+
+
+        var index=3+data[3]
+
+        println(String.format("%02X ", data[index]))
+        var flag = data[index] and 0x01
+        println(String.format("%02X ", flag))
+
+        Assert.assertEquals(flag,0x01.toByte())
+
+
 
     }
 

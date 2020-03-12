@@ -1,6 +1,7 @@
 package com.xtooltech.adten.common.ble
 
 import android.content.Context
+import android.util.Log
 import com.xtooltech.ad10.BleCallback
 import com.xtooltech.ad10.BleConnection
 import com.xtooltech.ad10.Communication
@@ -20,6 +21,7 @@ const val OBD_ISO=3
 const val OBD_KWP=4
 const val OBD_PWM=5
 const val OBD_VPW=6
+const val OBD_UNKNOWN=7
 
 
 class ObdManger :BleCallback{
@@ -32,7 +34,7 @@ class ObdManger :BleCallback{
      var diagInitSuccess =false
      var linkConfig=false
 
-    var currProto= OBD_PWM
+    var currProto= OBD_STD_CAN
 
     fun connect(context: Context,cb:BleListener ){
         deviceAddress.isEmpty().trueLet {
@@ -159,8 +161,26 @@ class ObdManger :BleCallback{
         return value
     }
 
-    fun readCommonRaw(cmd:Byte):DataArray?{
+
+    fun readCommonTrouble(cmd:Byte):String{
         var value=""
+        val command = comboCommand(byteArrayOf(cmd))
+        val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+        if (data != null) {
+            val dataArray=DataArray()
+            data.filterIndexed { index, _ -> index > 2 }.forEach{
+                dataArray.add(it.toShort())
+            }
+            var cmdString=Integer.toHexString(cmd.toInt())
+            (cmdString.length==1).trueLet { cmdString="0"+cmdString }
+            value=DataStream.commonCalcExpress("0x00,0x00,0x00,0x00,0x00,0x$cmdString",dataArray)
+        }
+        return value
+    }
+
+
+
+    fun readCommonRaw(cmd:Byte):DataArray?{
         val command = comboCommand(byteArrayOf(0x01,cmd))
         val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
         if (data != null) {
@@ -289,5 +309,29 @@ class ObdManger :BleCallback{
     }
 
     fun scan() {
+    }
+
+    fun fetObdData(bytes: ByteArray?):ByteArray? {
+        when(currProto){
+            OBD_STD_CAN -> return  parseData_std_can(bytes)
+        }
+        return null
+    }
+
+    private fun parseData_std_can(bytes: ByteArray?):ByteArray? {
+        return null
+    }
+
+    fun computerOffset(): Int {
+        when(currProto){
+            OBD_STD_CAN -> return  4
+            OBD_EXT_CAN->return 6
+            OBD_ISO->return 4
+            OBD_KWP->return 4
+            OBD_PWM->return 3
+            OBD_VPW->return 3
+            else->return 0
+
+        }
     }
 }

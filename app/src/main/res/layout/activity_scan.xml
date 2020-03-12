@@ -81,6 +81,7 @@
             android:onClick="onScan"
             app:layout_constraintBaseline_toBaselineOf="@+id/button6"
             app:layout_constraintEnd_toStartOf="@+id/button6" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </layout>

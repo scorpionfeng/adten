@@ -9,10 +9,7 @@ import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
 import com.xtooltech.adten.databinding.ActivityDiyBinding
 import com.xtooltech.adten.module.home.MenuItem
-import com.xtooltech.adten.util.PATH_DIY
-import com.xtooltech.adten.util.PATH_DIY_FLOW
-import com.xtooltech.adten.util.PATH_DIY_FREEZE
-import com.xtooltech.adten.util.PATH_DIY_MIL
+import com.xtooltech.adten.util.*
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
 import com.xtooltech.widget.UniversalAdapter
@@ -45,7 +42,7 @@ _,item,_->
                 1-> ARouter.getInstance().build(PATH_DIY_FLOW).navigation()
                 2-> ARouter.getInstance().build(PATH_DIY_FREEZE).navigation()
                 3->ARouter.getInstance().build(PATH_DIY_MIL).navigation()
-                4->""
+                4->ARouter.getInstance().build(PATH_DIY_SMOKE).navigation()
                 else->""
             }
 

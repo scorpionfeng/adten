@@ -28,3 +28,5 @@ const val BLE_ADDRESS="deviceAddress"
 const val PATH_DIY_FREEZE="/module/diy/freeze"
 
 const val PATH_DIY_MIL="/module/diy/mil"
+
+const val PATH_DIY_SMOKE="/module/diy/smoke"

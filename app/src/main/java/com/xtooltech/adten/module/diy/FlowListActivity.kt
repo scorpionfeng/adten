@@ -56,26 +56,40 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
 
     val adapter= UniversalAdapter(vm.datas,R.layout.item_flow,BR.model)
 
-
+    var query:Boolean =true
+    var maskBuffer = ShortArray(32)
     private fun getData() {
         UtilThread.execute{
             var enterSucc = ObdManger.getIns().enter()
             printMessage("entersucc ?= $enterSucc")
             enterSucc?.trueLet {
 
-                val obdData= ByteArray(2)
-                obdData[0]=0x01
-                obdData[1]=0x00
+                var pid:Byte=0x00.toByte()
 
-                var comboCommand = ObdManger.getIns().comboCommand(obdData)
-                var data = comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it,5000,10) }
+                var datas:MutableList<ByteArray?> = mutableListOf()
+                while(query){
+                    val obdData= ByteArray(2)
+                    obdData[0]=0x01
+                    obdData[1]=pid
 
-                printMessage(">>>"+Utils.debugByteData(data?.get(0)))
+                    var comboCommand = ObdManger.getIns().comboCommand(obdData)
+                    var data = comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it,5000,10) }
+                    data?.apply {
+                       var item= data[0]
+                        datas.add(item)
+                        var flag = item?.get(3 + item[3])
+                        var result = flag?.and(0x01)
+                        if (result==0x01.toByte()) {
+                            pid= (pid+0x20).toByte()
+                        }else{
+                            query=false
+                        }
+                    }
+                }
 
+                datas?.apply {
 
-                data?.apply {
-                    var maskBuffer = ShortArray(32)
-                    mergePid(data, maskBuffer, 3)
+                    mergePid(datas, maskBuffer, ObdManger.getIns().computerOffset())
                     var produPid = produPid(maskBuffer)
 
                     produPid.forEachIndexed { index, sh ->
@@ -110,6 +124,7 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
             }
         }
     }
+
 
     override fun initView() {
 

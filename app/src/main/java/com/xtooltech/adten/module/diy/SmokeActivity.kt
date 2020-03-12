@@ -1,37 +1,42 @@
 package com.xtooltech.adten.module.diy
 
 import android.os.Handler
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.alibaba.android.arouter.facade.annotation.Route
-import com.xtooltech.ad10.Utils
-import com.xtooltech.adten.BR
-import com.xtooltech.adten.R
-import com.xtooltech.adten.common.ble.ObdManger
-import com.xtooltech.adten.databinding.ActivityFlowMilBinding
-import com.xtooltech.adten.util.PATH_DIY_MIL
-import com.xtooltech.adten.util.UtilThread
-import com.xtooltech.adten.util.falseLet
-import com.xtooltech.adten.util.trueLet
 import com.xtooltech.base.BaseVMActivity
+import com.alibaba.android.arouter.facade.annotation.Route
+import com.xtooltech.adten.R
+import com.xtooltech.adten.BR
+import com.xtooltech.adten.common.ble.ObdManger
+import com.xtooltech.adten.databinding.ActivityFlowDetailBinding
+import com.xtooltech.adten.databinding.ActivityFlowMilBinding
+import com.xtooltech.adten.databinding.ActivityFlowSmokeBinding
+import com.xtooltech.adten.util.*
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.widget.UniversalAdapter
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 
-class MilViewModel : ViewModel() {
+class SmokeViewModel : ViewModel() {
     var datas= mutableListOf<FlowItem>(
-        FlowItem(0x01,"MIL灯(故障指示灯)状态",true,"","灯亮/灯灭"),
-        FlowItem(0x21,"故障指示灯点亮后行驶里程数",true,"","xx天/XX小时/XX分钟"),
-        FlowItem(0x31,"故障码清除后行驶里程数",true,"","公里"),
-        FlowItem(0x4D,"故障指标灯点亮后运行时间",true,"","xx天/XX小时/XX分钟"),
-        FlowItem(0x4e,"故障码清除后运行时间",true,"","XX公里"),
-        FlowItem(0x1f,"发动机启动后运行时间",true,"","XX小时/XX分钟/XX秒")
+//        FlowItem(0x01, "MIL灯(故障指示灯)状态",true,"","灯亮/灯灭"),
+        FlowItem(0x03,"故障码",true,"","个"),
+        FlowItem(0x07,"未决故障码",true,"","个"),
+        FlowItem(0x0a,"永久故障码",true,"","个")
+//        FlowItem(0x4e,"失火监测",true,"","XX公里"),
+//        FlowItem(0x1f,"燃油系统监测",true,"","XX小时/XX分钟/XX秒"),
+//        FlowItem(0x1f,"综合成分监测",true,"","XX小时/XX分钟/XX秒"),
+//        FlowItem(0x1f,"EGR和/或VVT系统",true,"","XX小时/XX分钟/XX秒")
     )
 }
 
 
-@Route(path = PATH_DIY_MIL)
-class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
+
+@Route(path = PATH_DIY_SMOKE)
+class SmokeActivity : BaseVMActivity<ActivityFlowSmokeBinding, SmokeViewModel>() {
 
     val handler: Handler= Handler()
     lateinit var  datas:MutableList<FlowItem>
@@ -85,8 +90,8 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
 
 
             enterSucc?.trueLet {
-                val value = ObdManger.getIns().readCommonRaw(item.kind)
-              //  printMessage("kind=${item.kind}>" + value.)
+                val value = ObdManger.getIns().readCommonTrouble(item.kind)
+                printMessage("kind=${item.kind}>" + value)
             }
 
 
@@ -146,7 +151,7 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
 
     override fun initData() {}
 
-    override fun getLayoutId(): Int = R.layout.activity_flow_mil
+    override fun getLayoutId(): Int = R.layout.activity_flow_smoke
 
     override fun getBindingId(): Int = BR.model
 }
