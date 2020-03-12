@@ -16,13 +16,13 @@ import java.util.*
 
 const val OBD_STD_CAN=1
 const val OBD_EXT_CAN=2
-const val OBD_ISO=2
-const val OBD_KWP=3
-const val OBD_PWM=4
-const val OBD_VPW=5
+const val OBD_ISO=3
+const val OBD_KWP=4
+const val OBD_PWM=5
+const val OBD_VPW=6
 
 
-class BleManger :BleCallback{
+class ObdManger :BleCallback{
 
 
     private  var communication: Communication? = null
@@ -72,8 +72,18 @@ class BleManger :BleCallback{
 
     }
 
-     fun enter():Boolean{
-       return  communication?.enterPwmVpw(true)?:false
+     fun enter(): Boolean? {
+
+         return when(currProto){
+             OBD_STD_CAN -> communication?.enterCanStd(500000)
+             OBD_EXT_CAN-> communication?.enterCanExt(500000)
+             OBD_ISO-> communication?.enterIso()
+             OBD_KWP-> communication?.enterKwp()
+             OBD_PWM-> communication?.enterPwmVpw(true)
+             OBD_VPW-> communication?.enterPwmVpw(false)
+             else-> false
+         }
+
     }
 
 
@@ -149,6 +159,20 @@ class BleManger :BleCallback{
         return value
     }
 
+    fun readCommonRaw(cmd:Byte):DataArray?{
+        var value=""
+        val command = comboCommand(byteArrayOf(0x01,cmd))
+        val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+        if (data != null) {
+            val dataArray=DataArray()
+            data.filterIndexed { index, _ -> index > 2 }.forEach{
+                dataArray.add(it.toShort())
+            }
+            return dataArray
+        }
+        return null
+    }
+
 
     fun readTemperByCommon():String{
         var temperValue=""
@@ -220,15 +244,15 @@ class BleManger :BleCallback{
 
 
     companion object{
-        private  var instance: BleManger?=null
+        private  var instance: ObdManger?=null
             get() {
                 if (field == null) {
-                    field = BleManger()
+                    field = ObdManger()
                 }
                 return field
             }
 
-        fun getIns(): BleManger {
+        fun getIns(): ObdManger {
             return instance!!
         }
     }
@@ -262,5 +286,8 @@ class BleManger :BleCallback{
             OBD_VPW->return Utils.comboPwmVpwCommand(false, obdData)
         }
         return null
+    }
+
+    fun scan() {
     }
 }

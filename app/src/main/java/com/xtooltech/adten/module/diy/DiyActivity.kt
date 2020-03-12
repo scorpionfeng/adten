@@ -11,6 +11,8 @@ import com.xtooltech.adten.databinding.ActivityDiyBinding
 import com.xtooltech.adten.module.home.MenuItem
 import com.xtooltech.adten.util.PATH_DIY
 import com.xtooltech.adten.util.PATH_DIY_FLOW
+import com.xtooltech.adten.util.PATH_DIY_FREEZE
+import com.xtooltech.adten.util.PATH_DIY_MIL
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
 import com.xtooltech.widget.UniversalAdapter
@@ -41,8 +43,8 @@ class DiyActivity : BaseVMActivity<ActivityDiyBinding, DiyViewModel>() {
 _,item,_->
             when(item.id){
                 1-> ARouter.getInstance().build(PATH_DIY_FLOW).navigation()
-                2->""
-                3->""
+                2-> ARouter.getInstance().build(PATH_DIY_FREEZE).navigation()
+                3->ARouter.getInstance().build(PATH_DIY_MIL).navigation()
                 4->""
                 else->""
             }

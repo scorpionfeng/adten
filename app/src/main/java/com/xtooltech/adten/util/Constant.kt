@@ -24,3 +24,7 @@ const val PATH_DIY_FLOW_DETAIL="/module/diy/flowdetail"
 
 
 const val BLE_ADDRESS="deviceAddress"
+
+const val PATH_DIY_FREEZE="/module/diy/freeze"
+
+const val PATH_DIY_MIL="/module/diy/mil"

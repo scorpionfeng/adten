@@ -26,6 +26,8 @@
         android:theme="@style/AppTheme.NoActionBar">
         <activity android:name=".module.diy.FlowDetailActivity"></activity>
         <activity android:name=".module.diy.FlowListActivity" />
+        <activity android:name=".module.diy.MilActivity" />
+        <activity android:name=".module.diy.FreezeListActivity" />
         <activity android:name=".module.diy.DiyActivity" />
         <activity android:name=".module.account.AccountActivity" />
         <activity android:name=".module.scan.ScanActivity" />

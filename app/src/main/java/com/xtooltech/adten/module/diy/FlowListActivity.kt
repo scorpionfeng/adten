@@ -11,7 +11,7 @@ import com.kaopiz.kprogresshud.KProgressHUD
 import com.xtooltech.ad10.Utils
 import com.xtooltech.adten.R
 import com.xtooltech.adten.BR
-import com.xtooltech.adten.common.ble.BleManger
+import com.xtooltech.adten.common.ble.ObdManger
 import com.xtooltech.adten.databinding.ActivityFlowListBinding
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
@@ -59,16 +59,16 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
 
     private fun getData() {
         UtilThread.execute{
-            var enterSucc = BleManger.getIns().enter()
+            var enterSucc = ObdManger.getIns().enter()
             printMessage("entersucc ?= $enterSucc")
-            enterSucc.trueLet {
+            enterSucc?.trueLet {
 
                 val obdData= ByteArray(2)
                 obdData[0]=0x01
                 obdData[1]=0x00
 
-                var comboCommand = BleManger.getIns().comboCommand(obdData)
-                var data = comboCommand?.let { BleManger.getIns().sendMultiCommandReceMulti(it,5000,10) }
+                var comboCommand = ObdManger.getIns().comboCommand(obdData)
+                var data = comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it,5000,10) }
 
                 printMessage(">>>"+Utils.debugByteData(data?.get(0)))
 

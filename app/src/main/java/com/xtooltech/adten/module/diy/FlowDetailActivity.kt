@@ -1,21 +1,20 @@
 package com.xtooltech.adten.module.diy
 
 import android.os.Handler
-import android.os.Looper
-import androidx.core.os.postDelayed
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.xtooltech.base.BaseVMActivity
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.xtooltech.adten.R
 import com.xtooltech.adten.BR
-import com.xtooltech.adten.common.ble.BleManger
+import com.xtooltech.adten.common.ble.ObdManger
 import com.xtooltech.adten.databinding.ActivityFlowDetailBinding
 import com.xtooltech.adten.util.PATH_DIY_FLOW_DETAIL
 import com.xtooltech.adten.util.UtilThread
 import com.xtooltech.base.util.printMessage
-import com.xtooltech.base.util.toast
 import com.xtooltech.widget.UniversalAdapter
-import kotlinx.android.synthetic.main.item_flow_detail.view.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 
 @Route(path = PATH_DIY_FLOW_DETAIL)
@@ -38,7 +37,6 @@ class FlowDetailActivity : BaseVMActivity<ActivityFlowDetailBinding, FlowListVie
 
     override fun initView() {
 
-        show=true
 
         datas.forEach{
             printMessage("it= ${it.title} + ${it.selected}")
@@ -49,8 +47,21 @@ class FlowDetailActivity : BaseVMActivity<ActivityFlowDetailBinding, FlowListVie
 
 
             if (datas.isNotEmpty()) {
-               UtilThread.execute(speedRunnable)
+                handler.postDelayed(speedRunnable,300)
             }
+
+
+
+        UtilThread.execute{
+            lifecycleScope.launch (){
+
+                val value= async { ObdManger.getIns().readTemper() }
+
+                printMessage("readtemper by coror= "+value.await())
+            }
+        }
+
+
 
 
     }
@@ -64,7 +75,7 @@ class FlowDetailActivity : BaseVMActivity<ActivityFlowDetailBinding, FlowListVie
 
                 while (show) {
                     datas.forEach {
-                        val value = BleManger.getIns().readCommon(it.kind)
+                        val value = ObdManger.getIns().readCommon(it.kind)
                         printMessage("kind= ${it.kind}>" + value)
                         it.content = value
                     }

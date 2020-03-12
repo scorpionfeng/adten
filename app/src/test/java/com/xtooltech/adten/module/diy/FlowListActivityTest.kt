@@ -3,6 +3,7 @@ import com.xtooltech.adten.common.obd.DataArray
 import com.xtooltech.adten.common.obd.DataStream
 import com.xtooltech.adten.util.mergePid
 import com.xtooltech.adten.util.produPid
+import org.junit.Assert
 import org.junit.Test
 
 internal class FlowListActivityTest{
@@ -59,28 +60,28 @@ internal class FlowListActivityTest{
      * @param s
      * @return
      */
-    fun hexStringToString(s: String?): String? {
-        var s = s
-        if (s == null || s == "") {
-            return null
-        }
-        s = s.replace(" ", "")
-        val baKeyword = ByteArray(s.length / 2)
-        for (i in baKeyword.indices) {
-            try {
-                baKeyword[i] = (0xff and s.substring(i * 2, i * 2 + 2).toInt(16)).toByte()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        try {
-            s = String(baKeyword, "UTF-8")
-            String()
-        } catch (e1: Exception) {
-            e1.printStackTrace()
-        }
-        return s
-    }
+//    fun hexStringToString(s: String?): String? {
+//        var s = s
+//        if (s == null || s == "") {
+//            return null
+//        }
+//        s = s.replace(" ", "")
+//        val baKeyword = ByteArray(s.length / 2)
+//        for (i in baKeyword.indices) {
+//            try {
+//                baKeyword[i] = (0xff and s.substring(i * 2, i * 2 + 2).toInt(16)).toByte()
+//            } catch (e: Exception) {
+//                e.printStackTrace()
+//            }
+//        }
+//        try {
+//            s = String(baKeyword, "UTF-8".toCharArray())
+//            String()
+//        } catch (e1: Exception) {
+//            e1.printStackTrace()
+//        }
+//        return s
+//    }
 
     @Test
     fun testSplite(){
@@ -91,5 +92,23 @@ internal class FlowListActivityTest{
         data.filter { it>3 }.forEach { print(it) }
     }
 
+    @Test
+    fun testMIl(){
+        var value=0x82 shr 7
+        println(value)
+    }
+
+
+    /** 故障灯亮行驶距离  0x21 */
+    @Test
+    fun testDistance(){
+//        0x06,0x07
+        var v1=0x01
+        var v2=0x01
+        var dis = v1 * 256 + v2
+        println(dis)
+        Assert.assertEquals(dis,257)
+
+    }
 
 }

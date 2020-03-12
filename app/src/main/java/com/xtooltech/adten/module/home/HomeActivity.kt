@@ -15,7 +15,7 @@ import com.xtooltech.adten.App
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
 import com.xtooltech.adten.common.ble.BleListener
-import com.xtooltech.adten.common.ble.BleManger
+import com.xtooltech.adten.common.ble.ObdManger
 import com.xtooltech.adten.databinding.ActivityHomeBinding
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
@@ -110,7 +110,7 @@ class HomeActivity : BaseVMActivity<ActivityHomeBinding, HomeViewModel>(), Navig
 
                 hud.show()
 
-                BleManger.getIns().connect(this@HomeActivity,object :BleListener{
+                ObdManger.getIns().connect(this@HomeActivity,object :BleListener{
                     override fun onBleError(content: String) {
                         printMessage("112 onerror $content")
                         hud.dismiss()

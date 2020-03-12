@@ -272,7 +272,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 //           communication=Communication(bleConnection)
 //           bleConnection.start()
 
-           BleManger.getIns().connect(this@ScanActivity,this@ScanActivity)
+           ObdManger.getIns().connect(this@ScanActivity,this@ScanActivity)
 
        }
 
@@ -336,7 +336,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 
         Thread{
 
-            var success = BleManger.getIns().enter()
+            var success = ObdManger.getIns().enter()
 
 //            var success = communication?.enterPwmVpw(true)
             vm.status.postValue("enter pwm is $success")
@@ -351,6 +351,10 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
             vm.status.postValue("enter pwm2 is $succ")
         }
 
+    }
+
+    fun onScan(view: View) {
+        ObdManger.getIns().scan()
     }
 
 
