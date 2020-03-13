@@ -8,11 +8,9 @@ import com.xtooltech.ad10.Utils
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
 import com.xtooltech.adten.common.ble.ObdManger
+import com.xtooltech.adten.common.obd.TextString.result
 import com.xtooltech.adten.databinding.ActivityFlowMilBinding
-import com.xtooltech.adten.util.PATH_DIY_MIL
-import com.xtooltech.adten.util.UtilThread
-import com.xtooltech.adten.util.falseLet
-import com.xtooltech.adten.util.trueLet
+import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.widget.UniversalAdapter
@@ -20,12 +18,12 @@ import com.xtooltech.widget.UniversalAdapter
 
 class MilViewModel : ViewModel() {
     var datas= mutableListOf<FlowItem>(
-        FlowItem(0x01,"MIL灯(故障指示灯)状态",true,"","灯亮/灯灭"),
-        FlowItem(0x21,"故障指示灯点亮后行驶里程数",true,"","xx天/XX小时/XX分钟"),
+        FlowItem(0x01,"MIL灯(故障指示灯)状态",true,"","亮/灭"),
+        FlowItem(0x21,"故障指示灯点亮后行驶里程数",true,"","公里"),
         FlowItem(0x31,"故障码清除后行驶里程数",true,"","公里"),
-        FlowItem(0x4D,"故障指标灯点亮后运行时间",true,"","xx天/XX小时/XX分钟"),
-        FlowItem(0x4e,"故障码清除后运行时间",true,"","XX公里"),
-        FlowItem(0x1f,"发动机启动后运行时间",true,"","XX小时/XX分钟/XX秒")
+        FlowItem(0x4D,"故障指标灯点亮后运行时间",true,"","分钟"),
+        FlowItem(0x4e,"故障码清除后运行时间",true,"","分钟"),
+        FlowItem(0x1f,"发动机启动后运行时间",true,"","分钟")
     )
 }
 
@@ -86,13 +84,71 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
 
             enterSucc?.trueLet {
                 val value = ObdManger.getIns().readCommonRaw(item.kind)
-              //  printMessage("kind=${item.kind}>" + value.)
+
+
+                printMessage("kind=${item.kind}>" )
+
+
+                when(item.kind){
+                    0x01.toByte()->{
+                        var arrayInner = value?.array
+                        var flag = arrayInner?.get(arrayInner.size - 5)
+                        var result = flag?.toInt()?.shr(7)
+
+                        (result==1).trueLet {
+                            item.content="灯亮"
+                        }.elseLet {
+                             item.content="灯灭"
+                        }
+                    }
+                    0x21.toByte()->{
+                        var arrayInner = value?.array
+                        var flagA = arrayInner?.get(arrayInner.size - 5)
+                        var flagB = arrayInner?.get(arrayInner.size - 4)
+                        if(flagB!!<0) {
+                            flagB = (flagB+ 256.toShort()).toShort()
+                        }
+                        var distance= (flagA?.times(256) ?: 0) + flagB!!
+                        item.content=distance.toString()
+                    }
+                    0x31.toByte()->{
+                        var arrayInner = value?.array
+                        var flagA = arrayInner?.get(arrayInner.size - 5)
+                        var flagB = arrayInner?.get(arrayInner.size - 4)
+                        if(flagB!!<0) {
+                            flagB = (flagB+ 256.toShort()).toShort()
+                        }
+                        var distance= (flagA?.times(256) ?: 0) + flagB!!
+                        item.content=distance.toString()
+                    }
+                    0x4D.toByte()->{
+                        var arrayInner = value?.array
+                        var flagA = arrayInner?.get(arrayInner.size - 5)
+                        var flagB = arrayInner?.get(arrayInner.size - 4)
+                        if(flagB!!<0) {
+                            flagB = (flagB+ 256.toShort()).toShort()
+                        }
+                        var distance= (flagA?.times(256) ?: 0) + flagB!!
+                        item.content=distance.toString()
+                    }
+                    0x4E.toByte()->{
+                        var arrayInner = value?.array
+                        var flagA = arrayInner?.get(arrayInner.size - 5)
+                        var flagB = arrayInner?.get(arrayInner.size - 4)
+                        if(flagB!!<0) {
+                            flagB = (flagB+ 256.toShort()).toShort()
+                        }
+
+                        var distance= (flagA?.times(256) ?: 0) + flagB!!
+                        item.content=distance.toString()
+                    }
+                }
+
+                runOnUiThread{
+                    adapter.notifyDataSetChanged()
+                }
+
             }
-
-
-
-
-
 
         }.start()
     }

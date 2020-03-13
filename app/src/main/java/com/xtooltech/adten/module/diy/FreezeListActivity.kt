@@ -72,7 +72,7 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
                 val obdData= ByteArray(3)
                 obdData[0]=0x02
                 obdData[1]=0x02
-                obdData[1]=0x00
+                obdData[2]=0x00
 
                 var comboCommand = ObdManger.getIns().comboCommand(obdData)
                 var data = comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it,5000,10) }
@@ -81,7 +81,7 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
 
                 //60 0A 0B 41 6B 10 42 00 00 7E 58 00 00 D1
 
-                var receiveData = data?.get(0)?.filterIndexed { index, _ -> index > 5 }
+                var receiveData = data?.get(0)?.filterIndexed { index, _ -> index > ObdManger.getIns().computerOffset()-1 }
 
                 val freezeSysIDRet =  ArrayList<Freeze_DataType_STD>()
                 receiveData?.let {
@@ -92,14 +92,14 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
                         }
                         for (i in 0..7) {
                             val obdData2= ByteArray(3)
-                            obdData[0]=0x02
-                            obdData[1]=0x00
-                            obdData[1]=0x00
+                            obdData2[0]=0x02
+                            obdData2[1]= (i*0x20.toByte()).toByte()
+                            obdData2[2]=0x00
                             var comboCommand2 = ObdManger.getIns().comboCommand(obdData2)
                             var data2 = comboCommand2?.let {
                                 ObdManger.getIns().sendMultiCommandReceMulti(it, 5000, 1)
                             }
-                            var filterData2= data2?.get(0)?.filterIndexed{index,_->index>5}
+                            var filterData2= data2?.get(0)?.filterIndexed{index,_->index>ObdManger.getIns().computerOffset()-1}
 
                             if(filterData2?.size!! >0){
                                 if (filterData2[0] == 0x42.toByte()) {
@@ -212,6 +212,8 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
                                 }
                             }
                         }
+
+
                         for (ta in tempArray.indices) {
                             val ds: DS_File = DataBaseBin.searchDS(tempArray[ta])
                             if (ds.isSearch()) {
