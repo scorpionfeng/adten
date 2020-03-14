@@ -167,11 +167,10 @@ class ObdManger :BleCallback{
         var value=""
         val command = comboCommand(byteArrayOf(0x09,0x02))
 
-        if(currProto in OBD_STD_CAN .. OBD_EXT_CAN){
+        if(currProto == OBD_STD_CAN ){
             val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
 
             var vinHexList:MutableList<Byte> = mutableListOf()
-            //08 07 E8 10 22 43 10 00 10 01
             if (data?.get(3)?.toInt()?.shr(4)==1) {
                 var ecuId = data?.get(2)
                 var dataLength=data?.get(5)
@@ -184,6 +183,9 @@ class ObdManger :BleCallback{
                 vinHexList.forEach{value+=String.format("%c",it)}
                 printMessage("vin value= $value")
             }
+        }else if (currProto== OBD_EXT_CAN){
+
+        }else{
 
         }
 
@@ -370,5 +372,35 @@ class ObdManger :BleCallback{
             else->return 0
 
         }
+    }
+
+    fun readTrobleCodeAmount(cmd:Byte): Int {
+        var value=0
+        val command = comboCommand(byteArrayOf(cmd))
+
+        if(currProto == OBD_STD_CAN ){
+            val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+            //08 07 E8 06 43 02 39 39 33 34 00
+            var vinHexList:MutableList<Byte> = mutableListOf()
+            if (data?.get(3)?.toInt()?.shr(4)==1) {
+                var ecuId = data?.get(2)
+                var dataLength=data?.get(5)
+                vinHexList.addAll(data?.slice(5..data?.size-1))
+                var streamControl=comboCanCommandStream(true,byteArrayOf(0x30,0x00,0x00),(ecuId-8).toByte())
+                var appendData=  streamControl?.let { sendSingleReceiveMultiCommand(it,3000L,10) }
+                appendData?.forEach {
+                    it?.slice(4..it.size-1)?.let { it1 -> vinHexList.addAll(it1) }
+                }
+            }else{
+                var amount = data?.get(5)?.toInt()
+                value=amount?:0
+
+            }
+        }else if (currProto== OBD_EXT_CAN){
+
+        }else{
+
+        }
+            return value
     }
 }

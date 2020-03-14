@@ -1,6 +1,7 @@
 package com.xtooltech.adten.module.diy
 import com.xtooltech.adten.common.obd.DataArray
 import com.xtooltech.adten.common.obd.DataStream
+import com.xtooltech.adten.util.hexString
 import com.xtooltech.adten.util.mergePid
 import com.xtooltech.adten.util.produPid
 import org.junit.Assert
@@ -296,6 +297,31 @@ internal class FlowListActivityTest{
         println(numbers2.slice(1..3))
         println(numbers2.slice(0..4 step 2))
         println(numbers2.slice(setOf(3, 5, 0)))
+    }
+
+    @Test
+    fun testParseTroble(){
+        var result:ByteArray= byteArrayOf(
+            0x08.toByte(),
+            0x07.toByte(),
+            0xe8.toByte(),
+            0x06.toByte(),
+            0x43.toByte(),
+            0x02.toByte(),
+            0x39.toByte(),
+            0x39.toByte(),
+            0x33.toByte(),
+            0x34.toByte(),
+            0x00.toByte()
+        )
+        var listData:MutableList<Byte> = mutableListOf()
+
+        listData.addAll(result.takeLast(6))
+
+        listData.forEach{print(hexString(it)+", ")}
+
+
+
     }
 
 }
