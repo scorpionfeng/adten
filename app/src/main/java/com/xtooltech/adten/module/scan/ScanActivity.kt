@@ -357,5 +357,21 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
         ObdManger.getIns().scan()
     }
 
+    fun readVin(view: View) {
+
+        Thread{
+
+            var readVinCode = ObdManger.getIns().readVin()
+            readVinCode.apply {
+                vm.status.postValue("vin code =$this")
+            }
+
+
+        }.start()
+
+
+
+    }
+
 
 }

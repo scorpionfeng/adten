@@ -184,8 +184,118 @@ internal class FlowListActivityTest{
 
         Assert.assertEquals(flag,0x01.toByte())
 
+    }
 
 
+    /**
+    Res:  08 07 E8 21 50 43 39 31 30 36 37
+    Res:  08 07 E8 22 57 44 38 38 34 39 35
+
+     */
+
+    //0x00,0x00,0x00,0x57,0x44,0x42,0x32,0x31,0x31,0x30,0x36,0x31,0x35,0x41,0x32,0x36,0x31,0x37,0x35,0x39,
+    //WDB2110615A261759
+    @Test
+    fun reverVin(){
+
+        var data: ByteArray = byteArrayOf(
+            0x49.toByte(),
+            0x02.toByte(),
+            0x01.toByte(),
+            0x57.toByte(),
+            0x42.toByte(),
+            0x41.toByte(),
+            0x50.toByte(),
+            0x43.toByte(),
+            0x39.toByte(),
+            0x31.toByte(),
+            0x30.toByte(),
+            0x36.toByte(),
+            0x37.toByte(),
+            0x57.toByte(),
+            0x44.toByte(),
+            0x38.toByte(),
+            0x38.toByte(),
+            0x34.toByte(),
+            0x39.toByte(),
+            0x35.toByte()
+        )
+
+        data.forEach { print(java.lang.String.format("%c", it)) }
+
+        println("------------------")
+
+        var data2:ByteArray= byteArrayOf(
+            0x00.toByte(),
+            0x00.toByte(),
+            0x00.toByte(),
+            0x57.toByte(),
+            0x44.toByte(),
+            0x42.toByte(),
+            0x32.toByte(),
+            0x31.toByte(),
+            0x31.toByte(),
+            0x30.toByte(),
+            0x36.toByte(),
+            0x31.toByte(),
+            0x35.toByte(),
+            0x41.toByte(),
+            0x32.toByte(),
+            0x36.toByte(),
+            0x31.toByte(),
+            0x37.toByte(),
+            0x35.toByte(),
+            0x39.toByte()
+        )
+        data2.forEach { print(java.lang.String.format("%c", it)) }
+
+        println(">>>>>>>>>>>>>>>")
+        var x=0x09
+        println(String.format("%02x",x))
+
+
+//0x34,0x54,0x31,0x42,0x45,0x34,0x36,0x4b,0x34,0x38,0x55,0x37,0x33,0x39,0x30,0x34,0x33,
+
+        //4T1BE46K48U739043
+        var data3:ByteArray= byteArrayOf(
+            0x34.toByte(),
+            0x54.toByte(),
+            0x31.toByte(),
+            0x42.toByte(),
+            0x45.toByte(),
+            0x34.toByte(),
+            0x36.toByte(),
+            0x4b.toByte(),
+            0x34.toByte(),
+            0x38.toByte(),
+            0x55.toByte(),
+            0x37.toByte(),
+            0x33.toByte(),
+            0x39.toByte(),
+            0x30.toByte(),
+            0x34.toByte(),
+            0x33.toByte()
+        )
+        println("&&&&&&&&&&&&&&&&&&&")
+        data3.forEach { print(java.lang.String.format("%c", it))  }
+
+    }
+
+
+    @Test
+    fun testTake(){
+        val numbers = listOf("one", "two", "three", "four", "five", "six")
+        println(numbers.take(3))
+        println(numbers.takeLast(3))
+        println(numbers.drop(1))
+        println(numbers.dropLast(5))
+
+        println("------------------------------------")
+
+        val numbers2 = listOf("one", "two", "three", "four", "five", "six")
+        println(numbers2.slice(1..3))
+        println(numbers2.slice(0..4 step 2))
+        println(numbers2.slice(setOf(3, 5, 0)))
     }
 
 }

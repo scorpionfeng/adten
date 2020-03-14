@@ -10,6 +10,7 @@ import com.xtooltech.adten.common.obd.DataArray
 import com.xtooltech.adten.common.obd.DataStream
 import com.xtooltech.adten.util.BLE_ADDRESS
 import com.xtooltech.adten.util.ProxyPreference
+import com.xtooltech.adten.util.hexString
 import com.xtooltech.adten.util.trueLet
 import com.xtooltech.base.util.printMessage
 import java.util.*
@@ -162,21 +163,57 @@ class ObdManger :BleCallback{
     }
 
 
-    fun readCommonTrouble(cmd:Byte):String{
+    fun readVin():String{
         var value=""
-        val command = comboCommand(byteArrayOf(cmd))
-        val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
-        if (data != null) {
-            val dataArray=DataArray()
-            data.filterIndexed { index, _ -> index > 2 }.forEach{
-                dataArray.add(it.toShort())
+        val command = comboCommand(byteArrayOf(0x09,0x02))
+
+        if(currProto in OBD_STD_CAN .. OBD_EXT_CAN){
+            val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+
+            var vinHexList:MutableList<Byte> = mutableListOf()
+            //08 07 E8 10 22 43 10 00 10 01
+            if (data?.get(3)?.toInt()?.shr(4)==1) {
+                var ecuId = data?.get(2)
+                var dataLength=data?.get(5)
+                vinHexList.addAll(data?.slice(5..data?.size-1))
+                var streamControl=comboCanCommandStream(true,byteArrayOf(0x30,0x00,0x00),(ecuId-8).toByte())
+              var appendData=  streamControl?.let { sendSingleReceiveMultiCommand(it,3000L,10) }
+                appendData?.forEach {
+                    it?.slice(4..it.size-1)?.let { it1 -> vinHexList.addAll(it1) }
+                }
+                vinHexList.forEach{value+=String.format("%c",it)}
+                printMessage("vin value= $value")
             }
-            var cmdString=Integer.toHexString(cmd.toInt())
-            (cmdString.length==1).trueLet { cmdString="0"+cmdString }
-            value=DataStream.commonCalcExpress("0x00,0x00,0x00,0x00,0x00,0x$cmdString",dataArray)
+
         }
+
         return value
     }
+
+
+
+    fun comboCanCommandStream(stdCan: Boolean, data: ByteArray,ecuid:Byte=-33 ): ByteArray? {
+        val length = if (data.size > 7) 7 else data.size
+        val ret: ByteArray
+        if (stdCan) {
+            ret = ByteArray(11)
+            ret[0] = 8
+            ret[1] = 7
+            ret[2] = ecuid
+            System.arraycopy(data, 0, ret, 3, length)
+        } else {
+            ret = ByteArray(13)
+            ret[0] = -120
+            ret[1] = 24
+            ret[2] = -37
+            ret[3] = 51 // 替换成 ecuid
+            ret[4] = -15
+            ret[5] = Utils.int2byte(length)
+            System.arraycopy(data, 0, ret, 6, length)
+        }
+        return ret
+    }
+
 
 
 

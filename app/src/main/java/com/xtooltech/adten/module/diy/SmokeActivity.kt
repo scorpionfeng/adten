@@ -1,23 +1,20 @@
 package com.xtooltech.adten.module.diy
 
 import android.os.Handler
-import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.xtooltech.base.BaseVMActivity
 import com.alibaba.android.arouter.facade.annotation.Route
-import com.xtooltech.adten.R
 import com.xtooltech.adten.BR
+import com.xtooltech.adten.R
 import com.xtooltech.adten.common.ble.ObdManger
-import com.xtooltech.adten.databinding.ActivityFlowDetailBinding
-import com.xtooltech.adten.databinding.ActivityFlowMilBinding
 import com.xtooltech.adten.databinding.ActivityFlowSmokeBinding
-import com.xtooltech.adten.util.*
+import com.xtooltech.adten.util.PATH_DIY_SMOKE
+import com.xtooltech.adten.util.UtilThread
+import com.xtooltech.adten.util.falseLet
+import com.xtooltech.adten.util.trueLet
+import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.widget.UniversalAdapter
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 
 
 class SmokeViewModel : ViewModel() {
@@ -90,7 +87,7 @@ class SmokeActivity : BaseVMActivity<ActivityFlowSmokeBinding, SmokeViewModel>()
 
 
             enterSucc?.trueLet {
-                val value = ObdManger.getIns().readCommonTrouble(item.kind)
+                val value = ObdManger.getIns().readVin()
                 printMessage("kind=${item.kind}>" + value)
             }
 
@@ -101,6 +98,11 @@ class SmokeActivity : BaseVMActivity<ActivityFlowSmokeBinding, SmokeViewModel>()
 
         }.start()
     }
+
+
+
+
+
     private fun request_obd_state1(item:FlowItem) {
         printMessage("request ${item.title}")
     }

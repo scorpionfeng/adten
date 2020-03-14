@@ -66,8 +66,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="PWM"
             android:onClick="enterPwm"
+            android:text="PWM"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/button5" />
@@ -81,6 +81,17 @@
             android:onClick="onScan"
             app:layout_constraintBaseline_toBaselineOf="@+id/button6"
             app:layout_constraintEnd_toStartOf="@+id/button6" />
+
+        <Button
+            android:id="@+id/VIN"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="VIN"
+            android:onClick="readVin"
+            app:layout_constraintEnd_toEndOf="@+id/button6"
+            app:layout_constraintStart_toStartOf="@+id/button6"
+            app:layout_constraintTop_toBottomOf="@+id/button6" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
