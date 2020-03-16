@@ -1,6 +1,7 @@
 package com.xtooltech.adten.module.diy
 
 import android.os.Handler
+import android.view.View
 import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.alibaba.android.arouter.facade.annotation.Route
@@ -14,6 +15,7 @@ import com.xtooltech.adten.util.falseLet
 import com.xtooltech.adten.util.trueLet
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
+import com.xtooltech.base.util.toast
 import com.xtooltech.widget.UniversalAdapter
 
 
@@ -114,4 +116,14 @@ class SmokeActivity : BaseVMActivity<ActivityFlowSmokeBinding, SmokeViewModel>()
     override fun getLayoutId(): Int = R.layout.activity_flow_smoke
 
     override fun getBindingId(): Int = BR.model
+    fun smokeQuery(view: View) {
+        Thread{
+            var queryMilState = ObdManger.getIns().queryMilState()
+
+            handler.post {
+                toast("mil stat= "+if(queryMilState)"故障灯亮" else "故障灯灭")
+            }
+
+        }.start()
+    }
 }

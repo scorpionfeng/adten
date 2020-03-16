@@ -320,8 +320,34 @@ internal class FlowListActivityTest{
 
         listData.forEach{print(hexString(it)+", ")}
 
+    }
+
+    @Test
+    fun testArrayCopy(){
+        val sourceArr = arrayOf("k", "o", "t", "l", "i", "n")
+        var secArr= arrayOf<String>("a","b")
+        var thiArr= arrayOf<String>("x","y","z")
+
+        var targetArr= arrayOfNulls<String>(8)
+        sourceArr.copyInto(targetArr)
+        secArr.copyInto(targetArr,6)
+        println(targetArr.contentToString())
 
 
+        var newArr = sourceArr.plus(secArr)
+        println("new->"+newArr.contentToString())
+        var newXy = sourceArr.plus(thiArr.copyOfRange(0, 2))
+        println("xy->"+newXy.contentToString())
+
+        println("x"+sourceArr.contentToString())
+
+    }
+
+
+    @Test
+    fun testPrint(){
+        var arr= byteArrayOf(0x02,0x03,0x04,0x05,0x06,0x07,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x15,0x1f,0x20,0x24,0x2e,0x30,0x31,0x33,0x34,0x3c,0x3e,0x40,0x42,0x43,0x44,0x45,0x47,0x49,0x4a,0x4c,0x4e,0x53)
+        println(arr.contentToString())
     }
 
 }

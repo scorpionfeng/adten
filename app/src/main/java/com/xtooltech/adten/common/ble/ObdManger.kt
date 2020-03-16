@@ -403,4 +403,16 @@ class ObdManger :BleCallback{
         }
             return value
     }
+
+    fun queryMilState():Boolean {
+        var milState=false
+        var value =readCommonRaw(0x01)
+        value?.apply {
+            var rawData = value.array
+            var flag = rawData.get(rawData.size - 5)
+            var statue = flag.toInt().shr(7)
+            if (statue==1) milState=true
+        }
+        return milState
+    }
 }
