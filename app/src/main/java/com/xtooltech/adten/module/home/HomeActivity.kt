@@ -16,6 +16,7 @@ import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
 import com.xtooltech.adten.common.ble.BleListener
 import com.xtooltech.adten.common.ble.ObdManger
+import com.xtooltech.adten.common.obd.OBDUtil
 import com.xtooltech.adten.databinding.ActivityHomeBinding
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
@@ -78,6 +79,10 @@ class HomeActivity : BaseVMActivity<ActivityHomeBinding, HomeViewModel>(), Navig
 
             ARouter.getInstance().build(PATH_DIY).navigation();
         }
+
+        Thread {
+            val isReadSuccess: Boolean = OBDUtil.readDataToMemory(this)
+        }.start()
 
     }
 

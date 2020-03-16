@@ -6,7 +6,7 @@
     <data>
         <variable
             name="model"
-            type="com.xtooltech.adten.module.diy.FlowItem" />
+            type="com.xtooltech.adten.common.obd.Freeze_DataType_STD" />
 
     </data>
 
@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:clickable="false"
-            android:checked="@{model.selected}"
+            android:checked="false"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -31,7 +31,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="@{model.title}"
+            android:text="@{model.freezeName}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/checked"
             app:layout_constraintTop_toTopOf="parent"

@@ -5,21 +5,16 @@ import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.kaopiz.kprogresshud.KProgressHUD
-import com.xtooltech.ad10.Utils
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
 import com.xtooltech.adten.common.ble.ObdManger
-import com.xtooltech.adten.common.obd.*
+import com.xtooltech.adten.common.obd.Freeze_DataType_STD
 import com.xtooltech.adten.databinding.ActivityFreezeListBinding
-import com.xtooltech.adten.databinding.ActivityFreezeListBindingImpl
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
 import com.xtooltech.widget.UniversalAdapter
-import java.util.*
-import kotlin.experimental.and
-
 
 
 class FreezeListViewModel : ViewModel() {
@@ -38,11 +33,14 @@ class FreezeListViewModel : ViewModel() {
         }
     }
 
-    var datas= mutableListOf<FlowItem>(
-        FlowItem(0,"车速",false,"","KM"),
-        FlowItem(1,"转速",false,"","RPM"),
-        FlowItem(2,"MAF (空气质量浏览) 空气流速",false,"","KM"),
-        FlowItem(3,"发动机冷却液温度",false,"",".C")
+    var datas= mutableListOf<Freeze_DataType_STD>(
+        Freeze_DataType_STD().apply {
+           this.setFreezeID("xxx")
+            this.freezeName="Name"
+            this.freezeUnit="unit"
+            this.freezeValue="xxxxxxxxxxxxxx"
+
+        }
     )
 }
 
@@ -71,12 +69,21 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
                     mergeFreezePid(datas, maskBuffer, ObdManger.getIns().computerOffset())
                     var pid = produFreezePid(maskBuffer)
                     printMessage(pid.toString())
+                    var freezeKeyList = freezeKeyList(pid)
+
+                    freezeKeyList?.apply {
+                        vm.datas.addAll(freezeKeyList)
+
+                        runOnUiThread{
+                            adapter.notifyDataSetChanged()
+                            hud.dismiss()
+                        }
+                    }
                 }
 
             }
 
             handler.post{
-
                 adapter.notifyDataSetChanged()
                 toast("succe ? ="+enterSucc)
                 hud.dismiss()
@@ -100,12 +107,6 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
 
         vb.list.adapter=adapter
         vb.list.layoutManager= LinearLayoutManager(this)
-        adapter.setOnItemClick{bind,item,index->
-            item.selected=!item.selected
-            vm.datas[index].selected=item.selected
-            bind.setVariable(BR.model,item)
-        }
-
 
     }
 

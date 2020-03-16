@@ -340,6 +340,7 @@ internal class FlowListActivityTest{
         println("xy->"+newXy.contentToString())
 
         println("x"+sourceArr.contentToString())
+        targetArr.dropLast(3)
 
     }
 

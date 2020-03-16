@@ -1,7 +1,7 @@
 package com.xtooltech.adten.util
 
 import com.xtooltech.adten.common.ble.ObdManger
-import com.xtooltech.base.util.printMessage
+import com.xtooltech.adten.common.obd.*
 import kotlin.experimental.and
 
 fun  produPid(data:ShortArray):List<Short>{
@@ -21,6 +21,7 @@ fun  produPid(data:ShortArray):List<Short>{
     }
     return array
 }
+
 fun  produFreezePid(data:ShortArray):List<Short>{
     val array = ArrayList<Short>()
 
@@ -34,6 +35,87 @@ fun  produFreezePid(data:ShortArray):List<Short>{
     }
     return array
 }
+
+
+
+fun freezeKeyList(pidData:List<Short>):MutableList<Freeze_DataType_STD>{
+
+    var freeseItem:MutableList<Freeze_DataType_STD> = mutableListOf()
+
+    var O2SLocId: Short = 0
+    for (o in 0 until pidData.size) {
+        if (pidData[o] === 0x13.toShort()) {
+            O2SLocId = 0x13
+            break
+        }
+        if (pidData[o] === 0x1D.toShort()) {
+            O2SLocId = 0x1D
+            break
+        }
+    }
+
+    val tempArray = java.util.ArrayList<String>()
+    for (element in pidData) {
+        val tempPidData = element
+        if (tempPidData >= 0x14 && tempPidData <= 0x1B
+            || tempPidData >= 0x24 && tempPidData <= 0x2B
+            || tempPidData >= 0x34 && tempPidData <= 0x3B
+        ) {
+            if (O2SLocId.toInt() == 0x13) {
+                tempArray.add(String.format("0x00,0x00,0x00,0x00,0x00,0x%02X", tempPidData))
+            } else if (O2SLocId.toInt() == 0x1D) {
+                tempArray.add(String.format("0x00,0x00,0x00,0x00,0x02,0x%02X", tempPidData))
+            }
+        } else {
+            tempArray.add(String.format("0x00,0x00,0x00,0x00,0x00,0x%02X", tempPidData))
+        }
+        if (tempPidData >= 0x14 && tempPidData <= 0x1B
+            || tempPidData >= 0x24 && tempPidData <= 0x2B
+            || tempPidData >= 0x34 && tempPidData <= 0x3B
+        ) {
+            if (O2SLocId.toInt() == 0x13) {
+                tempArray.add(String.format("0x00,0x00,0x00,0x00,0x01,0x%02X", tempPidData))
+            }
+            if (O2SLocId.toInt() == 0x1D) {
+                tempArray.add(String.format("0x00,0x00,0x00,0x00,0x03,0x%02X", tempPidData))
+            }
+        } else if (tempPidData.toInt() == 0x03) {
+            tempArray.add(String.format("0x00,0x00,0x00,0x00,0x01,0x%02X", tempPidData))
+        } else if (tempPidData.toInt() == 0x41) {
+            for (pid41 in 1..21) {
+                tempArray.add(
+                    String.format(
+                        "0x00,0x00,0x00,0x00,0x%02X,0x%02X",
+                        pid41 + 0x70,
+                        tempPidData
+                    )
+                )
+            }
+        }
+    }
+    for (ta in tempArray.indices) {
+        val ds: DS_File = DataBaseBin.searchDS(tempArray[ta])
+        if (ds.isSearch()) {
+            val searchData: DataArray = ds.dsCommand()
+            val cmdBuffer = ShortArray(3)
+            cmdBuffer[0] = 0x02
+            cmdBuffer[1] = searchData.get(1)
+            cmdBuffer[2] = 0x00
+            val unit: String = CurrentData.unitChoose(ds.dsUnit())
+            val freezeItem = Freeze_DataType_STD()
+            freezeItem.setFreezeID(tempArray[ta])
+            freezeItem.setFreezeName(ds.dsName())
+            freezeItem.setFreezeUnit(unit)
+            freezeItem.setFreezeCommand(DataArray(cmdBuffer, 3))
+            freeseItem.add(freezeItem)
+        }
+    }
+
+    return freeseItem
+
+}
+
+
 
 
 fun supportFreeze(): MutableList<ByteArray?> {
