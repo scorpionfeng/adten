@@ -10,7 +10,6 @@ import com.xtooltech.adten.common.obd.DataArray
 import com.xtooltech.adten.common.obd.DataStream
 import com.xtooltech.adten.util.BLE_ADDRESS
 import com.xtooltech.adten.util.ProxyPreference
-import com.xtooltech.adten.util.hexString
 import com.xtooltech.adten.util.trueLet
 import com.xtooltech.base.util.printMessage
 import java.util.*
@@ -347,8 +346,62 @@ class ObdManger :BleCallback{
         return null
     }
 
-    fun scan() {
+    fun scan():Int {
+      return   if (scanSystem()) currProto else OBD_UNKNOWN
     }
+
+
+    private fun scanSystem(): Boolean {
+       printMessage("scanning CAN...")
+        var ret: Boolean =  enterCan()?:false
+        if (!ret) {
+           printMessage("scanning ISO...")
+            currProto = OBD_ISO
+            ret = communication?.enterIso() ?: false
+        }
+        if (!ret) {
+           printMessage("scanning KWP...")
+            currProto = OBD_KWP
+            ret = communication?.enterKwp()?:false
+        }
+        if (!ret) {
+           printMessage("scanning PWM...")
+            currProto = OBD_PWM
+            ret = communication?.enterPwmVpw(true)?:false
+        }
+        if (!ret) {
+           printMessage("scanning VPW...")
+            currProto = OBD_VPW
+            ret = communication?.enterPwmVpw(false)?:false
+        }
+        if (!ret) currProto = OBD_UNKNOWN
+        return ret
+    }
+
+
+    private fun enterCan(): Boolean {
+        printMessage("STD CAN 500K...")
+        currProto = OBD_STD_CAN
+        var ret: Boolean = communication?.enterCanStd(500000)?:false
+        if (!ret) {
+            printMessage("EXT CAN 500K...")
+            currProto = OBD_EXT_CAN
+            ret = communication?.enterCanExt(500000)?:false
+        }
+        if (!ret) {
+            printMessage("STD CAN 250K...")
+            currProto = OBD_STD_CAN
+            ret = communication?.enterCanStd(250000)?:false
+        }
+        if (!ret) {
+            printMessage("EXT CAN 250K...")
+            currProto = OBD_EXT_CAN
+            ret = communication?.enterCanExt(250000)?:false
+        }
+        if (!ret) currProto = OBD_UNKNOWN
+        return ret
+    }
+
 
     fun fetObdData(bytes: ByteArray?):ByteArray? {
         when(currProto){

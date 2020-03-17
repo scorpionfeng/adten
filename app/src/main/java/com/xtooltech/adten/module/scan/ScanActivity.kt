@@ -354,7 +354,20 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
     }
 
     fun onScan(view: View) {
-        ObdManger.getIns().scan()
+        Thread{
+            var kind = ObdManger.getIns().scan()
+            when(kind){
+                OBD_EXT_CAN->vm.status.postValue("扩展CAN")
+                OBD_STD_CAN->vm.status.postValue("标准CAN")
+                OBD_ISO->vm.status.postValue("ISO")
+                OBD_KWP->vm.status.postValue("KWP")
+                OBD_PWM->vm.status.postValue("PWM")
+                OBD_VPW->vm.status.postValue("VPW")
+                OBD_UNKNOWN->vm.status.postValue("扫描失败")
+
+            }
+        }.start()
+
     }
 
     fun readVin(view: View) {
