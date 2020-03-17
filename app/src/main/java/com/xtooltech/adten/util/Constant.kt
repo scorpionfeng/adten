@@ -18,6 +18,8 @@ const val PATH_SECRET="/module/account/secret"
 
 const val PATH_DIY="/module/diy"
 
+const val PATH_DASH="/module/dash"
+
 const val PATH_DIY_FLOW="/module/diy/flow"
 
 const val PATH_DIY_FLOW_DETAIL="/module/diy/flowdetail"

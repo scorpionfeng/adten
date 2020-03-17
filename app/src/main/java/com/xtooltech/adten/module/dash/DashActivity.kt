@@ -1,4 +1,4 @@
-package com.xtooltech.adten.module.home
+package com.xtooltech.adten.module.dash
 
 import android.view.MenuItem
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -17,7 +17,7 @@ import com.xtooltech.adten.R
 import com.xtooltech.adten.common.ble.BleListener
 import com.xtooltech.adten.common.ble.ObdManger
 import com.xtooltech.adten.common.obd.OBDUtil
-import com.xtooltech.adten.databinding.ActivityHomeBinding
+import com.xtooltech.adten.databinding.ActivityDashBinding
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
@@ -25,14 +25,14 @@ import com.xtooltech.base.util.toast
 import com.xtooltech.widget.UniversalAdapter
 
 
-data class MenuItem(val id:Int,val title:String,val icon:Int)
+data class FunItem(val id:Int, val title:String, val icon:Int,val content:String="")
 
-class HomeViewModel : ViewModel() {
+class DashViewModel : ViewModel() {
 
 }
 
-@Route(path = PATH_HOME)
-class HomeActivity : BaseVMActivity<ActivityHomeBinding, HomeViewModel>(), NavigationView.OnNavigationItemSelectedListener {
+@Route(path = PATH_DASH)
+class DashActivity : BaseVMActivity<ActivityDashBinding, DashViewModel>(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var hud: KProgressHUD
 
@@ -40,16 +40,16 @@ class HomeActivity : BaseVMActivity<ActivityHomeBinding, HomeViewModel>(), Navig
     var deviceAddress by ProxyPreference(BLE_ADDRESS,"")
 
     private val data= listOf(
-        MenuItem(1,"仪表盘",R.mipmap.ic_launcher),
-        MenuItem(2,"车辆检测",R.mipmap.ic_launcher),
-        MenuItem(3,"车辆数据",R.mipmap.ic_launcher),
-        MenuItem(4,"性能测试",R.mipmap.ic_launcher),
-        MenuItem(5,"行程记录",R.mipmap.ic_launcher),
-        MenuItem(6,"排行榜",R.mipmap.ic_launcher),
-        MenuItem(7,"DIY模式",R.mipmap.ic_launcher)
+        FunItem(1,"仪表盘",R.mipmap.ic_launcher),
+        FunItem(2,"车辆检测",R.mipmap.ic_launcher),
+        FunItem(3,"车辆数据",R.mipmap.ic_launcher),
+        FunItem(4,"性能测试",R.mipmap.ic_launcher),
+        FunItem(5,"行程记录",R.mipmap.ic_launcher),
+        FunItem(6,"排行榜",R.mipmap.ic_launcher),
+        FunItem(7,"DIY模式",R.mipmap.ic_launcher)
     )
 
-    val menuAdapter= UniversalAdapter(data,R.layout.item_home,BR.model)
+    val menuAdapter= UniversalAdapter(data,R.layout.item_dash,BR.model)
 
     override fun initView() {
 
@@ -97,7 +97,7 @@ class HomeActivity : BaseVMActivity<ActivityHomeBinding, HomeViewModel>(), Navig
 
         App.instance.isGuest.falseLet {
             deviceAddress.isEmpty().trueLet {
-                AlertDialog.Builder(this@HomeActivity)
+                AlertDialog.Builder(this@DashActivity)
                     .setMessage("进入设备连接页面")
                     .setPositiveButton("是") { dialog, which ->
                         ARouter.getInstance().build(PATH_SCAN).navigation()
@@ -118,7 +118,7 @@ class HomeActivity : BaseVMActivity<ActivityHomeBinding, HomeViewModel>(), Navig
 
                 hud.show()
 
-                ObdManger.getIns().connect(this@HomeActivity,object :BleListener{
+                ObdManger.getIns().connect(this@DashActivity,object :BleListener{
                     override fun onBleError(content: String) {
                         printMessage("112 onerror $content")
                         hud.dismiss()
@@ -157,7 +157,7 @@ class HomeActivity : BaseVMActivity<ActivityHomeBinding, HomeViewModel>(), Navig
     }
 
 
-    override fun getLayoutId(): Int = R.layout.activity_home
+    override fun getLayoutId(): Int = R.layout.activity_dash
 
     override fun getBindingId(): Int = BR.model
     override fun onNavigationItemSelected(item: MenuItem): Boolean {

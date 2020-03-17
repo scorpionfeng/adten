@@ -174,22 +174,22 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
 
     fun readFlow(view: View) {
         UtilThread.execute {
-//            vm.datas.forEach {
-//                val value = ObdManger.getIns()
-//                    .readFlowState(it.dsCMD.array, it.dsID.binaryToCommand())
-//                it.dsValue = value
-//
-//                runOnUiThread {
-//                    adapter.notifyDataSetChanged()
-//                }
-//            }
+            vm.datas.forEach {
                 val value = ObdManger.getIns()
-                    .readFlowState(vm.datas[67].dsCMD.array, vm.datas[67].dsID.binaryToCommand())
-            vm.datas[67].dsValue = value
+                    .readFlowState(it.dsCMD.array, it.dsID.binaryToCommand())
+                it.dsValue = value
 
                 runOnUiThread {
                     adapter.notifyDataSetChanged()
                 }
+            }
+//                val value = ObdManger.getIns()
+//                    .readFlowState(vm.datas[67].dsCMD.array, vm.datas[67].dsID.binaryToCommand())
+//            vm.datas[67].dsValue = value
+//
+//                runOnUiThread {
+//                    adapter.notifyDataSetChanged()
+//                }
 
         }
     }

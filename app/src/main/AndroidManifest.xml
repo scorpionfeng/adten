@@ -26,6 +26,7 @@
         android:theme="@style/AppTheme.NoActionBar">
         <activity android:name=".module.diy.FlowDetailActivity"></activity>
         <activity android:name=".module.diy.FlowListActivity" />
+        <activity android:name=".module.dash.DashActivity" />
         <activity android:name=".module.diy.MilActivity" />
         <activity android:name=".module.diy.SmokeActivity" />
         <activity android:name=".module.diy.FreezeListActivity" />
