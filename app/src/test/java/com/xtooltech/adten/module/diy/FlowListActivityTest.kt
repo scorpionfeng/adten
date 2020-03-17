@@ -346,6 +346,22 @@ internal class FlowListActivityTest{
 
 
     @Test
+    fun testArrayDrop(){
+        val sourceArr = arrayOf("k", "o", "t", "l", "i", "n")
+        var secArr= arrayOf<String>("a","b")
+        var thiArr= arrayOf<String>("x","y","z")
+        var droped = sourceArr.drop(3)
+
+        thiArr.drop(1).apply { dropLast(1).apply { println(this) }}
+
+        println(droped.toString())
+
+
+    }
+
+
+
+    @Test
     fun testPrint(){
         var arr= byteArrayOf(0x02,0x03,0x04,0x05,0x06,0x07,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x15,0x1f,0x20,0x24,0x2e,0x30,0x31,0x33,0x34,0x3c,0x3e,0x40,0x42,0x43,0x44,0x45,0x47,0x49,0x4a,0x4c,0x4e,0x53)
         println(arr.contentToString())

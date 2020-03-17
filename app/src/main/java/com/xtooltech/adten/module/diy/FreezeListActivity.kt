@@ -1,6 +1,7 @@
 package com.xtooltech.adten.module.diy
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.alibaba.android.arouter.facade.annotation.Route
@@ -34,13 +35,6 @@ class FreezeListViewModel : ViewModel() {
     }
 
     var datas= mutableListOf<Freeze_DataType_STD>(
-        Freeze_DataType_STD().apply {
-           this.setFreezeID("xxx")
-            this.freezeName="Name"
-            this.freezeUnit="unit"
-            this.freezeValue="xxxxxxxxxxxxxx"
-
-        }
     )
 }
 
@@ -121,6 +115,23 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
     override fun getLayoutId(): Int = R.layout.activity_freeze_list
 
     override fun getBindingId(): Int = BR.model
+    fun readData(view: View) {
+        Thread{
+
+            vm.datas.forEach{
+                var value = ObdManger.getIns()
+                    .readFreezeState(it.freezeCommand.array, vm.datas[0].freezeID())
+                it.freezeValue=value
+            }
+
+            runOnUiThread{
+                adapter.notifyDataSetChanged()
+            }
+
+
+
+        }.start()
+    }
 
 
 }

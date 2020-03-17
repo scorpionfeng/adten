@@ -415,4 +415,24 @@ class ObdManger :BleCallback{
         }
         return milState
     }
+
+    fun readFreezeState(cmd: List<Short>,key:String) :String{
+        var value=""
+        var cmdArr= byteArrayOf(
+            cmd[0].toByte(),
+            cmd[1].toByte(),
+            cmd[2].toByte()
+        )
+        val command = comboCommand(cmdArr)
+        val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+        if (data != null) {
+            val dataArray=DataArray()
+            data.drop(ObdManger.getIns().computerOffset()+1).apply { dropLast(1).apply { forEach {
+                dataArray.array.add(it.toShort())
+            }}}
+            value=DataStream.commonCalcExpress(key,dataArray)
+            printMessage("value = $value")
+        }
+        return value
+    }
 }
