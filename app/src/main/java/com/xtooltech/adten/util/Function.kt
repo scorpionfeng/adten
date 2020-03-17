@@ -2,9 +2,22 @@ package com.xtooltech.adten.util
 
 import com.xtooltech.adten.common.ble.ObdManger
 import com.xtooltech.adten.common.obd.*
+import java.util.*
+import java.util.concurrent.TimeUnit
+import kotlin.collections.ArrayList
 import kotlin.experimental.and
 
-fun  produPid(data:ShortArray):List<Short>{
+
+const val DS_SUPPORT = 0x01 // ֧�ָ������
+
+// ����������
+private val supportDSItems = HashMap<String, DataStreamItem_DataType_STD>()
+var isSupportAirFlow = false
+var isSuppDataStream = false
+private var dsSupportMap: MutableMap<Short, java.util.ArrayList<DataStreamItem_DataType_STD>> =
+    HashMap()
+
+fun produPid(data: ShortArray): List<Short> {
     val array = ArrayList<Short>()
     for (i in 0..31) {
         for (j in 1..8) {
@@ -22,7 +35,7 @@ fun  produPid(data:ShortArray):List<Short>{
     return array
 }
 
-fun  produFreezePid(data:ShortArray):List<Short>{
+fun produFreezePid(data: ShortArray): List<Short> {
     val array = ArrayList<Short>()
 
     for (p in 0..31) {
@@ -37,10 +50,123 @@ fun  produFreezePid(data:ShortArray):List<Short>{
 }
 
 
+fun dataFlowKeyList(pidData: List<Short>): MutableList<DataStreamItem_DataType_STD> {
+    var result = mutableListOf<DataStreamItem_DataType_STD>()
+    var O2SLocId: Short = 0
+    val pidLength: Int = pidData.size
+    for (p in 0 until pidLength) {
+        if (pidData[p] === 0x13.toShort()) {
+            O2SLocId = 0x13
+            break
+        }
+        if (pidData[p] === 0x1D.toShort()) {
+            O2SLocId = 0x1D
+            break
+        }
+    }
+    // dsidArray init
+    // dsidArray init
+    val length2: Int = pidData.size
+    val dsIDArray = Frame()
+    for (p in 0 until length2) {
+        val pid = (pidData[p] and 0xFF)
+        if (pid >= 0x14 && pid <= 0x1B
+            || pid >= 0x24 && pid <= 0x2B
+            || pid >= 0x34 && pid <= 0x3B
+        ) {
+            if (O2SLocId.toInt() == 0x13) {
+                dsIDArray.add(
+                    String.format(
+                        "0x00,0x00,0x00,0x00,0x00,0x%02X", pid
+                    )
+                )
+            } else if (O2SLocId.toInt() == 0x1D) {
+                dsIDArray.add(
+                    String.format(
+                        "0x00,0x00,0x00,0x00,0x02,0x%02X", pid
+                    )
+                )
+            }
+        } else {
+            dsIDArray.add(
+                String.format(
+                    "0x00,0x00,0x00,0x00,0x00,0x%02X", pid
+                )
+            )
+        }
+        if (pid >= 0x14 && pid <= 0x1B
+            || pid >= 0x24 && pid <= 0x2B
+            || pid >= 0x34 && pid <= 0x3B
+        ) {
+            if (O2SLocId.toInt() == 0x13) {
+                dsIDArray.add(
+                    String.format(
+                        "0x00,0x00,0x00,0x00,0x01,0x%02X", pid
+                    )
+                )
+            } else if (O2SLocId.toInt() == 0x1D) {
+                dsIDArray.add(
+                    String.format(
+                        "0x00,0x00,0x00,0x00,0x03,0x%02X", pid
+                    )
+                )
+            }
+        } else if (pid.toInt() == 0x03) {
+            dsIDArray.add(
+                String.format(
+                    "0x00,0x00,0x00,0x00,0x01,0x%02X", pid
+                )
+            )
+        } else if (pid.toInt() == 0x41) {
+            for (n in 1..21) {
+                dsIDArray.add(
+                    String.format(
+                        "0x00,0x00,0x00,0x00,0x%02X,0x%02X", n + 0x70,
+                        pid
+                    )
+                )
+            }
+        }
+    }
+    TimeUnit.SECONDS.sleep(1)
+    // pidData初始化完成
 
-fun freezeKeyList(pidData:List<Short>):MutableList<Freeze_DataType_STD>{
+    // pidData初始化完成
+    for (a in 0 until dsIDArray.count()) {
+        val dsIDDataArray = dsIDArray[a]
+        val dsItem = DataStreamItem_DataType_STD(
+            dsIDDataArray
+        )
+        dsItem.supportType = DS_SUPPORT
+        val ds_file = DataBaseBin.searchDS(dsIDDataArray)
+        if (ds_file != null) {
+            dsItem.dsName = ds_file.dsName()
+            val dsUnit = ds_file.dsUnit()
+            dsItem.dsUnit = CurrentData.unitChoose(dsUnit)
+            dsItem.dsCMD = ds_file.dsCommand()
+            result.add(dsItem)
+            result.add(dsItem)
+            supportDSItems.put(dsIDDataArray.binaryToCommand(), dsItem)
+        }
+        if ("0x00,0x00,0x00,0x00,0x00,0x10".equals(
+                dsIDDataArray.binaryToCommand(),
+                ignoreCase = true
+            )
+        ) {
+            isSupportAirFlow = true
+        }
+    }
+    if (result.size > 0) {
+        isSuppDataStream = true
+    }
 
-    var freeseItem:MutableList<Freeze_DataType_STD> = mutableListOf()
+    return result
+}
+
+
+fun freezeKeyList(pidData: List<Short>): MutableList<Freeze_DataType_STD> {
+
+    var freeseItem: MutableList<Freeze_DataType_STD> = mutableListOf()
 
     var O2SLocId: Short = 0
     for (o in 0 until pidData.size) {
@@ -116,10 +242,8 @@ fun freezeKeyList(pidData:List<Short>):MutableList<Freeze_DataType_STD>{
 }
 
 
-
-
 fun supportFreeze(): MutableList<ByteArray?> {
-    var query =true
+    var query = true
     var pid1 = 0x00.toByte()
     var datas: MutableList<ByteArray?> = mutableListOf()
     while (query) {
@@ -133,8 +257,8 @@ fun supportFreeze(): MutableList<ByteArray?> {
             comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it, 5000, 10) }
         data?.apply {
 
-            takeIf { data?.size>0 }?.apply {
-                var item=data[0]
+            takeIf { data?.size > 0 }?.apply {
+                var item = data[0]
                 datas.add(item)
                 var flag = item?.get(3 + item[3])
                 var result = flag?.and(0x01)
@@ -149,16 +273,17 @@ fun supportFreeze(): MutableList<ByteArray?> {
     }
     return datas
 }
-fun supportItem(flag:Int): MutableList<ByteArray?> {
-    var query:Boolean =true
-    var size=if(flag==0) 2 else 376
+
+fun supportItem(flag: Int): MutableList<ByteArray?> {
+    var query: Boolean = true
+    var size = if (flag == 0) 2 else 376
     var pid1 = 0x00.toByte()
     var datas: MutableList<ByteArray?> = mutableListOf()
     while (query) {
         val obdData = ByteArray(size)
         obdData[0] = 0x01
         obdData[1] = pid1
-        if(flag==1){
+        if (flag == 1) {
             obdData[2] = 0x00
         }
 
@@ -179,21 +304,22 @@ fun supportItem(flag:Int): MutableList<ByteArray?> {
     }
     return datas
 }
-fun supportItem2(flag:Int): MutableList<ByteArray?> {
-    var query:Boolean =true
-    var size=if(flag==0) 2 else 3
+
+fun supportItem2(flag: Int): MutableList<ByteArray?> {
+    var query: Boolean = true
+    var size = if (flag == 0) 2 else 3
     var pid1 = 0x00.toByte()
     var datas: MutableList<ByteArray?> = mutableListOf()
     while (query) {
         val obdData = ByteArray(size)
         obdData[0] = 0x02
         obdData[1] = pid1
-        if(flag==1){
+        if (flag == 1) {
             obdData[2] = 0x00
         }
 
         var comboCommand = ObdManger.getIns().comboCommand(obdData)
-        var data =comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it, 5000, 10) }
+        var data = comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it, 5000, 10) }
 
         data?.apply {
             var item = data[0]
@@ -210,54 +336,55 @@ fun supportItem2(flag:Int): MutableList<ByteArray?> {
     return datas
 }
 
-fun hexString(data:Byte):String{
-    return String.format("%02X",data)
+fun hexString(data: Byte): String {
+    return String.format("%02X", data)
 }
 
 fun mergePid(
     data: List<ByteArray?>,
     maskBuffer: ShortArray,
-    offset:Int
+    offset: Int
 ) {
     for (index in 0 until data?.size!!) {
         var inItem = data[index]
-        if (inItem?.get(0+offset) == 0x41.toByte()) {
+        if (inItem?.get(0 + offset) == 0x41.toByte()) {
             if (inItem.size > 2) {
-                maskBuffer[index * 4 + 0] = inItem.get(2+offset).toShort()
+                maskBuffer[index * 4 + 0] = inItem.get(2 + offset).toShort()
             }
             if (inItem.size > 3) {
-                maskBuffer[index * 4 + 1] = inItem.get(3+offset).toShort()
+                maskBuffer[index * 4 + 1] = inItem.get(3 + offset).toShort()
             }
             if (inItem.size > 4) {
-                maskBuffer[index * 4 + 2] = inItem.get(4+offset).toShort()
+                maskBuffer[index * 4 + 2] = inItem.get(4 + offset).toShort()
             }
             if (inItem.size > 5) {
-                maskBuffer[index * 4 + 3] = (inItem.get(5+offset).toShort() and 0xFE)
-                if (inItem[5+offset].toShort() and 0x01 === 0.toShort()) break
+                maskBuffer[index * 4 + 3] = (inItem.get(5 + offset).toShort() and 0xFE)
+                if (inItem[5 + offset].toShort() and 0x01 === 0.toShort()) break
             }
         }
     }
 }
+
 fun mergeFreezePid(
     data: List<ByteArray?>,
     maskBuffer: ShortArray,
-    offset:Int
+    offset: Int
 ) {
     for (index in 0 until data?.size!!) {
         var inItem = data[index]
-        if (inItem?.get(0+offset) == 0x42.toByte()) {
+        if (inItem?.get(0 + offset) == 0x42.toByte()) {
             if (inItem.size > 3) {
-                maskBuffer[index * 4 + 0] = inItem.get(3+offset).toShort()
+                maskBuffer[index * 4 + 0] = inItem.get(3 + offset).toShort()
             }
             if (inItem.size > 4) {
-                maskBuffer[index * 4 + 1] = inItem.get(4+offset).toShort()
+                maskBuffer[index * 4 + 1] = inItem.get(4 + offset).toShort()
             }
             if (inItem.size > 5) {
-                maskBuffer[index * 4 + 2] = inItem.get(5+offset).toShort()
+                maskBuffer[index * 4 + 2] = inItem.get(5 + offset).toShort()
             }
             if (inItem.size > 6) {
-                maskBuffer[index * 4 + 3] = inItem.get(6+offset).toShort()
-                if (inItem[6+offset].toShort() and 0x01 === 0.toShort()) break
+                maskBuffer[index * 4 + 3] = inItem.get(6 + offset).toShort()
+                if (inItem[6 + offset].toShort() and 0x01 === 0.toShort()) break
             }
         }
     }

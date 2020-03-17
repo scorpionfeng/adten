@@ -12,6 +12,8 @@ import com.xtooltech.ad10.Utils
 import com.xtooltech.adten.R
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.common.ble.ObdManger
+import com.xtooltech.adten.common.obd.DataStreamItem_DataType_STD
+import com.xtooltech.adten.common.obd.Freeze_DataType_STD
 import com.xtooltech.adten.databinding.ActivityFlowListBinding
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
@@ -36,11 +38,7 @@ class FlowListViewModel : ViewModel() {
         }
     }
 
-    var datas= mutableListOf<FlowItem>(
-//        FlowItem(0,"车速",false,"","KM"),
-//        FlowItem(1,"转速",false,"","RPM"),
-//        FlowItem(2,"MAF (空气质量浏览) 空气流速",false,"","KM"),
-//        FlowItem(3,"发动机冷却液温度",false,"",".C")
+    var datas= mutableListOf<DataStreamItem_DataType_STD>(
     )
 }
 
@@ -72,27 +70,16 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
 
                     mergePid(datas, maskBuffer, ObdManger.getIns().computerOffset())
                     var produPid = produPid(maskBuffer)
+                    var freezeKeyList = dataFlowKeyList(produPid)
+                    freezeKeyList?.apply {
+                        vm.datas.addAll(freezeKeyList)
 
-                    produPid.forEachIndexed { index, sh ->
-                        when(sh){
-                            0x0c.toShort()->vm.datas.add(FlowItem(0x0c,"发动机转数",false,"","RPM "))
-                            0x0d.toShort()->vm.datas.add(FlowItem(0x0d,"车速",false,"","km/h"))
-                            0x03.toShort()->vm.datas.add(FlowItem(0x03,"燃油系统1状态",false,""," "))
-                            0x04.toShort()->vm.datas.add(FlowItem(0x04,"负荷计算值",false,"","% "))
-                            0x05.toShort()->vm.datas.add(FlowItem(0x05,"冷却液温度",false,"","°C "))
-                            0x07.toShort()->vm.datas.add(FlowItem(0x07,"长期燃油修正(缸组1)",false,"","% "))
-                            0x06.toShort()->vm.datas.add(FlowItem(0x06,"短期燃油修正(缸组1)",false,"","% "))
-                            0x14.toShort()->vm.datas.add(FlowItem(0x14,"氧传感器输出电压(缸组1,传感器1)",false,"","v "))
-                            0x15.toShort()->vm.datas.add(FlowItem(0x15,"氧传感器输出电压(缸组1,传感器2)",false,"","v "))
-                            0x0e.toShort()->vm.datas.add(FlowItem(0x0e,"点火提前角",false,"","° "))
-                            0x0f.toShort()->vm.datas.add(FlowItem(0x0f,"进气温度",false,"","°C "))
-                            0x10.toShort()->vm.datas.add(FlowItem(0x10,"进气流量",false,"","g/s "))
-                            0x11.toShort()->vm.datas.add(FlowItem(0x11,"节气门绝对位置",false,"","% "))
-                            0x13.toShort()->vm.datas.add(FlowItem(0x13,"氧传感器位置",false,""," "))
-                            0x1c.toShort()->vm.datas.add(FlowItem(0x1c,"车辆或发动机认证的OBD要求",false,""," "))
-                            0x21.toShort()->vm.datas.add(FlowItem(0x21,"MIL(故障指示灯)点亮后的行驶距离",false,"","km "))
+                        runOnUiThread{
+                            adapter.notifyDataSetChanged()
+                            hud.dismiss()
                         }
                     }
+
                 }
             }
 
@@ -127,11 +114,11 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
 
         vb.list.adapter=adapter
         vb.list.layoutManager= LinearLayoutManager(this)
-        adapter.setOnItemClick{bind,item,index->
-            item.selected=!item.selected
-            vm.datas[index].selected=item.selected
-            bind.setVariable(BR.model,item)
-        }
+//        adapter.setOnItemClick{bind,item,index->
+//            item.selected=!item.selected
+//            vm.datas[index].selected=item.selected
+//            bind.setVariable(BR.model,item)
+//        }
 
 
     }
@@ -172,9 +159,9 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
     override fun getBindingId(): Int = BR.model
 
     fun selectAll(view: View) {
-        vm.datas.forEach {
-            it.selected=true
-        }
+//        vm.datas.forEach {
+//            it.selected=true
+//        }
         adapter.notifyDataSetChanged()
     }
 
@@ -183,5 +170,27 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
         FlowListViewModel.setIns(vm)
         ARouter.getInstance().build(PATH_DIY_FLOW_DETAIL).navigation()
 
+    }
+
+    fun readFlow(view: View) {
+        UtilThread.execute {
+//            vm.datas.forEach {
+//                val value = ObdManger.getIns()
+//                    .readFlowState(it.dsCMD.array, it.dsID.binaryToCommand())
+//                it.dsValue = value
+//
+//                runOnUiThread {
+//                    adapter.notifyDataSetChanged()
+//                }
+//            }
+                val value = ObdManger.getIns()
+                    .readFlowState(vm.datas[67].dsCMD.array, vm.datas[67].dsID.binaryToCommand())
+            vm.datas[67].dsValue = value
+
+                runOnUiThread {
+                    adapter.notifyDataSetChanged()
+                }
+
+        }
     }
 }

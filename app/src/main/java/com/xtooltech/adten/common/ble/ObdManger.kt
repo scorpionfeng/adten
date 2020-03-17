@@ -484,6 +484,23 @@ class ObdManger :BleCallback{
                 dataArray.array.add(it.toShort())
             }}}
             value=DataStream.commonCalcExpress(key,dataArray)
+        }
+        return value
+    }
+    fun readFlowState(cmd: List<Short>,key:String) :String{
+        var value=""
+        var cmdArr= byteArrayOf(
+            cmd[0].toByte(),
+            cmd[1].toByte()
+        )
+        val command = comboCommand(cmdArr)
+        val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+        if (data != null) {
+            val dataArray=DataArray()
+            data.drop(ObdManger.getIns().computerOffset()).apply { dropLast(4).apply { forEach {
+                dataArray.array.add(it.toShort())
+            }}}
+            value=DataStream.commonCalcExpress(key,dataArray)
             printMessage("value = $value")
         }
         return value

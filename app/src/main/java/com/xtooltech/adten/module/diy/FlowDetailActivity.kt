@@ -22,7 +22,7 @@ class FlowDetailActivity : BaseVMActivity<ActivityFlowDetailBinding, FlowListVie
 
     val handler: Handler= Handler()
     val destVm=FlowListViewModel.getIns()
-    val datas=destVm.datas.filter { it.selected }
+//    val datas=destVm.datas.filter { it.selected }
 
     var show=true
 
@@ -38,17 +38,17 @@ class FlowDetailActivity : BaseVMActivity<ActivityFlowDetailBinding, FlowListVie
     override fun initView() {
 
 
-        datas.forEach{
-            printMessage("it= ${it.title} + ${it.selected}")
-        }
-        adapter=UniversalAdapter(datas,R.layout.item_flow_detail,BR.model)
-        vb.list.adapter=adapter
-        vb.list.layoutManager= LinearLayoutManager(this)
-
-
-            if (datas.isNotEmpty()) {
-                handler.postDelayed(speedRunnable,300)
-            }
+//        datas.forEach{
+//            printMessage("it= ${it.title} + ${it.selected}")
+//        }
+//        adapter=UniversalAdapter(datas,R.layout.item_flow_detail,BR.model)
+//        vb.list.adapter=adapter
+//        vb.list.layoutManager= LinearLayoutManager(this)
+//
+//
+//            if (datas.isNotEmpty()) {
+//                handler.postDelayed(speedRunnable,300)
+//            }
 
 
 
@@ -74,11 +74,11 @@ class FlowDetailActivity : BaseVMActivity<ActivityFlowDetailBinding, FlowListVie
             UtilThread.execute {
 
                 while (show) {
-                    datas.forEach {
-                        val value = ObdManger.getIns().readCommon(it.kind)
-                        printMessage("kind= ${it.kind}>" + value)
-                        it.content = value
-                    }
+//                    datas.forEach {
+//                        val value = ObdManger.getIns().readCommon(it.kind)
+//                        printMessage("kind= ${it.kind}>" + value)
+//                        it.content = value
+//                    }
 
                     runOnUiThread {
                         adapter.notifyDataSetChanged()

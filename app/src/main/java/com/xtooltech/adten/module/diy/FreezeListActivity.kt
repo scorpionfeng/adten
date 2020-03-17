@@ -47,7 +47,7 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
     private lateinit  var  hud: KProgressHUD
     private lateinit var handler: Handler
 
-    val adapter= UniversalAdapter(vm.datas,R.layout.item_flow,BR.model)
+    val adapter= UniversalAdapter(vm.datas,R.layout.item_freeze,BR.model)
 
     var maskBuffer = ShortArray(32)
 
@@ -119,8 +119,7 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
         Thread{
 
             vm.datas.forEach{
-                var value = ObdManger.getIns()
-                    .readFreezeState(it.freezeCommand.array, vm.datas[0].freezeID())
+                var value = ObdManger.getIns() .readFreezeState(it.freezeCommand.array, it.freezeID())
                 it.freezeValue=value
             }
 
