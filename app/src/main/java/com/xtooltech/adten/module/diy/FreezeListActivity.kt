@@ -59,21 +59,22 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
 
                 var datas: MutableList<ByteArray?> = supportFreeze()
 
-                datas?.apply {
-                    mergeFreezePid(datas, maskBuffer, ObdManger.getIns().computerOffset())
-                    var pid = produFreezePid(maskBuffer)
-                    printMessage(pid.toString())
-                    var freezeKeyList = freezeKeyList(pid)
+                (datas.size>0).trueLet {
+                        mergeFreezePid(datas, maskBuffer, ObdManger.getIns().computerOffset())
+                        var pid = produFreezePid(maskBuffer)
+                        printMessage(pid.toString())
+                        var freezeKeyList = freezeKeyList(pid)
 
-                    freezeKeyList?.apply {
-                        vm.datas.addAll(freezeKeyList)
+                        freezeKeyList?.apply {
+                            vm.datas.addAll(freezeKeyList)
 
-                        runOnUiThread{
-                            adapter.notifyDataSetChanged()
-                            hud.dismiss()
+                            runOnUiThread{
+                                adapter.notifyDataSetChanged()
+                                hud.dismiss()
+                            }
                         }
-                    }
                 }
+
 
             }
 

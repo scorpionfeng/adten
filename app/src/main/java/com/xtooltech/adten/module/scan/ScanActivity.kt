@@ -66,7 +66,10 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
     var deviceAddress by ProxyPreference(BLE_ADDRESS,"")
     var rssiOn by ProxyPreference(DETECT_RSSI,true)
 
+
     override fun initView() {
+
+
 
         hud=KProgressHUD.create(this)
             .setCancellable(false)
@@ -331,15 +334,16 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
             .show()
     }
 
-    fun enterPwm(view: View) {
-        hud.setLabel("进入pwm")
+    fun clieckEnter(view: View) {
+
+        hud.setLabel("进入"+ nameMap.get(ObdManger.getIns().currProto))
 
         Thread{
 
             var success = ObdManger.getIns().enter()
 
 //            var success = communication?.enterPwmVpw(true)
-            vm.status.postValue("enter pwm is $success")
+            vm.status.postValue("enter ${nameMap.get(ObdManger.getIns().currProto)} is $success")
         }.start()
 
     }

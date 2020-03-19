@@ -1,7 +1,6 @@
 package com.xtooltech.adten.common.ble
 
 import android.content.Context
-import android.util.Log
 import com.xtooltech.ad10.BleCallback
 import com.xtooltech.ad10.BleConnection
 import com.xtooltech.ad10.Communication
@@ -10,6 +9,7 @@ import com.xtooltech.adten.common.obd.DataArray
 import com.xtooltech.adten.common.obd.DataStream
 import com.xtooltech.adten.util.BLE_ADDRESS
 import com.xtooltech.adten.util.ProxyPreference
+import com.xtooltech.adten.util.parse2BizSingle
 import com.xtooltech.adten.util.trueLet
 import com.xtooltech.base.util.printMessage
 import java.util.*
@@ -24,6 +24,18 @@ const val OBD_VPW=6
 const val OBD_UNKNOWN=7
 
 
+
+val nameMap= mapOf(
+    OBD_STD_CAN to "标准CAN",
+    OBD_EXT_CAN to "扩展CAN",
+    OBD_ISO to "ISO",
+    OBD_KWP to "KWP",
+    OBD_VPW to "VPW",
+    OBD_PWM to "PWM",
+    OBD_UNKNOWN to "未知"
+)
+
+
 class ObdManger :BleCallback{
 
 
@@ -34,8 +46,7 @@ class ObdManger :BleCallback{
      var diagInitSuccess =false
      var linkConfig=false
 
-    var currProto= OBD_STD_CAN
-
+    var currProto= OBD_PWM
     fun connect(context: Context,cb:BleListener ){
         deviceAddress.isEmpty().trueLet {
             cb.onBleError("蓝牙地址为空,无法连接")
@@ -418,7 +429,7 @@ class ObdManger :BleCallback{
         when(currProto){
             OBD_STD_CAN -> return  4
             OBD_EXT_CAN->return 6
-            OBD_ISO->return 4
+            OBD_ISO->return 3
             OBD_KWP->return 4
             OBD_PWM->return 3
             OBD_VPW->return 3
@@ -496,11 +507,10 @@ class ObdManger :BleCallback{
         val command = comboCommand(cmdArr)
         val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
         if (data != null) {
-            val dataArray=DataArray()
-            data.drop(ObdManger.getIns().computerOffset()).apply { dropLast(4).apply { forEach {
-                dataArray.array.add(it.toShort())
-            }}}
-            value=DataStream.commonCalcExpress(key,dataArray)
+            val dataArray=DataArray()//08 07 E8 06 41 00 BE 1F A8 13 00
+            var bizData = parse2BizSingle(data)
+            bizData.forEach { dataArray.array.add(it.toShort()) }
+            value=DataStream.commonCalcExpress(key,dataArray)//0x41,0x00,0xbe,
             printMessage("value = $value")
         }
         return value

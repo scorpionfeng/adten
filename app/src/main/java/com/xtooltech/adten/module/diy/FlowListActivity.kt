@@ -64,7 +64,7 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
             enterSucc?.trueLet {
 
 
-                var datas: MutableList<ByteArray?> = supportItem(0)
+                var datas: MutableList<ByteArray?> = supportItem()
 
                 datas?.apply {
 
@@ -114,40 +114,15 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
 
         vb.list.adapter=adapter
         vb.list.layoutManager= LinearLayoutManager(this)
-//        adapter.setOnItemClick{bind,item,index->
-//            item.selected=!item.selected
-//            vm.datas[index].selected=item.selected
-//            bind.setVariable(BR.model,item)
-//        }
-
-
-    }
-
-
-
-    private fun mergePid(
-        data: List<ByteArray?>?,
-        maskBuffer: ShortArray
-    ) {
-        for (index in 0 until data?.size!!) {
-            var inItem = data[index]
-            if (inItem?.get(6) == 0x41.toByte()) {
-                if (inItem.size > 2) {
-                    maskBuffer[index * 4 + 0] = inItem.get(8).toShort()
-                }
-                if (inItem.size > 3) {
-                    maskBuffer[index * 4 + 1] = inItem.get(9).toShort()
-                }
-                if (inItem.size > 4) {
-                    maskBuffer[index * 4 + 2] = inItem.get(10).toShort()
-                }
-                if (inItem.size > 5) {
-                    maskBuffer[index * 4 + 3] = (inItem.get(11).toShort() and 0xFE)
-                    if (inItem[5].toShort() and 0x01 === 0.toShort()) break
-                }
-            }
+        adapter.setOnItemClick{bind,item,index->
+            readItem(item)
         }
+
+
     }
+
+
+
 
 
     override fun initData() {
@@ -158,17 +133,31 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
 
     override fun getBindingId(): Int = BR.model
 
-    fun selectAll(view: View) {
-//        vm.datas.forEach {
-//            it.selected=true
-//        }
-        adapter.notifyDataSetChanged()
-    }
 
     fun nextStep(view: View) {
 
         FlowListViewModel.setIns(vm)
         ARouter.getInstance().build(PATH_DIY_FLOW_DETAIL).navigation()
+
+    }
+
+    fun readItem(item:DataStreamItem_DataType_STD){
+
+        Thread{
+
+            val value = ObdManger.getIns()
+                .readFlowState(item.dsCMD.array, item.dsID.binaryToCommand())
+            item.dsValue = value
+
+            runOnUiThread {
+                adapter.notifyDataSetChanged()
+                toast("${item.dsID.binaryToCommand()} value= "+item.dsValue)
+            }
+
+        }.start()
+
+
+
 
     }
 
@@ -183,6 +172,15 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
                     adapter.notifyDataSetChanged()
                 }
             }
+//                val value = ObdManger.getIns()
+//                    .readFlowState(listOf(0x01,0x0D), vm.datas[3].dsID.binaryToCommand())
+//                     vm.datas[3].dsValue = value
+//
+//            printMessage("value= "+value)
+
+                runOnUiThread {
+                    adapter.notifyDataSetChanged()
+                }
 //                val value = ObdManger.getIns()
 //                    .readFlowState(vm.datas[67].dsCMD.array, vm.datas[67].dsID.binaryToCommand())
 //            vm.datas[67].dsValue = value

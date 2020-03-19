@@ -1,6 +1,7 @@
 package com.xtooltech.adten.util
 
-import com.xtooltech.adten.common.ble.ObdManger
+import com.xtooltech.ad10.Utils
+import com.xtooltech.adten.common.ble.*
 import com.xtooltech.adten.common.obd.*
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -242,6 +243,11 @@ fun freezeKeyList(pidData: List<Short>): MutableList<Freeze_DataType_STD> {
 }
 
 
+fun ByteArray.toHex():String{
+    return  Utils.debugByteData(this)
+}
+
+
 fun supportFreeze(): MutableList<ByteArray?> {
     var query = true
     var pid1 = 0x00.toByte()
@@ -257,15 +263,125 @@ fun supportFreeze(): MutableList<ByteArray?> {
             comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it, 5000, 10) }
         data?.apply {
 
-            takeIf { data?.size > 0 }?.apply {
-                var item = data[0]
-                datas.add(item)
-                var flag = item?.get(3 + item[3])
-                var result = flag?.and(0x01)
-                if (result == 0x01.toByte()) {
-                    pid1 = (pid1 + 0x20).toByte()
-                } else {
-                    query = false
+            when(ObdManger.getIns().currProto){
+                OBD_STD_CAN->{
+
+                    if (data.isEmpty()) {
+                        query=false
+                    }else{
+                        data[0]?.apply {
+                            datas.add(this)
+                            var bizData = parse2BizSingle(this)
+                            if(bizData.get(0) == 0x42.toByte()){
+                                if (bizData.last().and(0x01) == 0x01.toByte()) {
+                                    pid1 = (pid1 + 0x20).toByte()
+                                }else{
+                                    query=false
+                                }
+                            }
+                        }
+
+                    }
+
+                }
+                else-> {
+                    (data?.size>0)?.trueLet {
+                        var item = data[0]
+                        datas.add(item)
+                        var flag = item?.get(3 + item[3])
+                        var result = flag?.and(0x01)
+                        if (result == 0x01.toByte()) {
+                            pid1 = (pid1 + 0x20).toByte()
+                        } else {
+                            query = false
+                        }
+                    }.elseLet {
+                        query=false
+                    }
+                }
+            }
+
+
+
+        }
+    }
+    return datas
+}
+
+fun supportItem(): MutableList<ByteArray?> {
+    var query = true
+    var size = 2
+    var pid1 = 0x00.toByte()
+    var datas: MutableList<ByteArray?> = mutableListOf()
+    while (query) {
+        val obdData = ByteArray(size)
+        obdData[0] = 0x01
+        obdData[1] = pid1
+
+        var comboCommand = ObdManger.getIns().comboCommand(obdData)
+        var data =
+            comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it, 5000, 10) }
+        data?.apply {
+
+            when(ObdManger.getIns().currProto){
+                OBD_STD_CAN->{
+
+                    if(data.isEmpty()){
+                        query=false
+                    }else{
+                        data[0]?.apply {
+                            datas.add(this)
+                            var bizData = parse2BizSingle(this)
+                            if(bizData.get(0) == 0x41.toByte()){
+                                if (bizData.last().and(0x01) == 0x01.toByte()) {
+                                    pid1 = (pid1 + 0x20).toByte()
+                                }else{
+                                    query=false
+                                }
+                            }
+                        }
+
+                    }
+                }
+                OBD_PWM->{
+                    if (data.isEmpty()) {
+                        query = false
+                    } else {
+                        var item = data[0]
+                        datas.add(item)
+                        item?.let {
+                            //41 00  BE 5F B8 11
+                            var bizData = parse2BizSingle(item)
+                            if (bizData.get(0)==0x41.toByte()) {
+                                if (bizData.last().and(0x01)==0x01.toByte()) {
+                                    pid1 = (pid1 + 0x20).toByte()
+                                }else{
+                                    query=false
+                                }
+                            }
+                        }
+                    }
+                }
+
+                else-> {
+                    if (data.isEmpty()) {
+                        query = false
+                    } else {
+                        var item = data[0]
+                        datas.add(item)
+                        var index = item?.indexOf(0x41.toByte())
+                        if (index!! > 0) {
+                            var sizex = item?.size
+                            var index = sizex?.minus(2)
+                            var flag = item?.get(index!!)
+                            var result = flag?.and(0x01)
+                            if (result == 0x01.toByte()) {
+                                pid1 = (pid1 + 0x20).toByte()
+                            } else {
+                                query = false
+                            }
+                        }
+                    }
                 }
             }
 
@@ -274,35 +390,26 @@ fun supportFreeze(): MutableList<ByteArray?> {
     return datas
 }
 
-fun supportItem(flag: Int): MutableList<ByteArray?> {
-    var query: Boolean = true
-    var size = if (flag == 0) 2 else 376
-    var pid1 = 0x00.toByte()
-    var datas: MutableList<ByteArray?> = mutableListOf()
-    while (query) {
-        val obdData = ByteArray(size)
-        obdData[0] = 0x01
-        obdData[1] = pid1
-        if (flag == 1) {
-            obdData[2] = 0x00
-        }
+fun parse2BizSingle(obdData:ByteArray):List<Byte>{
 
-        var comboCommand = ObdManger.getIns().comboCommand(obdData)
-        var data =
-            comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it, 5000, 10) }
-        data?.apply {
-            var item = data[0]
-            datas.add(item)
-            var flag = item?.get(3 + item[3])
-            var result = flag?.and(0x01)
-            if (result == 0x01.toByte()) {
-                pid1 = (pid1 + 0x20).toByte()
-            } else {
-                query = false
-            }
-        }
+
+
+    var bizData= arrayListOf<Byte>()
+
+    when(ObdManger.getIns().currProto){
+        OBD_STD_CAN ->  return obdData.slice(4 .. obdData[3]+3)
+        OBD_EXT_CAN -> return obdData.slice(4 .. obdData[3]+3)
+        OBD_ISO -> return obdData.slice(3 .. obdData.size-2)
+        OBD_KWP -> "KWP"
+        OBD_VPW -> return obdData.slice(3 .. obdData.size-2)
+        OBD_PWM -> return obdData.slice(3 .. obdData.size-2)
+        OBD_UNKNOWN -> "未知"
     }
-    return datas
+
+   return bizData
+    // pwm //41 6B 10 [ 41 00  BE 5F B8 11] 4F
+    // can 08 07 E8 07 [42 20 00 10 05 B0 15]
+    // can 08 07 E8 04 [42 20 00 10] 00 00 00
 }
 
 fun supportItem2(flag: Int): MutableList<ByteArray?> {
@@ -338,6 +445,10 @@ fun supportItem2(flag: Int): MutableList<ByteArray?> {
 
 fun hexString(data: Byte): String {
     return String.format("%02X", data)
+}
+
+fun List<Byte>.hexString():String{
+    return this.map { hexString(it) }.toString()
 }
 
 fun mergePid(
