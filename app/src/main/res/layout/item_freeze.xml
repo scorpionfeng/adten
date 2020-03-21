@@ -6,7 +6,7 @@
     <data>
         <variable
             name="model"
-            type="com.xtooltech.adten.common.obd.Freeze_DataType_STD" />
+            type="com.xtooltech.adten.module.diy.ObdItem" />
 
     </data>
 
@@ -31,7 +31,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="@{model.freezeName}"
+            android:text="@{model.title}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/checked"
             app:layout_constraintTop_toTopOf="parent"
@@ -41,7 +41,7 @@
             android:id="@+id/value"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@{model.freezeValue}"
+            android:text="@{model.content}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/textView7"

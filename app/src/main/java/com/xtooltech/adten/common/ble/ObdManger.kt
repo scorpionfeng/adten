@@ -480,20 +480,16 @@ class ObdManger :BleCallback{
         return milState
     }
 
-    fun readFreezeState(cmd: List<Short>,key:String) :String{
+    fun readFreezeState(item:ObdItem) :String{
         var value=""
-        var cmdArr= byteArrayOf(
-            cmd[0].toByte(),
-            cmd[1].toByte(),
-            cmd[2].toByte()
-        )
-        val command = comboCommand(cmdArr)
+        val command = comboCommand(byteArrayOf(0x02,item.kind,0x00))
         val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
         if (data != null) {
-            val dataArray=DataArray()           //48 6B 10 42 02 00 00 00 89
-            var bizData = parse2BizSingle(data) // 42 02 00 00 00
-            bizData.forEach { dataArray.array.add(it.toShort()) }
-            value=DataStream.commonCalcExpress(key,dataArray)
+            item.obd = parse2BizSingle(data) // 42 02 00 00 00
+            calc.get(item.index)?.apply {
+                value= calculation(item)
+                printMessage("value = $value")
+            }
         }
         return value
     }

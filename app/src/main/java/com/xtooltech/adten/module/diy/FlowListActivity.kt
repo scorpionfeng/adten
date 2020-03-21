@@ -61,7 +61,7 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
             enterSucc?.trueLet {
 
 
-                var datas: MutableList<ByteArray?> = supportItem()
+                var datas: MutableList<ByteArray?> = supportFlowPids()
 
                 datas?.apply {
 

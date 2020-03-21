@@ -34,7 +34,7 @@ class FreezeListViewModel : ViewModel() {
         }
     }
 
-    var datas= mutableListOf<Freeze_DataType_STD>(
+    var datas= mutableListOf<ObdItem>(
     )
 }
 
@@ -63,16 +63,15 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
                         mergeFreezePid(datas, maskBuffer, ObdManger.getIns().computerOffset())
                         var pid = produFreezePid(maskBuffer)
                         printMessage(pid.toString())
-                        var freezeKeyList = freezeKeyList(pid)
+                        var freezeKeyList = dataFlow4KeyList(pid,0x02)
 
-                        freezeKeyList?.apply {
-                            vm.datas.addAll(freezeKeyList)
-
-                            runOnUiThread{
-                                adapter.notifyDataSetChanged()
-                                hud.dismiss()
+                        freezeKeyList.forEach {
+                            var element = ds[it.toObdIndex()]
+                            element?.apply {
+                                vm.datas.add(ObdItem(it.toObdPid(), element.first, false, "", element.second, it.toObdIndex()))
                             }
-                        }
+                    }
+
                 }
 
 
@@ -123,12 +122,13 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
     override fun getBindingId(): Int = BR.model
 
 
-    fun readItem(data:Freeze_DataType_STD){
-        Thread{
-                var value = ObdManger.getIns() .readFreezeState(data.freezeCommand.array, data.freezeID())
-            data.freezeValue=value
+    fun readItem(data:ObdItem){
+        Thread {
 
-            runOnUiThread{
+            var value = ObdManger.getIns().readFreezeState(data)
+            data.content = value
+
+            runOnUiThread {
                 toast("value= $value")
                 adapter.notifyDataSetChanged()
             }
@@ -139,8 +139,8 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
         Thread{
 
             vm.datas.forEach{
-                var value = ObdManger.getIns() .readFreezeState(it.freezeCommand.array, it.freezeID())
-                it.freezeValue=value
+                var value = ObdManger.getIns() .readFreezeState(it)
+                it.content=value
             }
 
             runOnUiThread{

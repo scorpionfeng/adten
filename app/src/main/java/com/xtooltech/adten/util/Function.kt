@@ -341,10 +341,6 @@ fun Short.toObdPid():Byte{
     return pid.toByte()
 }
 
-fun ObdItem.alculation(func:Pair<String,String>):String{
-
-    return ""
-}
 
 
 fun supportFreeze(): MutableList<ByteArray?> {
@@ -383,7 +379,7 @@ fun supportFreeze(): MutableList<ByteArray?> {
     return datas
 }
 
-fun supportItem(): MutableList<ByteArray?> {
+fun supportFlowPids(): MutableList<ByteArray?> {
     var query = true
     var size = 2
     var pid1 = 0x00.toByte()
