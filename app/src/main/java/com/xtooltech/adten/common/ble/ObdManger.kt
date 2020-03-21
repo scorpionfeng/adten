@@ -1,16 +1,15 @@
 package com.xtooltech.adten.common.ble
 
 import android.content.Context
+import calculation
 import com.xtooltech.ad10.BleCallback
 import com.xtooltech.ad10.BleConnection
 import com.xtooltech.ad10.Communication
 import com.xtooltech.ad10.Utils
 import com.xtooltech.adten.common.obd.DataArray
 import com.xtooltech.adten.common.obd.DataStream
-import com.xtooltech.adten.util.BLE_ADDRESS
-import com.xtooltech.adten.util.ProxyPreference
-import com.xtooltech.adten.util.parse2BizSingle
-import com.xtooltech.adten.util.trueLet
+import com.xtooltech.adten.module.diy.ObdItem
+import com.xtooltech.adten.util.*
 import com.xtooltech.base.util.printMessage
 import java.util.*
 
@@ -46,7 +45,7 @@ class ObdManger :BleCallback{
      var diagInitSuccess =false
      var linkConfig=false
 
-    var currProto= OBD_PWM
+    var currProto= OBD_VPW
     fun connect(context: Context,cb:BleListener ){
         deviceAddress.isEmpty().trueLet {
             cb.onBleError("蓝牙地址为空,无法连接")
@@ -233,10 +232,9 @@ class ObdManger :BleCallback{
         val command = comboCommand(byteArrayOf(0x01,cmd))
         val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
         if (data != null) {
-            val dataArray=DataArray()
-            data.filterIndexed { index, _ -> index > 2 }.forEach{
-                dataArray.add(it.toShort())
-            }
+            val dataArray=DataArray() //48 6B 10 41 01 00 07 E1 E1 A3
+            var bizData = parse2BizSingle(data)
+            bizData.forEach { dataArray.add(it.toShort()) }
             return dataArray
         }
         return null
@@ -456,11 +454,13 @@ class ObdManger :BleCallback{
                     it?.slice(4..it.size-1)?.let { it1 -> vinHexList.addAll(it1) }
                 }
             }else{
-                var amount = data?.get(5)?.toInt()
+                var amount = data?.get(5)?.toInt()//08 07 E8 03 7F 0A 11 00 00 00 00
                 value=amount?:0
 
             }
-        }else if (currProto== OBD_EXT_CAN){
+        }else if (currProto== OBD_VPW){
+            val data = command?.let { sendSingleReceiveMultiCommand(it,3000,10) }
+            printMessage("data= "+data)
 
         }else{
 
@@ -490,28 +490,25 @@ class ObdManger :BleCallback{
         val command = comboCommand(cmdArr)
         val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
         if (data != null) {
-            val dataArray=DataArray()
-            data.drop(ObdManger.getIns().computerOffset()+1).apply { dropLast(1).apply { forEach {
-                dataArray.array.add(it.toShort())
-            }}}
+            val dataArray=DataArray()           //48 6B 10 42 02 00 00 00 89
+            var bizData = parse2BizSingle(data) // 42 02 00 00 00
+            bizData.forEach { dataArray.array.add(it.toShort()) }
             value=DataStream.commonCalcExpress(key,dataArray)
         }
         return value
     }
-    fun readFlowState(cmd: List<Short>,key:String) :String{
+
+    fun readFlowItem(item:ObdItem) :String{
         var value=""
-        var cmdArr= byteArrayOf(
-            cmd[0].toByte(),
-            cmd[1].toByte()
-        )
-        val command = comboCommand(cmdArr)
+        val command = comboCommand(byteArrayOf(0x01,item.kind))
         val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
         if (data != null) {
-            val dataArray=DataArray()//08 07 E8 06 41 00 BE 1F A8 13 00
-            var bizData = parse2BizSingle(data)
-            bizData.forEach { dataArray.array.add(it.toShort()) }
-            value=DataStream.commonCalcExpress(key,dataArray)//0x41,0x00,0xbe,
-            printMessage("value = $value")
+            item.obd= parse2BizSingle(data)
+            calc.get(item.index)?.apply {
+                value= calculation(item)
+                printMessage("value = $value")
+            }
+
         }
         return value
     }

@@ -102,6 +102,11 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
 
         vb.list.adapter=adapter
         vb.list.layoutManager= LinearLayoutManager(this)
+        adapter.setOnItemClick{
+            bd,item,index->
+
+            readItem(item)
+        }
 
     }
 
@@ -116,6 +121,20 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
     override fun getLayoutId(): Int = R.layout.activity_freeze_list
 
     override fun getBindingId(): Int = BR.model
+
+
+    fun readItem(data:Freeze_DataType_STD){
+        Thread{
+                var value = ObdManger.getIns() .readFreezeState(data.freezeCommand.array, data.freezeID())
+            data.freezeValue=value
+
+            runOnUiThread{
+                toast("value= $value")
+                adapter.notifyDataSetChanged()
+            }
+        }.start()
+    }
+
     fun readData(view: View) {
         Thread{
 

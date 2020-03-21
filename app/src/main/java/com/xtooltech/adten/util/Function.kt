@@ -3,6 +3,7 @@ package com.xtooltech.adten.util
 import com.xtooltech.ad10.Utils
 import com.xtooltech.adten.common.ble.*
 import com.xtooltech.adten.common.obd.*
+import com.xtooltech.adten.module.diy.ObdItem
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
@@ -48,6 +49,84 @@ fun produFreezePid(data: ShortArray): List<Short> {
         }
     }
     return array
+}
+
+
+fun IsRange(raw:Byte,a1:Byte,a2:Byte):Boolean{
+    return    (raw in (a1 + 1) until a2)
+}
+
+fun dataFlow4KeyList(pidData: List<Short>,sid:Byte): List<Short>{
+//[3, 4, 5, 6, 7, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 28, 31, 33, 46, 47, 48, 49, 50, 51, 60, 65, 66, 67, 68, 69, 70, 71, 73, 74, 76]
+    var vsTids:MutableList<Short> = mutableListOf()
+    var binFrame: ByteArray= byteArrayOf()
+//        for (k in binPids.size - 1 downTo 0) {
+//            if (SID === 0x02) binFrame =
+//                SendRecvByte(DEFAULT, 3, 0x02, binPids.get(k), 0x00) else binFrame =
+//                SendRecvByte(DEFAULT, 2, 0x01, binPids.get(k))
+//            if (binFrame.IsEmpty() || binFrame.get(0) !== 0x40 + SID) binPids.RemoveAt(k)
+//        }
+    var O2S_PID: Byte = 0
+    for (j in 0 until pidData.size) {
+        val pid: Byte = pidData.get(j).toByte()
+        if (pid == 0x13.toByte()) {
+            O2S_PID = 0x13
+            break
+        }
+        if (pid == 0x1d.toByte()) {
+            O2S_PID = 0x1D
+            break
+        }
+    }
+    for (i in 0 until pidData.size) {
+        val pid: Byte = pidData.get(i).toByte()
+        if (IsRange(pid, 0x01, 0x01)) { //01
+            vsTids.add(0x0110)
+            vsTids.add(0x0111)
+            /*			BYTE k;
+        for(k=0x20;k<=0x22;k++)vsTids.Add(0x0100|k);
+        for(k=0x24;k<=0x26;k++)vsTids.Add(0x0100|k);
+        for(k=0x30;k<=0x37;k++)vsTids.Add(0x0100|k);
+        for(k=0x40;k<=0x47;k++)vsTids.Add(0x0100|k);
+*/
+        }
+        if (IsRange(pid, 0x41, 0x41)) { //41
+/*			BYTE k;
+			for(k=0x20;k<=0x22;k++)vsTids.Add(0x4100|k);
+			for(k=0x24;k<=0x26;k++)vsTids.Add(0x4100|k);
+			for(k=0x30;k<=0x37;k++)vsTids.Add(0x4100|k);
+			for(k=0x40;k<=0x47;k++)vsTids.Add(0x4100|k);
+*/
+        } else if (IsRange(pid, 0x03, 0x03)) { //03
+            vsTids.add((pid.toInt() shl 8 or 0x00).toShort())
+            vsTids.add((pid.toInt() shl 8 or 0x10).toShort())
+        } else if (IsRange(pid, 0x06, 0x09)) { //06~09
+            if (O2S_PID == 0x1D.toByte()) vsTids.add((pid.toInt() shl 8 or 0x10).toShort()) else vsTids.add(
+                (pid.toInt() shl 8 or 0x00).toShort()
+            )
+        } else if (IsRange(pid, 0x14, 0x1B)) { //14~1B
+            if (O2S_PID == 0x1D.toByte()) {
+                vsTids.add((pid.toInt() shl 8 or 0x01).toShort())
+                vsTids.add((pid.toInt() shl 8 or 0x11).toShort())
+            } else {
+                vsTids.add((pid.toInt() shl 8 or 0x00).toShort())
+                vsTids.add((pid.toInt() shl 8 or 0x10).toShort())
+            }
+        } else if (IsRange(pid, 0x24, 0x2B) ||  //24~2B
+            IsRange(pid, 0x34, 0x3B)
+        ) { //34~3B
+            if (O2S_PID == 0x1D.toByte()) {
+                vsTids.add((pid.toInt() shl 8 or 0x01).toShort())
+                vsTids.add((pid.toInt() shl 8 or 0x21).toShort())
+            } else {
+                vsTids.add((pid.toInt() shl 8 or 0x00).toShort())
+                vsTids.add((pid.toInt() shl 8 or 0x20).toShort())
+            }
+        } else {
+            vsTids.add((pid.toInt() shl 8 or 0x00).toShort())
+        }
+    }
+    return vsTids
 }
 
 
@@ -129,6 +208,7 @@ fun dataFlowKeyList(pidData: List<Short>): MutableList<DataStreamItem_DataType_S
             }
         }
     }
+
     TimeUnit.SECONDS.sleep(1)
     // pidData初始化完成
 
@@ -246,6 +326,25 @@ fun freezeKeyList(pidData: List<Short>): MutableList<Freeze_DataType_STD> {
 fun ByteArray.toHex():String{
     return  Utils.debugByteData(this)
 }
+fun List<Byte>.toHex():String{
+    return  Utils.debugByteData(this.toByteArray())
+}
+
+fun Short.toObdIndex():String{
+    var format = String.format("%04x", this)
+    var first = format.substring(0, 2)
+    var second=format.substring(2,4)
+    return "0x00,0x00,0x$first,0x$second"
+}
+fun Short.toObdPid():Byte{
+    var pid = this.toInt() shr 8
+    return pid.toByte()
+}
+
+fun ObdItem.alculation(func:Pair<String,String>):String{
+
+    return ""
+}
 
 
 fun supportFreeze(): MutableList<ByteArray?> {
@@ -263,46 +362,22 @@ fun supportFreeze(): MutableList<ByteArray?> {
             comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it, 5000, 10) }
         data?.apply {
 
-            when(ObdManger.getIns().currProto){
-                OBD_STD_CAN->{
-
-                    if (data.isEmpty()) {
-                        query=false
-                    }else{
-                        data[0]?.apply {
-                            datas.add(this)
-                            var bizData = parse2BizSingle(this)
-                            if(bizData.get(0) == 0x42.toByte()){
-                                if (bizData.last().and(0x01) == 0x01.toByte()) {
-                                    pid1 = (pid1 + 0x20).toByte()
-                                }else{
-                                    query=false
-                                }
-                            }
-                        }
-
-                    }
-
-                }
-                else-> {
-                    (data?.size>0)?.trueLet {
-                        var item = data[0]
-                        datas.add(item)
-                        var flag = item?.get(3 + item[3])
-                        var result = flag?.and(0x01)
-                        if (result == 0x01.toByte()) {
+            if (data.isEmpty()) {
+                query = false
+            } else {
+                data[0]?.apply {
+                    datas.add(this)
+                    var bizData = parse2BizSingle(this)
+                    if (bizData.get(0) == 0x42.toByte()) {
+                        if (bizData.last().and(0x01) == 0x01.toByte()) {
                             pid1 = (pid1 + 0x20).toByte()
                         } else {
                             query = false
                         }
-                    }.elseLet {
-                        query=false
                     }
                 }
+
             }
-
-
-
         }
     }
     return datas
@@ -360,6 +435,28 @@ fun supportItem(): MutableList<ByteArray?> {
                                 }
                             }
                         }
+                    }
+                }
+                OBD_VPW->{
+                    if (data.isEmpty()) {
+                        query = false
+                    } else {
+                        var item = data[0]
+                        item?.apply {
+                            datas.add(item)
+                            var bizData = parse2BizSingle(item)
+                            if (bizData.get(0)== 0x41.toByte()) {
+                                var flag = bizData.last()
+                                var result = flag?.and(0x01)
+                                if (result == 0x01.toByte()) {
+                                    pid1 = (pid1 + 0x20).toByte()
+                                } else {
+                                    query = false
+                                }
+                            }
+
+                        }
+
                     }
                 }
 

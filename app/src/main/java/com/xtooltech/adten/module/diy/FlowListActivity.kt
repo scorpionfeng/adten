@@ -8,19 +8,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.alibaba.android.arouter.launcher.ARouter
 import com.kaopiz.kprogresshud.KProgressHUD
-import com.xtooltech.ad10.Utils
 import com.xtooltech.adten.R
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.common.ble.ObdManger
-import com.xtooltech.adten.common.obd.DataStreamItem_DataType_STD
-import com.xtooltech.adten.common.obd.Freeze_DataType_STD
 import com.xtooltech.adten.databinding.ActivityFlowListBinding
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
 import com.xtooltech.widget.UniversalAdapter
-import kotlin.experimental.and
 
 class FlowListViewModel : ViewModel() {
 
@@ -38,12 +34,13 @@ class FlowListViewModel : ViewModel() {
         }
     }
 
-    var datas= mutableListOf<DataStreamItem_DataType_STD>(
+    var datas= mutableListOf<ObdItem>(
     )
 }
 
 
 data class FlowItem(var kind:Byte,var title:String,var selected:Boolean,var content:String,var symbol:String)
+data class ObdItem(var kind:Byte, var title:String, var selected:Boolean, var content:String, var symbol:String, var index:String,var obd:List<Byte> = mutableListOf())
 
 
 @Route(path = PATH_DIY_FLOW)
@@ -70,23 +67,20 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
 
                     mergePid(datas, maskBuffer, ObdManger.getIns().computerOffset())
                     var produPid = produPid(maskBuffer)
-                    var freezeKeyList = dataFlowKeyList(produPid)
-                    freezeKeyList?.apply {
-                        vm.datas.addAll(freezeKeyList)
+                    var freezeKeyList = dataFlow4KeyList(produPid,0x01)
 
-                        runOnUiThread{
-                            adapter.notifyDataSetChanged()
-                            hud.dismiss()
+                    freezeKeyList.forEach{
+                       var element = ds[it.toObdIndex()]
+                        element?.apply {
+                            vm.datas.add(ObdItem(it.toObdPid(),element.first,false,"",element.second,it.toObdIndex()))
                         }
                     }
-
                 }
             }
 
             handler.post{
 
                 adapter.notifyDataSetChanged()
-                toast("succe ? ="+enterSucc)
                 hud.dismiss()
 
             }
@@ -107,10 +101,7 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
             .setLabel("正在加载...")
         hud.show()
 
-
         getData()
-
-
 
         vb.list.adapter=adapter
         vb.list.layoutManager= LinearLayoutManager(this)
@@ -118,10 +109,7 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
             readItem(item)
         }
 
-
     }
-
-
 
 
 
@@ -141,17 +129,16 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
 
     }
 
-    fun readItem(item:DataStreamItem_DataType_STD){
+    fun readItem(item:ObdItem){
 
         Thread{
 
-            val value = ObdManger.getIns()
-                .readFlowState(item.dsCMD.array, item.dsID.binaryToCommand())
-            item.dsValue = value
+            val value = ObdManger.getIns().readFlowItem(item)
+            item.content=value
 
             runOnUiThread {
                 adapter.notifyDataSetChanged()
-                toast("${item.dsID.binaryToCommand()} value= "+item.dsValue)
+                toast("${item.index} value= "+item.content)
             }
 
         }.start()
@@ -164,30 +151,20 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
     fun readFlow(view: View) {
         UtilThread.execute {
             vm.datas.forEach {
-                val value = ObdManger.getIns()
-                    .readFlowState(it.dsCMD.array, it.dsID.binaryToCommand())
-                it.dsValue = value
+
+                val value = ObdManger.getIns().readFlowItem(it)
+                it.content=value
+
+                runOnUiThread {
+                    adapter.notifyDataSetChanged()
+                    toast("${it.index} value= "+it.content)
+                }
 
                 runOnUiThread {
                     adapter.notifyDataSetChanged()
                 }
             }
-//                val value = ObdManger.getIns()
-//                    .readFlowState(listOf(0x01,0x0D), vm.datas[3].dsID.binaryToCommand())
-//                     vm.datas[3].dsValue = value
-//
-//            printMessage("value= "+value)
 
-                runOnUiThread {
-                    adapter.notifyDataSetChanged()
-                }
-//                val value = ObdManger.getIns()
-//                    .readFlowState(vm.datas[67].dsCMD.array, vm.datas[67].dsID.binaryToCommand())
-//            vm.datas[67].dsValue = value
-//
-//                runOnUiThread {
-//                    adapter.notifyDataSetChanged()
-//                }
 
         }
     }

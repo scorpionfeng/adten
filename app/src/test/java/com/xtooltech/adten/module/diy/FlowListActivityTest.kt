@@ -1,14 +1,12 @@
 package com.xtooltech.adten.module.diy
 import com.xtooltech.adten.common.obd.DataArray
 import com.xtooltech.adten.common.obd.DataStream
-import com.xtooltech.adten.util.hexString
-import com.xtooltech.adten.util.mergePid
-import com.xtooltech.adten.util.produPid
+import com.xtooltech.adten.util.*
 import org.junit.Assert
 import org.junit.Test
 import kotlin.experimental.and
 
-internal class FlowListActivityTest{
+internal class FlowListActivityTestt{
 
     @Test
     fun test(){
@@ -373,6 +371,19 @@ internal class FlowListActivityTest{
 
     }
 
+    @Test
+    fun testAnd(){
+
+        var flagA=30.toByte()
+        var flagB= (-30).toByte()
+
+
+
+        println(flagA and 0xff.toByte())
+
+        println(flagB and 0xff.toByte())
+    }
+
 
 
     @Test
@@ -380,5 +391,236 @@ internal class FlowListActivityTest{
         var arr= byteArrayOf(0x02,0x03,0x04,0x05,0x06,0x07,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x15,0x1f,0x20,0x24,0x2e,0x30,0x31,0x33,0x34,0x3c,0x3e,0x40,0x42,0x43,0x44,0x45,0x47,0x49,0x4a,0x4c,0x4e,0x53)
         println(arr.contentToString())
     }
+
+
+
+    @Test
+    fun testCalculation(){
+        var method=::calcu1
+        var data= byteArrayOf(0x41,0x04,0x00)
+        var value = method.invoke(data)
+        println(value)
+
+    }
+
+    fun calculation(item:ObdItem):String{
+        var value=""
+        var method:Any
+
+        when(item.index){
+            "0x00,0x00,0x01,0x10"-> method=::calcu1
+            "0x00,0x00,0x01,0x11"-> method=::calcu2
+        }
+
+        return value
+    }
+
+    fun calcu1(data:ByteArray):String{
+        return (data[2]*100.0/255).toString()
+    }
+
+
+    fun calcu3(data:ByteArray):String{
+       return  String.format("%d", data[2] and 0x7F)
+    }
+    fun calcu4(data:ByteArray):String{
+       return  String.format("%d",  data[2]*199.2/255-100)
+    }
+    fun calcu5(data:ByteArray):String{
+       return  String.format("%d",  (data[2]*256+data[3])*2.0/65536)
+    }
+    fun calcu2(data:ByteArray):String{
+         return if(data[2] and 0x80.toByte() ==0x01.toByte()) "MIL ON" else "MIL OFF"
+    }
+
+    @Test
+    fun cacl6(){
+
+        var content="(data[2]*256+data[3])?1:0"
+        if(content.contains("&")){
+            content=content.replace("&"," and ")
+        }
+
+        var data= byteArrayOf(0x03,0x03,0x03,0x05)
+
+        var c = if((data[2]*256+data[3])==0x01) "a" else "b"
+        println(c)
+
+        var spliteContent = content.split("?")
+        println(spliteContent.toString())
+    }
+
+    @Test
+    fun printTemplte(){
+
+        /** 构造默认值方法 */
+
+        println("import com.xtooltech.adten.module.diy.ObdItem")
+        println("import kotlin.experimental.and")
+        println("fun calcuEmpty(item:ObdItem):String{ return \"\"}")
+
+
+        calcx.forEachIndexed{
+            index,triple->
+
+            var format=triple.second
+            var data=triple.third
+            if (data.contains(";")) {
+                data=data.replace(";","")
+            }
+            if (data.contains("CHAR")) {
+                data=data.replace("CHAR","data")
+            }
+            if (data.contains("BYTE")) {
+                data=data.replace("BYTE","data")
+            }
+            println("// index= ${triple.first}")
+            println("// raw =$data")
+            if(data.contains("?")){
+                //(data[2]*256+data[3])?1:0
+
+                    println("fun calcu$index(data:List<Byte>):String{")
+                    var contents = triple.second.split("|")
+
+//                    //取index
+//                    var indexValue=data.get(data.indexOf("[")+1).toString()
+//                    //取& 下标
+//                    var indexOfAnd = data.indexOf("&")
+//                    //取位计算值
+//                    var andValue = data.substring(indexOfAnd+1, indexOfAnd + 5)
+//
+//                    data.contains("&").trueLet {
+//                        data =data.replace("&"," and ")
+//                    }
+//
+//                    println("return if(data[$indexValue] and $andValue.toByte() == 0x01.toByte())  \"${contents[0]}\" else \"${contents[1]}\" ")
+                if(data.contains("&")){
+                    data=data.replace("&"," and ")
+
+                }
+
+                /** 替换0x** */
+                if(data.contains("0x")){
+                    var start=data.indexOf("0x")
+                    var end=start+3
+                    var hexValue=data.substring(start ..end)
+                    data=data.replace(hexValue,"$hexValue.toByte(")
+                }
+                var convertFlag=data.contains("*")
+                var convertContent=if(convertFlag) "" else ".toByte()"
+                var head=if(convertFlag) "(" else ""
+
+                var spliteContent = data.split("?")
+
+                println("return if $head ${spliteContent[0]} ==0x01$convertContent ) \"${contents[0]}\" else \"${contents[1]}\"")
+
+                    println("}")
+            }else if(data.contains("&")){
+
+
+                println("fun calcu$index(data:List<Byte>):String{")
+                //取index
+                var indexValue=data.get(data.indexOf("[")+1).toString()
+
+
+                //取& 下标
+                var indexOfAnd = data.indexOf("&")
+
+                //取位计算值
+                var andValue = data.substring(indexOfAnd+1, indexOfAnd + 5)
+
+                println("return  String.format(\"$format\", data[$indexValue] and $andValue) ")
+
+                println("}")
+
+            }else if(data.contains("-")){
+                println("fun calcu$index(data:List<Byte>):String{")
+                //BYTE[2]*199.2/255-100
+                //(BYTE[3]*256+BYTE[4])*128.0/65536-128
+                data = data.replace("BYTE", "data")
+                println("return  String.format(\"$format\", $data)")
+                println("}")
+
+            }else if (data.contains("/")){
+
+                //(BYTE[2]*256+BYTE[3])*2.0/65536;
+
+                println("fun calcu$index(data:List<Byte>):String{")
+                //BYTE[2]*199.2/255-100
+                //(BYTE[3]*256+BYTE[4])*128.0/65536-128
+                data = data.replace("BYTE", "data")
+                println("return  String.format(\"$format\", $data)")
+                println("}")
+
+            }else if (data==""){
+                println("fun calcu$index(data:List<Byte>):String{")
+                //BYTE[2]*199.2/255-100
+                //(BYTE[3]*256+BYTE[4])*128.0/65536-128
+                println("return  \"\"")
+                println("}")
+            }else{
+                //BYTE[2]*256+BYTE[3];
+                println("fun calcu$index(data:List<Byte>):String{")
+                //BYTE[2]*199.2/255-100
+                //(BYTE[3]*256+BYTE[4])*128.0/65536-128
+                data = data.replace("BYTE", "data")
+                println("return  String.format(\"$format\", $data)")
+                println("}")
+            }
+
+        }
+
+        /** 构造入口方法 */
+            println("fun calculation(item:ObdItem):String{")
+            println("var value=\"\"")
+            println("when(item.index){")
+
+        /** when构造 */
+            calcx.forEachIndexed{ index,triple->
+                println("\"${triple.first}\" -> value= calcu$index(item.obd)")
+            }
+            println("else -> { ::calcuEmpty}")
+            println("}")
+        println("return value")
+            println("}")
+
+    }
+
+    @Test
+    fun getIndex(){
+        var content="(BYTE[2]&0x80)?0:1;"
+        var replace = content.replace("&", "and")
+        println(content)
+        println(replace)
+    }
+
+
+
+    @Test
+    fun testMapIndex4(){
+        var raw:Short=3065
+
+        var i = raw.toInt() shr 8
+
+        println(i.toByte())
+    }
+
+    @Test
+    fun testConver(){
+
+        var raw:Short=3065
+
+        var format = String.format("%04x", raw)
+        var first = format.substring(0, 2)
+        var second=format.substring(2,4)
+
+        println("0x$first,0x$second")
+
+
+
+    }
+
+
+
 
 }

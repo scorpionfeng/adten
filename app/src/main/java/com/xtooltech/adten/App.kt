@@ -27,4 +27,5 @@ class App  :Application(){
         HttpManager.get().init()
 
     }
+
 }

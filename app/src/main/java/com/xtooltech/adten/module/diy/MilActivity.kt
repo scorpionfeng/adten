@@ -105,41 +105,43 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
                         var arrayInner = value?.array
                         var flagA = arrayInner?.get(arrayInner.size - 5)
                         var flagB = arrayInner?.get(arrayInner.size - 4)
-                        if(flagB!!<0) {
-                            flagB = (flagB+ 256.toShort()).toShort()
+
+                        if (flagB!=null) {
+                            flagB=  (flagB+256.toShort()).toShort()
                         }
-                        var distance= (flagA?.times(256) ?: 0) + flagB!!
+
+                        var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
                         item.content=distance.toString()
                     }
                     0x31.toByte()->{
                         var arrayInner = value?.array
                         var flagA = arrayInner?.get(arrayInner.size - 5)
                         var flagB = arrayInner?.get(arrayInner.size - 4)
-                        if(flagB!!<0) {
-                            flagB = (flagB+ 256.toShort()).toShort()
+                        if (flagB!=null) {
+                            flagB=  (flagB+256.toShort()).toShort()
                         }
-                        var distance= (flagA?.times(256) ?: 0) + flagB!!
+                        var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
                         item.content=distance.toString()
                     }
                     0x4D.toByte()->{
                         var arrayInner = value?.array
                         var flagA = arrayInner?.get(arrayInner.size - 5)
                         var flagB = arrayInner?.get(arrayInner.size - 4)
-                        if(flagB!!<0) {
-                            flagB = (flagB+ 256.toShort()).toShort()
+                        if (flagB!=null) {
+                            flagB=  (flagB+256.toShort()).toShort()
                         }
-                        var distance= (flagA?.times(256) ?: 0) + flagB!!
+                        var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
                         item.content=distance.toString()
                     }
                     0x4E.toByte()->{
                         var arrayInner = value?.array
                         var flagA = arrayInner?.get(arrayInner.size - 5)
                         var flagB = arrayInner?.get(arrayInner.size - 4)
-                        if(flagB!!<0) {
-                            flagB = (flagB+ 256.toShort()).toShort()
+                        if (flagB!=null) {
+                            flagB=  (flagB+256.toShort()).toShort()
                         }
 
-                        var distance= (flagA?.times(256) ?: 0) + flagB!!
+                        var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
                         item.content=distance.toString()
                     }
                 }
