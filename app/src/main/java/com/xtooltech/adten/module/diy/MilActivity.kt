@@ -14,6 +14,7 @@ import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.widget.UniversalAdapter
+import kotlin.experimental.and
 
 
 class MilViewModel : ViewModel() {
@@ -91,10 +92,9 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
 
                 when(item.kind){
                     0x01.toByte()->{
-                        var arrayInner = value?.array
-                        var flag = arrayInner?.get(arrayInner.size - 5)
-                        var result = flag?.toInt()?.shr(7)
-
+                        var flag = value?.get(2)
+                        var result = flag?.toInt()?.and(0x80)
+//
                         (result==1).trueLet {
                             item.content="灯亮"
                         }.elseLet {
@@ -102,43 +102,59 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
                         }
                     }
                     0x21.toByte()->{
-                        var arrayInner = value?.array
-                        var flagA = arrayInner?.get(arrayInner.size - 5)
-                        var flagB = arrayInner?.get(arrayInner.size - 4)
+                        var flagA = value?.get(2)
+                        var flagB = value?.get(3)
 
                         if (flagB!=null) {
-                            flagB=  (flagB+256.toShort()).toShort()
+                            if(flagB<0){
+                                flagB = flagB.and(0xff.toByte())
+                            }
                         }
 
                         var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
                         item.content=distance.toString()
                     }
                     0x31.toByte()->{
-                        var arrayInner = value?.array
-                        var flagA = arrayInner?.get(arrayInner.size - 5)
-                        var flagB = arrayInner?.get(arrayInner.size - 4)
+                        var flagA = value?.get(2)
+                        var flagB = value?.get(3)
                         if (flagB!=null) {
-                            flagB=  (flagB+256.toShort()).toShort()
+                            if(flagB<0){
+                                flagB = flagB.and(0xff.toByte())
+                            }
                         }
                         var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
                         item.content=distance.toString()
                     }
                     0x4D.toByte()->{
-                        var arrayInner = value?.array
-                        var flagA = arrayInner?.get(arrayInner.size - 5)
-                        var flagB = arrayInner?.get(arrayInner.size - 4)
+                        var flagA = value?.get(2)
+                        var flagB = value?.get(3)
                         if (flagB!=null) {
-                            flagB=  (flagB+256.toShort()).toShort()
+                            if(flagB<0){
+                                flagB = flagB.and(0xff.toByte())
+                            }
                         }
                         var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
                         item.content=distance.toString()
                     }
                     0x4E.toByte()->{
-                        var arrayInner = value?.array
-                        var flagA = arrayInner?.get(arrayInner.size - 5)
-                        var flagB = arrayInner?.get(arrayInner.size - 4)
+                        var flagA = value?.get(2)
+                        var flagB = value?.get(3)
                         if (flagB!=null) {
-                            flagB=  (flagB+256.toShort()).toShort()
+                            if(flagB<0){
+                                flagB = flagB.and(0xff.toByte())
+                            }
+                        }
+
+                        var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
+                        item.content=distance.toString()
+                    }
+                    0x1f.toByte()->{
+                        var flagA = value?.get(2)
+                        var flagB = value?.get(3)
+                        if (flagB!=null) {
+                            if(flagB<0){
+                                flagB = flagB.and(0xff.toByte())
+                            }
                         }
 
                         var distance= (flagA?.times(256) ?: 0) + (flagB?:0)

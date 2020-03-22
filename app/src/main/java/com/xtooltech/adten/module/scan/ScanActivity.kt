@@ -30,6 +30,7 @@ import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
 import com.xtooltech.adten.common.ble.*
 import com.xtooltech.adten.databinding.ActivityScanBinding
+import com.xtooltech.adten.module.diy.ObdItem
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
@@ -387,6 +388,19 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
         }.start()
 
 
+
+    }
+
+    fun onFuellevel(view: View) {
+
+        Thread {
+
+            var value = ObdManger.getIns().readFlowItem(ObdItem(0x2f, "燃油液位", false, "", "%", "0x00,0x00,0x2F,0x00"))
+            value.apply {
+                vm.status.postValue("燃油液位 =$this %")
+            }
+
+        }.start()
 
     }
 

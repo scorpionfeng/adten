@@ -24,8 +24,8 @@ class SmokeViewModel : ViewModel() {
 //        FlowItem(0x01, "MIL灯(故障指示灯)状态",true,"","灯亮/灯灭"),
         FlowItem(0x03, "故障码", true, "", "个"),
         FlowItem(0x07, "未决故障码", true, "", "个"),
-        FlowItem(0x0a, "永久故障码", true, "", "个"),
-        FlowItem(0x04, "清除故障码", true, "", "个")
+        FlowItem(0x0a, "永久故障码", true, "", "个")
+
 //        FlowItem(0x4e,"失火监测",true,"","XX公里"),
 //        FlowItem(0x1f,"燃油系统监测",true,"","XX小时/XX分钟/XX秒"),
 //        FlowItem(0x1f,"综合成分监测",true,"","XX小时/XX分钟/XX秒"),
@@ -122,7 +122,19 @@ class SmokeActivity : BaseVMActivity<ActivityFlowSmokeBinding, SmokeViewModel>()
             var queryMilState = ObdManger.getIns().queryMilState()
 
             handler.post {
-                toast("mil stat= "+if(queryMilState)"故障灯亮" else "故障灯灭")
+                toast("mil stat= "+if(queryMilState.first)"故障灯亮" else "故障灯灭" +" and 就绪状态是:${queryMilState.second}")
+            }
+
+        }.start()
+    }
+
+    fun clickClear(view: View) {
+        Thread{
+
+            val value = ObdManger.getIns().clearCode()
+
+            handler.post {
+                toast("清码= "+if(value) "成功"  else "失败")
             }
 
         }.start()

@@ -45,7 +45,7 @@ class ObdManger :BleCallback{
      var diagInitSuccess =false
      var linkConfig=false
 
-    var currProto= OBD_VPW
+    var currProto= OBD_PWM
     fun connect(context: Context,cb:BleListener ){
         deviceAddress.isEmpty().trueLet {
             cb.onBleError("蓝牙地址为空,无法连接")
@@ -192,9 +192,15 @@ class ObdManger :BleCallback{
                 vinHexList.forEach{value+=String.format("%c",it)}
                 printMessage("vin value= $value")
             }
-        }else if (currProto== OBD_EXT_CAN){
-
         }else{
+            val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+            data?.apply {
+                var bizData = parse2BizSingle(data)             //41 6B 10 49 02 01 FF FF FF FF 55
+                bizData.forEach{value+=String.format("%c",it)}           //49 02 01 FF FF FF FF
+                printMessage("data = "+data?.toHex() ?: "N/A")
+                printMessage("bizdata = "+bizData.toHex())
+                printMessage("value = "+value)
+            }
 
         }
 
@@ -228,14 +234,12 @@ class ObdManger :BleCallback{
 
 
 
-    fun readCommonRaw(cmd:Byte):DataArray?{
+    fun readCommonRaw(cmd:Byte):List<Byte>?{
         val command = comboCommand(byteArrayOf(0x01,cmd))
         val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
         if (data != null) {
             val dataArray=DataArray() //48 6B 10 41 01 00 07 E1 E1 A3
-            var bizData = parse2BizSingle(data)
-            bizData.forEach { dataArray.add(it.toShort()) }
-            return dataArray
+            return  parse2BizSingle(data)
         }
         return null
     }
@@ -458,26 +462,51 @@ class ObdManger :BleCallback{
                 value=amount?:0
 
             }
+        }else{
+            val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+            data?.apply {//41 6B 10 47 01 93 12 33 00 00 0C
+                var biz = parse2BizSingle(data)//47 01 93 12 33 00 00
+               value= biz[2].toInt()
+            }
+        }
+            return value
+    }
+    fun clearCode(): Boolean {
+        var flag=false
+        val command = comboCommand(byteArrayOf(0x04))
+
+        if(currProto == OBD_STD_CAN ){
+            val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+            //08 07 E8 06 43 02 39 39 33 34 00
+            data?.apply {
+                var biz = parse2BizSingle(data)
+             flag=   biz.first()!=0x7f.toByte()
+            }
         }else if (currProto== OBD_VPW){
-            val data = command?.let { sendSingleReceiveMultiCommand(it,3000,10) }
-            printMessage("data= "+data)
+            val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+            data?.apply {
+                var biz = parse2BizSingle(data)
+                flag = biz.first()!=0x7f.toByte()
+
+            }
 
         }else{
 
         }
-            return value
+            return flag
     }
 
-    fun queryMilState():Boolean {
+    fun queryMilState():Pair<Boolean,Byte> {
         var milState=false
+        var readyStatus=0x00.toByte()
         var value =readCommonRaw(0x01)
         value?.apply {
-            var rawData = value.array
-            var flag = rawData.get(rawData.size - 5)
+            var flag = value[2]
             var statue = flag.toInt().shr(7)
             if (statue==1) milState=true
+            readyStatus= value[3]
         }
-        return milState
+        return Pair(milState,readyStatus)
     }
 
     fun readFreezeState(item:ObdItem) :String{
