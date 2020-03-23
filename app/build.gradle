@@ -83,7 +83,7 @@ dependencies {
 
     implementation 'com.phoenix:base:1.0.0@aar'
     implementation 'com.phoenix:widget:1.0.1'
-    implementation 'com.phoenix:ad10:1.0.1@aar'
+    implementation 'com.phoenix:ad10:1.0.2@aar'
 
 
     //动态权限

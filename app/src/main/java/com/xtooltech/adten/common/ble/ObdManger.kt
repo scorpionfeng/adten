@@ -45,7 +45,7 @@ class ObdManger :BleCallback{
      var diagInitSuccess =false
      var linkConfig=false
 
-    var currProto= OBD_PWM
+    var currProto= OBD_ISO
     fun connect(context: Context,cb:BleListener ){
         deviceAddress.isEmpty().trueLet {
             cb.onBleError("蓝牙地址为空,无法连接")
@@ -491,7 +491,12 @@ class ObdManger :BleCallback{
             }
 
         }else{
+            val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+            data?.apply {
+                var biz = parse2BizSingle(data)
+                flag = biz.first()!=0x7f.toByte()
 
+            }
         }
             return flag
     }
@@ -529,12 +534,16 @@ class ObdManger :BleCallback{
         val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
         if (data != null) {
             item.obd= parse2BizSingle(data)
-            calc.get(item.index)?.apply {
+            calc[item.index]?.apply {
                 value= calculation(item)
                 printMessage("value = $value")
             }
 
         }
         return value
+    }
+
+    fun readDv(): String {
+        return communication?.readDv()?:"电压读取不到"
     }
 }

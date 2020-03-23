@@ -104,6 +104,17 @@
             app:layout_constraintStart_toEndOf="@+id/button6"
             app:layout_constraintTop_toTopOf="@+id/button6" />
 
+        <Button
+            android:id="@+id/button13"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="电压"
+            android:onClick="clickReadDv"
+            app:layout_constraintEnd_toEndOf="@+id/VIN"
+            app:layout_constraintStart_toStartOf="@+id/VIN"
+            app:layout_constraintTop_toBottomOf="@+id/VIN" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </layout>

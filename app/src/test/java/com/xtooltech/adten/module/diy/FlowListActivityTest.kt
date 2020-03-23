@@ -2,6 +2,7 @@ package com.xtooltech.adten.module.diy
 import com.xtooltech.adten.common.obd.DataArray
 import com.xtooltech.adten.common.obd.DataStream
 import com.xtooltech.adten.util.*
+import com.xtooltech.base.util.printMessage
 import org.junit.Assert
 import org.junit.Test
 import kotlin.experimental.and
@@ -594,6 +595,14 @@ internal class FlowListActivityTestt{
         println(replace)
     }
 
+
+    @Test
+    fun readDV(){
+        //2F C6
+        var a= byteArrayOf(0x2f,0xc6.toByte())
+        a.forEach { println(String.format("%c",it)) }
+
+    }
 
 
     @Test

@@ -404,5 +404,14 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 
     }
 
+    fun clickReadDv(view: View) {
+        Thread{
+            var dvValue=ObdManger.getIns().readDv()
+            dvValue?.apply{
+                vm.status.postValue("电压值  是 $this ")
+            }
+        }.start()
+    }
+
 
 }

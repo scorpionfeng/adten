@@ -364,12 +364,17 @@ fun supportFreeze(): MutableList<ByteArray?> {
                 data[0]?.apply {
                     datas.add(this)
                     var bizData = parse2BizSingle(this)
-                    if (bizData.get(0) == 0x42.toByte()) {
-                        if (bizData.last().and(0x01) == 0x01.toByte()) {
-                            pid1 = (pid1 + 0x20).toByte()
-                        } else {
-                            query = false
+                    bizData.isNotEmpty().trueLet {
+                        if (bizData[0] == 0x42.toByte()) {
+                            if (bizData.last().and(0x01) == 0x01.toByte()) {
+                                pid1 = (pid1 + 0x20).toByte()
+                            } else {
+                                query = false
+                            }
                         }
+
+                    }.elseLet {
+                        query=false
                     }
                 }
 
@@ -462,19 +467,24 @@ fun supportFlowPids(): MutableList<ByteArray?> {
                     } else {
                         var item = data[0]
                         datas.add(item)
-                        var index = item?.indexOf(0x41.toByte())
-                        if (index!! > 0) {
-                            var sizex = item?.size
-                            var index = sizex?.minus(2)
-                            var flag = item?.get(index!!)
-                            var result = flag?.and(0x01)
-                            if (result == 0x01.toByte()) {
-                                pid1 = (pid1 + 0x20).toByte()
-                            } else {
-                                query = false
+                        item?.let {
+                            //41 00  BE 5F B8 11
+                            var bizData = parse2BizSingle(item)
+                            bizData.isNotEmpty().trueLet {
+                                if (bizData[0] ==0x41.toByte()) {
+                                    if (bizData.last().and(0x01)==0x01.toByte()) {
+                                        pid1 = (pid1 + 0x20).toByte()
+                                    }else{
+                                        query=false
+                                    }
+                                }
+
+                            }.elseLet {
+                                query=false
                             }
                         }
                     }
+
                 }
             }
 
@@ -549,23 +559,26 @@ fun mergePid(
     maskBuffer: ShortArray,
     offset: Int
 ) {
-    for (index in 0 until data?.size!!) {
-        var inItem = data[index]
-        if (inItem?.get(0 + offset) == 0x41.toByte()) {
-            if (inItem.size > 2) {
-                maskBuffer[index * 4 + 0] = inItem.get(2 + offset).toShort()
-            }
-            if (inItem.size > 3) {
-                maskBuffer[index * 4 + 1] = inItem.get(3 + offset).toShort()
-            }
-            if (inItem.size > 4) {
-                maskBuffer[index * 4 + 2] = inItem.get(4 + offset).toShort()
-            }
-            if (inItem.size > 5) {
-                maskBuffer[index * 4 + 3] = (inItem.get(5 + offset).toShort() and 0xFE)
-                if (inItem[5 + offset].toShort() and 0x01 === 0.toShort()) break
+    data.isNotEmpty().trueLet {
+        for (index in data.indices) {
+            var inItem = data[index]
+            if (inItem?.get(0 + offset) == 0x41.toByte()) {
+                if (inItem.size > 2) {
+                    maskBuffer[index * 4 + 0] = inItem.get(2 + offset).toShort()
+                }
+                if (inItem.size > 3) {
+                    maskBuffer[index * 4 + 1] = inItem.get(3 + offset).toShort()
+                }
+                if (inItem.size > 4) {
+                    maskBuffer[index * 4 + 2] = inItem.get(4 + offset).toShort()
+                }
+                if (inItem.size > 5) {
+                    maskBuffer[index * 4 + 3] = (inItem.get(5 + offset).toShort() and 0xFE)
+                    if (inItem[5 + offset].toShort() and 0x01 == 0.toShort()) break
+                }
             }
         }
+
     }
 }
 
