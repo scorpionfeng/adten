@@ -3,7 +3,7 @@ package com.xtooltech.adten.util
 import com.xtooltech.ad10.Utils
 import com.xtooltech.adten.common.ble.*
 import com.xtooltech.adten.common.obd.*
-import com.xtooltech.adten.module.diy.ObdItem
+import com.xtooltech.adten.common.obd.DataStream.engineType
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
@@ -605,4 +605,74 @@ fun mergeFreezePid(
             }
         }
     }
+}
+
+/**
+ *
+ *
+ * fuelAdjustment, speedAdjustment, weight, displacement;  //油耗系数，速度系数，车辆总重，加速度，排量
+ *
+ * isSupportAirFlow
+ * airFlow
+ * fuelUnit
+ * engineValue
+ * displacement
+ * airPressure
+ * rpm
+ * fuelAdjustment
+ * */
+
+fun calculationWithAirFlow(airFlowValue:Int,engineKind:Int,fuelUnitValue:Int):String{
+    var rec=""
+    if (engineKind == 0)  //汽油
+    {
+        var value = airFlowValue/14.7/0.725/1000*3600        //L／h
+        if (fuelUnitValue == 1)           //gal(us)/h
+            value = value/3.785;
+        else if (fuelUnitValue == 2)      //gal(uk)/h
+            value = value/4.546;
+        rec = String.format("%1.2f", value)
+    }
+    else if (engineKind == 1)  //柴油
+    {
+        var value:Double=0.0
+            value = (airFlowValue/14.3/0.86/1000*3600);        //L／h
+        if (fuelUnitValue == 1)           //gal(us)/h
+            value = value/3.785;
+        else if (fuelUnitValue == 2)      //gal(uk)/h
+            value = value/4.546;
+        rec = String.format("%1.2f", value)
+    }
+    return rec
+}
+
+fun calcSpecialDataItem(isSupportAirFlow:Boolean,airFlow:Int,fuelUnit:Int,engineValue:Int,displacement:Int,airTemperature:Int,airPressure:Int,rpm:Int,fuelAdjustment:Int=1):String{
+    var rec=""
+    if (engineValue == 0)  //汽油
+    {
+        var value:Double=0.0
+        if (isSupportAirFlow)
+            value = fuelAdjustment*(airFlow/14.7/0.725/1000*3600);        //L／h
+        else
+            value = fuelAdjustment*(9.6898/1000*rpm*airPressure/(airTemperature+273.15)*displacement*0.85);    //L／h
+        if (fuelUnit == 1)           //gal(us)/h
+            value = value/3.785;
+        else if (fuelUnit == 2)      //gal(uk)/h
+            value = value/4.546;
+        rec = String.format("%0.2f", value)
+    }
+    else if (engineValue == 1)  //柴油
+    {
+        var value:Double=0.0
+        if (isSupportAirFlow)
+            value = fuelAdjustment*(airFlow/14.3/0.86/1000*3600);        //L／h
+        else
+            value = fuelAdjustment*(8.513/1000*rpm*airPressure/(airTemperature+273.15)*displacement*0.85);    //L／h
+        if (fuelUnit == 1)           //gal(us)/h
+            value = value/3.785;
+        else if (fuelUnit == 2)      //gal(uk)/h
+            value = value/4.546;
+        rec = String.format("%0.2f", value)
+    }
+    return rec
 }

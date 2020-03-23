@@ -58,7 +58,7 @@ class SmokeActivity : BaseVMActivity<ActivityFlowSmokeBinding, SmokeViewModel>()
             request_obd_state(item)
         }
 
-        handler.postDelayed(speedRunnable, 1000L)
+       // handler.postDelayed(speedRunnable, 1000L)
 
 
     }
@@ -67,20 +67,28 @@ class SmokeActivity : BaseVMActivity<ActivityFlowSmokeBinding, SmokeViewModel>()
         printMessage("request ${item.title}")
         Thread {
 
-            enterSucc?.falseLet {
-                printMessage("entersucc ?= $enterSucc")
-                enterSucc = ObdManger.getIns().enter()
-            }
+//            enterSucc?.falseLet {
+//                printMessage("entersucc ?= $enterSucc")
+//                enterSucc = ObdManger.getIns().enter()
+//            }
 
-            enterSucc?.trueLet {
-                val amount = ObdManger.getIns().readTrobleCodeAmount(item.kind)
+//            enterSucc?.trueLet {
+//                val amount = ObdManger.getIns().readTrobleCodeAmount(item.kind)
+//                item.content = amount.toString()
+//                printMessage("kind=${item.kind}>" + amount)
+//
+//                handler.post {
+//                    adapter.notifyDataSetChanged()
+//                }
+//            }
+
+            val amount = ObdManger.getIns().readTrobleCodeAmount(item.kind)
                 item.content = amount.toString()
                 printMessage("kind=${item.kind}>" + amount)
 
                 handler.post {
                     adapter.notifyDataSetChanged()
                 }
-            }
 
         }.start()
     }

@@ -45,7 +45,7 @@ class ObdManger :BleCallback{
      var diagInitSuccess =false
      var linkConfig=false
 
-    var currProto= OBD_ISO
+    var currProto= OBD_STD_CAN
     fun connect(context: Context,cb:BleListener ){
         deviceAddress.isEmpty().trueLet {
             cb.onBleError("蓝牙地址为空,无法连接")
@@ -175,23 +175,21 @@ class ObdManger :BleCallback{
     fun readVin():String{
         var value=""
         val command = comboCommand(byteArrayOf(0x09,0x02))
-
+        var vinHexList:MutableList<Byte> = mutableListOf()
         if(currProto == OBD_STD_CAN ){
-            val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
-
-            var vinHexList:MutableList<Byte> = mutableListOf()
-            if (data?.get(3)?.toInt()?.shr(4)==1) {
-                var ecuId = data?.get(2)
-                var dataLength=data?.get(5)
-                vinHexList.addAll(data?.slice(5..data?.size-1))
-                var streamControl=comboCanCommandStream(true,byteArrayOf(0x30,0x00,0x00),(ecuId-8).toByte())
-              var appendData=  streamControl?.let { sendSingleReceiveMultiCommand(it,3000L,10) }
-                appendData?.forEach {
-                    it?.slice(4..it.size-1)?.let { it1 -> vinHexList.addAll(it1) }
+            val data = command?.let { sendSingleReceiveMultiCommand(it,3000,10) }
+            data?.forEach {
+                it?.slice(4 until it.size)?.let { it2->
+                    vinHexList.addAll(it2)
+                    printMessage("data= >"+it2.toHex())
                 }
-                vinHexList.forEach{value+=String.format("%c",it)}
-                printMessage("vin value= $value")
             }
+            vinHexList.isNotEmpty().trueLet {
+                vinHexList.forEach{
+                    value+=String.format("%c",it)
+                }
+            }
+
         }else{
             val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
             data?.apply {
@@ -443,24 +441,18 @@ class ObdManger :BleCallback{
     fun readTrobleCodeAmount(cmd:Byte): Int {
         var value=0
         val command = comboCommand(byteArrayOf(cmd))
-
+        var vinHexList:MutableList<Byte> = mutableListOf()
         if(currProto == OBD_STD_CAN ){
-            val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+            val data = command?.let { sendSingleReceiveMultiCommand(it,3000,10) }
             //08 07 E8 06 43 02 39 39 33 34 00
-            var vinHexList:MutableList<Byte> = mutableListOf()
-            if (data?.get(3)?.toInt()?.shr(4)==1) {
-                var ecuId = data?.get(2)
-                var dataLength=data?.get(5)
-                vinHexList.addAll(data?.slice(5..data?.size-1))
-                var streamControl=comboCanCommandStream(true,byteArrayOf(0x30,0x00,0x00),(ecuId-8).toByte())
-                var appendData=  streamControl?.let { sendSingleReceiveMultiCommand(it,3000L,10) }
-                appendData?.forEach {
-                    it?.slice(4..it.size-1)?.let { it1 -> vinHexList.addAll(it1) }
+            data?.forEach {
+                it?.slice(4 until it.size)?.let { it2->
+                    vinHexList.addAll(it2)
+                    printMessage("data= >"+it2.toHex())
                 }
-            }else{
-                var amount = data?.get(5)?.toInt()//08 07 E8 03 7F 0A 11 00 00 00 00
-                value=amount?:0
-
+            }
+            vinHexList.isNotEmpty().trueLet {
+                value= vinHexList.first().toInt()
             }
         }else{
             val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
@@ -546,4 +538,36 @@ class ObdManger :BleCallback{
     fun readDv(): String {
         return communication?.readDv()?:"电压读取不到"
     }
+
+    /** 读油耗 */
+    fun fuelCons(): String {
+        var value=""
+        var bizWind= listOf<Byte>()
+        val command = comboCommand(byteArrayOf(0x01,0x10))
+        val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
+        if (data != null) {
+            /** 获取到 空气流量 */
+            bizWind= parse2BizSingle(data)
+            printMessage("bizWind= "+bizWind.toHex())
+            //"%3.2f"	"(BYTE[2]*256+BYTE[3])/100.0;"
+            var airFlow = 1
+            try {
+                airFlow= (String.format("%3.2f", (bizWind[2] * 256 + bizWind[3]) / 100.0)).toInt()
+            }catch (e:ArrayIndexOutOfBoundsException){
+                printMessage("数组越界")
+            }
+            value = calculationWithAirFlow(airFlow,0,1)
+            printMessage("读油耗 ->空气流量 = "+value)
+        }else{
+            val press = comboCommand(byteArrayOf(0x01,0x12))
+            val preData = press?.let { sendSingleReceiveSingleCommand(it,3000) }
+            preData?.apply {
+                var bizPress = parse2BizSingle(preData)
+                printMessage("press data= "+bizPress.toHex())
+            }
+        }
+        return value
+    }
+
+
 }

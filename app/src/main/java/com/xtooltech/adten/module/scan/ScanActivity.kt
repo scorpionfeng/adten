@@ -413,5 +413,14 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
         }.start()
     }
 
+    fun clickFuelRate(view: View) {
+        Thread{
+            var fuelConsValue=ObdManger.getIns().fuelCons()
+            fuelConsValue?.apply{
+                vm.status.postValue("油耗  是 $this ")
+            }
+        }.start()
+    }
+
 
 }

@@ -115,6 +115,17 @@
             app:layout_constraintStart_toStartOf="@+id/VIN"
             app:layout_constraintTop_toBottomOf="@+id/VIN" />
 
+        <Button
+            android:id="@+id/button14"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="油耗"
+            android:onClick="clickFuelRate"
+            app:layout_constraintBottom_toBottomOf="@+id/button13"
+            app:layout_constraintEnd_toStartOf="@+id/button13"
+            app:layout_constraintTop_toBottomOf="@+id/VIN" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </layout>
