@@ -2263,6 +2263,7 @@ fun calcu451(data:List<Byte>):String{
 }
 fun calculation(item:ObdItem):String{
     var value=""
+    try{
     when(item.index){
         "0x00,0x00,0x01,0x10" -> value= calcu0(item.obd)
         "0x00,0x00,0x01,0x11" -> value= calcu1(item.obd)
@@ -2717,6 +2718,9 @@ fun calculation(item:ObdItem):String{
         "0x00,0x06,0x12,0xFE" -> value= calcu450(item.obd)
         "0x00,0x06,0x12,0xFF" -> value= calcu451(item.obd)
         else -> { ::calcuEmpty}
+    }
+    }catch (e:Exception){
+
     }
     return value
 }

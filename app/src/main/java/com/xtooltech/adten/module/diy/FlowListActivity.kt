@@ -61,16 +61,10 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
             enterSucc?.trueLet {
 
 
-                var datas: MutableList<ByteArray?> = supportFlowPids()
-
-                datas?.apply {
-
-                    mergePid(datas, maskBuffer, ObdManger.getIns().computerOffset())
-                    var produPid = produPid(maskBuffer)
-                    var freezeKeyList = dataFlow4KeyList(produPid,0x01)
-
-                    freezeKeyList.forEach{
-                       var element = ds[it.toObdIndex()]
+                var list=ObdManger.getIns().queryFlowList()
+                list.isNotEmpty().trueLet {
+                    list.forEach{
+                        var element = ds[it.toObdIndex()]
                         element?.apply {
                             vm.datas.add(ObdItem(it.toObdPid(),element.first,false,"",element.second,it.toObdIndex()))
                         }

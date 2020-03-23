@@ -9,7 +9,6 @@ import com.kaopiz.kprogresshud.KProgressHUD
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
 import com.xtooltech.adten.common.ble.ObdManger
-import com.xtooltech.adten.common.obd.Freeze_DataType_STD
 import com.xtooltech.adten.databinding.ActivityFreezeListBinding
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
@@ -49,37 +48,30 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
 
     val adapter= UniversalAdapter(vm.datas,R.layout.item_freeze,BR.model)
 
-    var maskBuffer = ShortArray(32)
+
 
     private fun getData() {
-        UtilThread.execute{
-            var enterSucc = ObdManger.getIns().enter()
+        UtilThread.execute {
+            val enterSucc = ObdManger.getIns().enter()
             printMessage("entersucc ?= $enterSucc")
             enterSucc?.trueLet {
 
-                var datas: MutableList<ByteArray?> = supportFreeze()
 
-                (datas.size>0).trueLet {
-                        mergeFreezePid(datas, maskBuffer, ObdManger.getIns().computerOffset())
-                        var pid = produFreezePid(maskBuffer)
-                        printMessage(pid.toString())
-                        var freezeKeyList = dataFlow4KeyList(pid,0x02)
+                var freezeList = ObdManger.getIns().queryFreezeList()
 
-                        freezeKeyList.forEach {
-                            var element = ds[it.toObdIndex()]
-                            element?.apply {
-                                vm.datas.add(ObdItem(it.toObdPid(), element.first, false, "", element.second, it.toObdIndex()))
-                            }
+                freezeList.isNotEmpty().trueLet {
+                    freezeList.forEach {
+                        var element = ds[it.toObdIndex()]
+                        element?.apply {
+                            vm.datas.add(ObdItem(it.toObdPid(), element.first, false, "", element.second, it.toObdIndex()))
+                        }
                     }
-
                 }
-
-
             }
 
-            handler.post{
+            handler.post {
                 adapter.notifyDataSetChanged()
-                toast("succe ? ="+enterSucc)
+                toast("succe ? =" + enterSucc)
                 hud.dismiss()
 
             }
@@ -125,7 +117,7 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
     fun readItem(data:ObdItem){
         Thread {
 
-            var value = ObdManger.getIns().readFreezeState(data)
+            var value = ObdManger.getIns().readFreezeItem(data)
             data.content = value
 
             runOnUiThread {
@@ -139,7 +131,7 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
         Thread{
 
             vm.datas.forEach{
-                var value = ObdManger.getIns() .readFreezeState(it)
+                var value = ObdManger.getIns() .readFreezeItem(it)
                 it.content=value
             }
 

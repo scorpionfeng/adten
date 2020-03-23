@@ -384,11 +384,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
                 vm.status.postValue("vin code =$this")
             }
 
-
         }.start()
-
-
-
     }
 
     fun onFuellevel(view: View) {

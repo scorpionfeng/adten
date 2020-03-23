@@ -12,6 +12,7 @@ import com.xtooltech.adten.module.diy.ObdItem
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.util.printMessage
 import java.util.*
+import kotlin.experimental.and
 
 
 const val OBD_STD_CAN=1
@@ -479,7 +480,6 @@ class ObdManger :BleCallback{
             data?.apply {
                 var biz = parse2BizSingle(data)
                 flag = biz.first()!=0x7f.toByte()
-
             }
 
         }else{
@@ -506,7 +506,7 @@ class ObdManger :BleCallback{
         return Pair(milState,readyStatus)
     }
 
-    fun readFreezeState(item:ObdItem) :String{
+    fun readFreezeItem(item:ObdItem) :String{
         var value=""
         val command = comboCommand(byteArrayOf(0x02,item.kind,0x00))
         val data = command?.let { sendSingleReceiveSingleCommand(it,3000) }
@@ -555,6 +555,8 @@ class ObdManger :BleCallback{
                 airFlow= (String.format("%3.2f", (bizWind[2] * 256 + bizWind[3]) / 100.0)).toInt()
             }catch (e:ArrayIndexOutOfBoundsException){
                 printMessage("数组越界")
+            }catch(e2:NumberFormatException){
+                printMessage("格式错误")
             }
             value = calculationWithAirFlow(airFlow,0,1)
             printMessage("读油耗 ->空气流量 = "+value)
@@ -567,6 +569,186 @@ class ObdManger :BleCallback{
             }
         }
         return value
+    }
+
+    fun supportFlowPids(): MutableList<ByteArray?> {
+        var query = true
+        var size = 2
+        var pid1 = 0x00.toByte()
+        var datas: MutableList<ByteArray?> = mutableListOf()
+        while (query) {
+            val obdData = ByteArray(size)
+            obdData[0] = 0x01
+            obdData[1] = pid1
+
+            var comboCommand = ObdManger.getIns().comboCommand(obdData)
+            var data =
+                comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it, 5000, 10) }
+            data?.apply {
+
+                when(ObdManger.getIns().currProto){
+                    OBD_STD_CAN->{
+
+                        if(data.isEmpty()){
+                            query=false
+                        }else{
+                            data[0]?.apply {
+                                datas.add(this)
+                                var bizData = parse2BizSingle(this)
+                                if(bizData.get(0) == 0x41.toByte()){
+                                    if (bizData.last().and(0x01) == 0x01.toByte()) {
+                                        pid1 = (pid1 + 0x20).toByte()
+                                    }else{
+                                        query=false
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                    OBD_PWM->{
+                        if (data.isEmpty()) {
+                            query = false
+                        } else {
+                            var item = data[0]
+                            datas.add(item)
+                            item?.let {
+                                //41 00  BE 5F B8 11
+                                var bizData = parse2BizSingle(item)
+                                if (bizData.get(0)==0x41.toByte()) {
+                                    if (bizData.last().and(0x01)==0x01.toByte()) {
+                                        pid1 = (pid1 + 0x20).toByte()
+                                    }else{
+                                        query=false
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    OBD_VPW->{
+                        if (data.isEmpty()) {
+                            query = false
+                        } else {
+                            var item = data[0]
+                            item?.apply {
+                                datas.add(item)
+                                var bizData = parse2BizSingle(item)
+                                if (bizData.get(0)== 0x41.toByte()) {
+                                    var flag = bizData.last()
+                                    var result = flag?.and(0x01)
+                                    if (result == 0x01.toByte()) {
+                                        pid1 = (pid1 + 0x20).toByte()
+                                    } else {
+                                        query = false
+                                    }
+                                }
+
+                            }
+
+                        }
+                    }
+
+                    else-> {
+                        if (data.isEmpty()) {
+                            query = false
+                        } else {
+                            var item = data[0]
+                            datas.add(item)
+                            item?.let {
+                                //41 00  BE 5F B8 11
+                                var bizData = parse2BizSingle(item)
+                                bizData.isNotEmpty().trueLet {
+                                    if (bizData[0] ==0x41.toByte()) {
+                                        if (bizData.last().and(0x01)==0x01.toByte()) {
+                                            pid1 = (pid1 + 0x20).toByte()
+                                        }else{
+                                            query=false
+                                        }
+                                    }
+
+                                }.elseLet {
+                                    query=false
+                                }
+                            }
+                        }
+
+                    }
+                }
+
+            }
+        }
+        return datas
+    }
+
+    /** 查询数据流支持项 */
+    fun queryFlowList():List<Short> {
+        var maskBuffer = ShortArray(32)
+        var freezeKeyList:List<Short> = mutableListOf()
+        var pids: MutableList<ByteArray?> = supportFlowPids()
+
+        pids?.apply {
+
+            mergePid(pids, maskBuffer, computerOffset())
+            var produPid = produPid(maskBuffer)
+             freezeKeyList = dataFlow4KeyList(produPid,0x01)
+        }
+        return freezeKeyList
+    }
+
+    fun supportFreeze(): MutableList<ByteArray?> {
+        var query = true
+        var pid1 = 0x00.toByte()
+        var datas: MutableList<ByteArray?> = mutableListOf()
+        while (query) {
+            val obdData = ByteArray(3)
+            obdData[0] = 0x02
+            obdData[1] = pid1
+            obdData[2] = 0x00
+
+            var comboCommand = ObdManger.getIns().comboCommand(obdData)
+            var data =
+                comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it, 5000, 10) }
+            data?.apply {
+
+                if (data.isEmpty()) {
+                    query = false
+                } else {
+                    data[0]?.apply {
+                        datas.add(this)
+                        var bizData = parse2BizSingle(this)
+                        bizData.isNotEmpty().trueLet {
+                            if (bizData[0] == 0x42.toByte()) {
+                                if (bizData.last().and(0x01) == 0x01.toByte()) {
+                                    pid1 = (pid1 + 0x20).toByte()
+                                } else {
+                                    query = false
+                                }
+                            }
+
+                        }.elseLet {
+                            query=false
+                        }
+                    }
+
+                }
+            }
+        }
+        return datas
+    }
+
+    /** 查询 冻结帧列表 */
+    fun queryFreezeList(): List<Short> {
+        var maskBuffer = ShortArray(32)
+        var freezeKeyList = listOf<Short>()
+        var datas: MutableList<ByteArray?> = supportFreeze()
+        (datas.size > 0).trueLet {
+            mergeFreezePid(datas, maskBuffer, computerOffset())
+            var pid = produFreezePid(maskBuffer)
+            printMessage(pid.toString())
+            freezeKeyList = dataFlow4KeyList(pid, 0x02)
+        }
+
+        return freezeKeyList
     }
 
 
