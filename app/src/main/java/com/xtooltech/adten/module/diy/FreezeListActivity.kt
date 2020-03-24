@@ -8,9 +8,12 @@ import com.alibaba.android.arouter.facade.annotation.Route
 import com.kaopiz.kprogresshud.KProgressHUD
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
-import com.xtooltech.adten.common.ble.ObdManger
+import com.xtooltech.adtenx.common.ble.ObdManger
 import com.xtooltech.adten.databinding.ActivityFreezeListBinding
 import com.xtooltech.adten.util.*
+import com.xtooltech.adtenx.common.ble.ObdItem
+import com.xtooltech.adtenx.util.toObdIndex
+import com.xtooltech.adtenx.util.toObdPid
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
@@ -51,7 +54,7 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
 
 
     private fun getData() {
-        UtilThread.execute {
+        Thread{
             val enterSucc = ObdManger.getIns().enter()
             printMessage("entersucc ?= $enterSucc")
             enterSucc?.trueLet {
@@ -75,7 +78,7 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
                 hud.dismiss()
 
             }
-        }
+        }.start()
     }
 
     override fun initView() {

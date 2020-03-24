@@ -17,21 +17,22 @@ import android.os.Build
 import android.os.Handler
 import android.provider.Settings
 import android.view.View
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.kaopiz.kprogresshud.KProgressHUD
-import com.xtooltech.ad10.BleConnection
-import com.xtooltech.ad10.Communication
-import com.xtooltech.ad10.Utils
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
 import com.xtooltech.adten.common.ble.*
 import com.xtooltech.adten.databinding.ActivityScanBinding
-import com.xtooltech.adten.module.diy.ObdItem
 import com.xtooltech.adten.util.*
+import com.xtooltech.adtenx.common.ble.*
+import com.xtooltech.adtenx.plus.BleConnection
+import com.xtooltech.adtenx.plus.Communication
+import com.xtooltech.adtenx.plus.Utils
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
@@ -68,6 +69,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
     var rssiOn by ProxyPreference(DETECT_RSSI,true)
 
 
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun initView() {
 
 
@@ -95,6 +97,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun initBle() {
         takeIf {  Build.VERSION.SDK_INT>=23 }.apply {
             if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -112,7 +115,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
                 if (!(isGpsProvider || isNetWorkProvider)) {
                     enableLocation = false
                     val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                    startActivityForResult(intent,REQUEST_COARSE_LOCATION)
+                    startActivityForResult(intent, REQUEST_COARSE_LOCATION)
                 }
             }
         }
@@ -174,7 +177,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
             enableBle = true
         } else {
             val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            startActivityForResult(enableBtIntent,REQUEST_ENABLE_BLUETOOTH)
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BLUETOOTH)
         }
 
     }
@@ -195,6 +198,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
             .setPositiveButton("是") { dialog, which ->
                 vm.deviceName.value=name
                 deviceAddress=address
+                ObdManger.getIns().deviceAddress=address
                 stopScan()
 
             }
@@ -287,7 +291,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
     }
 
     override fun onCharacteristicChanged(p0: ByteArray?) {
-        printMessage("接收"+Utils.debugByteData(p0))
+        printMessage("接收"+ Utils.debugByteData(p0))
 //        BleManger.getIns().append(p0)
 //        communication?.addByteArray(p0)
 
@@ -362,13 +366,13 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
         Thread{
             var kind = ObdManger.getIns().scan()
             when(kind){
-                OBD_EXT_CAN->vm.status.postValue("扩展CAN")
-                OBD_STD_CAN->vm.status.postValue("标准CAN")
-                OBD_ISO->vm.status.postValue("ISO")
-                OBD_KWP->vm.status.postValue("KWP")
-                OBD_PWM->vm.status.postValue("PWM")
-                OBD_VPW->vm.status.postValue("VPW")
-                OBD_UNKNOWN->vm.status.postValue("扫描失败")
+                OBD_EXT_CAN ->vm.status.postValue("扩展CAN")
+                OBD_STD_CAN ->vm.status.postValue("标准CAN")
+                OBD_ISO ->vm.status.postValue("ISO")
+                OBD_KWP ->vm.status.postValue("KWP")
+                OBD_PWM ->vm.status.postValue("PWM")
+                OBD_VPW ->vm.status.postValue("VPW")
+                OBD_UNKNOWN ->vm.status.postValue("扫描失败")
 
             }
         }.start()
@@ -402,7 +406,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 
     fun clickReadDv(view: View) {
         Thread{
-            var dvValue=ObdManger.getIns().readDv()
+            var dvValue= ObdManger.getIns().readDv()
             dvValue?.apply{
                 vm.status.postValue("电压值  是 $this ")
             }
@@ -411,7 +415,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 
     fun clickFuelRate(view: View) {
         Thread{
-            var fuelConsValue=ObdManger.getIns().fuelCons()
+            var fuelConsValue= ObdManger.getIns().fuelCons()
             fuelConsValue?.apply{
                 vm.status.postValue("油耗  是 $this ")
             }

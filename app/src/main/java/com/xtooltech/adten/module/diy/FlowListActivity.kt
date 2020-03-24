@@ -10,9 +10,12 @@ import com.alibaba.android.arouter.launcher.ARouter
 import com.kaopiz.kprogresshud.KProgressHUD
 import com.xtooltech.adten.R
 import com.xtooltech.adten.BR
-import com.xtooltech.adten.common.ble.ObdManger
+import com.xtooltech.adtenx.common.ble.ObdManger
 import com.xtooltech.adten.databinding.ActivityFlowListBinding
 import com.xtooltech.adten.util.*
+import com.xtooltech.adtenx.common.ble.ObdItem
+import com.xtooltech.adtenx.util.toObdIndex
+import com.xtooltech.adtenx.util.toObdPid
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
@@ -40,7 +43,7 @@ class FlowListViewModel : ViewModel() {
 
 
 data class FlowItem(var kind:Byte,var title:String,var selected:Boolean,var content:String,var symbol:String)
-data class ObdItem(var kind:Byte, var title:String, var selected:Boolean, var content:String, var symbol:String, var index:String,var obd:List<Byte> = mutableListOf())
+
 
 
 @Route(path = PATH_DIY_FLOW)
@@ -55,13 +58,13 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
     var maskBuffer = ShortArray(32)
 
     private fun getData() {
-        UtilThread.execute{
+        Thread{
             var enterSucc = ObdManger.getIns().enter()
             printMessage("entersucc ?= $enterSucc")
             enterSucc?.trueLet {
 
 
-                var list=ObdManger.getIns().queryFlowList()
+                var list= ObdManger.getIns().queryFlowList()
                 list.isNotEmpty().trueLet {
                     list.forEach{
                         var element = ds[it.toObdIndex()]
@@ -78,7 +81,7 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
                 hud.dismiss()
 
             }
-        }
+        }.start()
     }
 
 
@@ -136,14 +139,10 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
             }
 
         }.start()
-
-
-
-
     }
 
     fun readFlow(view: View) {
-        UtilThread.execute {
+        Thread {
             vm.datas.forEach {
 
                 val value = ObdManger.getIns().readFlowItem(it)
@@ -158,8 +157,6 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
                     adapter.notifyDataSetChanged()
                 }
             }
-
-
-        }
+        }.start()
     }
 }

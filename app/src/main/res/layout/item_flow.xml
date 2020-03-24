@@ -6,7 +6,7 @@
     <data>
         <variable
             name="model"
-            type="com.xtooltech.adten.module.diy.ObdItem" />
+            type="com.xtooltech.adtenx.common.ble.ObdItem" />
 
     </data>
 

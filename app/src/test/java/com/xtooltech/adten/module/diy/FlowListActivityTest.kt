@@ -1,7 +1,9 @@
 package com.xtooltech.adten.module.diy
-import com.xtooltech.adten.common.obd.DataArray
-import com.xtooltech.adten.common.obd.DataStream
 import com.xtooltech.adten.util.*
+import com.xtooltech.adtenx.common.ble.ObdItem
+import com.xtooltech.adtenx.common.obd.DataArray
+import com.xtooltech.adtenx.common.obd.DataStream
+import com.xtooltech.adtenx.util.hexString
 import com.xtooltech.base.util.printMessage
 import org.junit.Assert
 import org.junit.Test
@@ -22,33 +24,31 @@ internal class FlowListActivityTestt{
             data1x,data2x
         )
 
-        var maskBuffer = ShortArray(32)
-        mergePid(datas,maskBuffer,7)
-
-        maskBuffer.forEach { println(it.toString()) }
-
-        var produPid = produPid(maskBuffer)
-
-        produPid.forEach {
-            println(it.toString())
-        }
-
     }
 
 
     @Test
-    fun testConvert(){
+    fun testBitMask(){
+        var a=1//0000 0001
+        var b=2//0000 0010
+        var c=4//0000 0100
+        var d=8//0000 1000
+        var e=16//0001 0000
+        var f=32//0010 0000
+        var g=64//0100 0000
+        var h=128//1000 0000
 
-//        val li:ArrayList<Short> = arrayListOf(0x41.toShort(), 0x05.toShort(),0x44.toShort())
-//        val li:ArrayList<Short> = arrayListOf(0x41.toShort(), 0x0c.toShort(),0x00.toShort())
-        val li:ArrayList<Short> = arrayListOf(0x41.toShort(), 0x0d.toShort(),0x00.toShort())
-
-        val daAr=DataArray()
-        daAr.array=li
-        var temp = DataStream.commonCalcExpress("0x00,0x00,0x00,0x00,0x00,0x05,", daAr)
-        println("temp=$temp")
-
+        var x=6 //0000 0110
+        println(x.and(a)>0)
+        println(x.and(b)>0)
+        println(x and c>0)
+        println(x and d>0)
+        println(x and e>0)
+        println(x and f>0)
+        println(x and g>0)
+        println(x and h>0)
     }
+
 
 
     @Test
@@ -404,7 +404,7 @@ internal class FlowListActivityTestt{
 
     }
 
-    fun calculation(item:ObdItem):String{
+    fun calculation(item: ObdItem):String{
         var value=""
         var method:Any
 

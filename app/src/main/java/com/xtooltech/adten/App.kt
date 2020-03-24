@@ -2,7 +2,6 @@ package com.xtooltech.adten
 
 import android.app.Application
 import com.alibaba.android.arouter.launcher.ARouter
-import com.xtooltech.adten.common.net.HttpManager
 import kotlin.properties.Delegates
 
 class App  :Application(){
@@ -23,9 +22,6 @@ class App  :Application(){
             ARouter.openDebug()
             ARouter.openDebug()
         }
-
-        HttpManager.get().init()
-
     }
 
 }

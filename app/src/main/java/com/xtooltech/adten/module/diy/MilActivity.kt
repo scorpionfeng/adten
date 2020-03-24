@@ -4,11 +4,9 @@ import android.os.Handler
 import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.alibaba.android.arouter.facade.annotation.Route
-import com.xtooltech.ad10.Utils
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
-import com.xtooltech.adten.common.ble.ObdManger
-import com.xtooltech.adten.common.obd.TextString.result
+import com.xtooltech.adtenx.common.ble.ObdManger
 import com.xtooltech.adten.databinding.ActivityFlowMilBinding
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.BaseVMActivity
@@ -191,7 +189,7 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
 
 
         override fun run() {
-            UtilThread.execute {
+            Thread {
 
                 while (show) {
                     datas.forEach {
@@ -206,9 +204,7 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
 
                     }
                 }
-
-
-            }
+            }.start()
         }
     }
 

@@ -13,7 +13,6 @@ import com.alibaba.android.arouter.launcher.ARouter
 import com.xtooltech.adten.App
 import com.xtooltech.adten.R
 import com.xtooltech.adten.BR
-import com.xtooltech.adten.common.net.HttpManager
 import com.xtooltech.adten.databinding.ActivityAccountBinding
 import com.xtooltech.adten.util.*
 import com.xtooltech.base.util.printMessage
@@ -130,13 +129,6 @@ class AccountViewModel : ViewModel() {
     }
 
 
-    fun requestNet(view:View){
-        viewModelScope.launch {
-            var service = HttpManager.get().getService()
-            var readDtc = service.readDtc()
-            printMessage("dtc data is $readDtc")
-        }
-    }
 
 }
 

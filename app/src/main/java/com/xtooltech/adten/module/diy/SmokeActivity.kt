@@ -7,12 +7,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
-import com.xtooltech.adten.common.ble.ObdManger
+import com.xtooltech.adtenx.common.ble.ObdManger
 import com.xtooltech.adten.databinding.ActivityFlowSmokeBinding
 import com.xtooltech.adten.util.PATH_DIY_SMOKE
-import com.xtooltech.adten.util.UtilThread
-import com.xtooltech.adten.util.falseLet
-import com.xtooltech.adten.util.trueLet
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
@@ -83,7 +80,7 @@ class SmokeActivity : BaseVMActivity<ActivityFlowSmokeBinding, SmokeViewModel>()
 
 
         override fun run() {
-            UtilThread.execute {
+            Thread{
 
                 datas.forEach {
                     val value = ObdManger.getIns().readTrobleCodeAmount(it.kind)
@@ -95,7 +92,7 @@ class SmokeActivity : BaseVMActivity<ActivityFlowSmokeBinding, SmokeViewModel>()
                     adapter.notifyDataSetChanged()
                 }
 
-            }
+            }.start()
         }
     }
 
