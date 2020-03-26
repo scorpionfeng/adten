@@ -4,10 +4,12 @@ import com.xtooltech.adtenx.common.ble.ObdItem
 import com.xtooltech.adtenx.common.obd.DataArray
 import com.xtooltech.adtenx.common.obd.DataStream
 import com.xtooltech.adtenx.util.hexString
+import com.xtooltech.adtenx.util.toHex
 import com.xtooltech.base.util.printMessage
 import org.junit.Assert
 import org.junit.Test
 import kotlin.experimental.and
+import kotlin.reflect.typeOf
 
 internal class FlowListActivityTestt{
 
@@ -47,6 +49,14 @@ internal class FlowListActivityTestt{
         println(x and f>0)
         println(x and g>0)
         println(x and h>0)
+    }
+
+    @Test
+    fun testUnsign(){
+        var a:Byte=0xff.toByte()
+        var b:UByte=0xff.toUByte()
+        println(a)
+        println(b)
     }
 
 
@@ -149,6 +159,77 @@ internal class FlowListActivityTestt{
 
     }
 
+
+
+    @Test
+    fun testReadyStatus(){
+
+        var bin_zero:Byte=1//0000 0001
+        var bin_one:Byte=2//0000 0010
+        var bin_two:Byte=4//0000 0100
+        var bin_three:Byte=8//0000 1000
+        var bin_four:Byte=16//0001 0000
+        var bin_five:Byte=32//0010 0000
+        var bin_six:Byte=64//0100 0000
+        var bin_seven:Byte=128.toByte()//1000 0000
+
+        var rawData= listOf(
+            0x41,0x01, 0x85.toByte(),0x07,0x61,0x61
+        )
+        println(rawData.toHex())
+
+        //41 01 85 07 61 61
+
+        var data= listOf(
+            ReadyItem("MIS_SUP","失火状态 Misfire monitoring",(if(rawData[3].and(bin_zero)>0) "ON" else "OFF"),0),
+            ReadyItem("FUEL_SUP","燃油监视 fuel system monitoring",(if(rawData[3].and(bin_one)>0) "ON" else "OFF"),0),
+            ReadyItem("CCM_SUP","综合部件监视 CCM",(if(rawData[3].and(bin_two)>0) "ON" else "OFF"),0),
+            ReadyItem("TypeIgn","点火类型",(if(rawData[3].and(bin_three)>0) "汽油" else "柴油"),0),
+            ReadyItem("MIS_RDY","失火监视",(if(rawData[3].and(bin_four)>0) "ON" else "OFF"),0),
+            ReadyItem("FUEL_RDY","燃油系统监视",(if(rawData[3].and(bin_five)>0) "ON" else "OFF"),0),
+            ReadyItem("CCM_RDY","综合部件监视",(if(rawData[3].and(bin_six)>0) "ON" else "OFF"),0),
+            ReadyItem("Reserved1","Reserved1",(if(rawData[3].and(bin_seven)>0) "ON" else "OFF"),0),
+            ReadyItem("CAT_SUP","催化器监视",(if(rawData[4].and(bin_zero)>0) "ON" else "OFF"),1),
+            ReadyItem("HCAT_SUP","加热式催化器监视",(if(rawData[4].and(bin_one)>0) "ON" else "OFF"),1),
+            ReadyItem("EVAP_SUP","燃油蒸气系统监视",(if(rawData[4].and(bin_two)>0) "ON" else "OFF"),1),
+            ReadyItem("AIR_SUP","二次空气喷射监视",(if(rawData[4].and(bin_three)>0) "ON" else "OFF"),1),
+            ReadyItem("SIgn.Reserved1","二次空气喷射监视",(if(rawData[4].and(bin_four)>0) "ON" else "OFF"),1),
+            ReadyItem("O2S_SUP","氧传感器监视",(if(rawData[4].and(bin_five)>0) "ON" else "OFF"),1),
+            ReadyItem("HTR_SUP","氧传感器加热监视",(if(rawData[4].and(bin_six)>0) "ON" else "OFF"),1),
+            ReadyItem("EGR_RDY","废气再循环监视",(if(rawData[4].and(bin_seven)>0) "ON" else "OFF"),1),
+            ReadyItem("HCCATSUP","催化剂监视",(if(rawData[4].and(bin_zero)>0) "ON" else "OFF"),2),
+            ReadyItem("NCAT_SUP","氮氧化物后处理监视",(if(rawData[4].and(bin_one)>0) "ON" else "OFF"),2),
+            ReadyItem("CIgn.Reserved1","CIgn.Reserved1",(if(rawData[4].and(bin_two)>0) "ON" else "OFF"),2),
+            ReadyItem("BP_SUP","增压系统监视",(if(rawData[4].and(bin_three)>0) "ON" else "OFF"),2),
+            ReadyItem("CIgn.Reserved2","CIgn.Reserved2",(if(rawData[4].and(bin_four)>0) "ON" else "OFF"),2),
+            ReadyItem("EGS_SUP","废气传感器监视",(if(rawData[4].and(bin_five)>0) "ON" else "OFF"),2),
+            ReadyItem("PM_SUP","颗粒物补集器监视",(if(rawData[4].and(bin_six)>0) "ON" else "OFF"),2),
+            ReadyItem("EGR_SUP","废气再循环监视",(if(rawData[4].and(bin_seven)>0) "ON" else "OFF"),2),
+            ReadyItem("HCCATSUP","NMHC催化剂监视",(if(rawData[5].and(bin_zero)>0) "ON" else "OFF"),2),
+            ReadyItem("NCAT_RDY","氮氧化物后处理监视",(if(rawData[5].and(bin_one)>0) "ON" else "OFF"),2),
+            ReadyItem("CIgn.Reserved3","---",(if(rawData[5].and(bin_two)>0) "ON" else "OFF"),2),
+            ReadyItem("BP_RDY","增压系统监视",(if(rawData[5].and(bin_three)>0) "ON" else "OFF"),2),
+            ReadyItem("CIgn.Reserved4","---",(if(rawData[5].and(bin_four)>0) "ON" else "OFF"),2),
+            ReadyItem("EGS_RDY","废气传感器监视",(if(rawData[5].and(bin_five)>0) "ON" else "OFF"),2),
+            ReadyItem("PM_RDY","颗粒物补集器监视",(if(rawData[5].and(bin_six)>0) "ON" else "OFF"),2),
+            ReadyItem("EGR_RDY","废气再循环监视",(if(rawData[5].and(bin_seven)>0) "ON" else "OFF"),2)
+        )
+
+        println(data.toString())
+    }
+
+
+
+
+    @Test
+    fun testI2B(){
+        var i=100
+        i=3203 //3072 + 131
+        var h = (i shr 8).and(0xff)
+        var l=i.and(0xff)
+        println(h.toString()+">>"+String.format("%02X",h))
+        println(l.toString()+">>"+String.format("%02X",l))
+    }
 
     @Test
     fun testAdd(){
@@ -458,6 +539,9 @@ internal class FlowListActivityTestt{
 
         println("import com.xtooltech.adten.module.diy.ObdItem")
         println("import kotlin.experimental.and")
+        println("import com.xtooltech.adtenx.common.ble.ObdItem")
+        println("import com.xtooltech.adtenx.util.b2i")
+
         println("fun calcuEmpty(item:ObdItem):String{ return \"\"}")
 
 
@@ -466,6 +550,11 @@ internal class FlowListActivityTestt{
 
             var format=triple.second
             var data=triple.third
+
+            if (data.contains("]")) {
+                data=data.replace("]","].b2i() ")
+            }
+
             if (data.contains(";")) {
                 data=data.replace(";","")
             }
@@ -497,7 +586,6 @@ internal class FlowListActivityTestt{
 //                    println("return if(data[$indexValue] and $andValue.toByte() == 0x01.toByte())  \"${contents[0]}\" else \"${contents[1]}\" ")
                 if(data.contains("&")){
                     data=data.replace("&"," and ")
-
                 }
 
                 /** 替换0x** */
@@ -505,15 +593,15 @@ internal class FlowListActivityTestt{
                     var start=data.indexOf("0x")
                     var end=start+3
                     var hexValue=data.substring(start ..end)
-                    data=data.replace(hexValue,"$hexValue.toByte(")
+                    data=data.replace(hexValue,"$hexValue")
                 }
                 var convertFlag=data.contains("*")
-                var convertContent=if(convertFlag) "" else ".toByte()"
+//                var convertContent=if(convertFlag) "" else ".toByte()"
                 var head=if(convertFlag) "(" else ""
 
-                var spliteContent = data.split("?")
+                var spliteContent = data.split(")?")
 
-                println("return if $head ${spliteContent[0]} ==0x01$convertContent ) \"${contents[0]}\" else \"${contents[1]}\"")
+                println("return if $head ${spliteContent[0]} ==0x01 ) \"${contents[0]}\" else \"${contents[1]}\"")
 
                     println("}")
             }else if(data.contains("&")){
@@ -574,6 +662,7 @@ internal class FlowListActivityTestt{
         /** 构造入口方法 */
             println("fun calculation(item:ObdItem):String{")
             println("var value=\"\"")
+            println("try{")
             println("when(item.index){")
 
         /** when构造 */
@@ -582,6 +671,8 @@ internal class FlowListActivityTestt{
             }
             println("else -> { ::calcuEmpty}")
             println("}")
+        println("}catch(e:Exception){")
+        println("}")
         println("return value")
             println("}")
 

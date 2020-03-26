@@ -54,6 +54,7 @@
             android:layout_height="wrap_content"
             android:text="下一步"
             android:onClick="nextStep"
+            android:visibility="gone"
             app:layout_constraintStart_toEndOf="@id/all"
             app:layout_constraintTop_toBottomOf="@id/list"
             app:layout_constraintBottom_toBottomOf="parent"

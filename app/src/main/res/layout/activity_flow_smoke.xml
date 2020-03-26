@@ -37,23 +37,30 @@
             android:id="@+id/button9"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="查询故障灯状态和就绪状态"
             android:onClick="smokeQuery"
+            android:text="查询故障灯状态和就绪状态"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/list" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <Button
             android:id="@+id/button12"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="清码"
             android:onClick="clickClear"
-            app:layout_constraintEnd_toEndOf="@+id/button9"
-            app:layout_constraintStart_toStartOf="@+id/button9"
-            app:layout_constraintTop_toBottomOf="@+id/button9" />
+            android:text="清码"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/button9"
+            app:layout_constraintTop_toTopOf="@+id/button9" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/ready"
+            android:layout_width="409dp"
+            android:layout_height="315dp"
+            app:layout_constraintBottom_toTopOf="@+id/button9"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/list" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

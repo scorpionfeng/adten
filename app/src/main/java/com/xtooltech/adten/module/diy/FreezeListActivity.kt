@@ -1,4 +1,5 @@
 package com.xtooltech.adten.module.diy
+
 import android.os.Handler
 import android.os.Looper
 import android.view.View
@@ -22,59 +23,47 @@ import com.xtooltech.widget.UniversalAdapter
 
 class FreezeListViewModel : ViewModel() {
 
-
-
-    companion object{
+    companion object {
         private lateinit var instance: FreezeListViewModel
 
-       fun setIns(ins:FreezeListViewModel){
-           instance=ins
-       }
+        fun setIns(ins: FreezeListViewModel) {
+            instance = ins
+        }
 
-        fun getIns():FreezeListViewModel{
+        fun getIns(): FreezeListViewModel {
             return instance
         }
     }
 
-    var datas= mutableListOf<ObdItem>(
+    var datas = mutableListOf<ObdItem>(
     )
 }
-
-
 
 
 @Route(path = PATH_DIY_FREEZE)
 class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListViewModel>() {
 
-    private lateinit  var  hud: KProgressHUD
+    private lateinit var hud: KProgressHUD
     private lateinit var handler: Handler
 
-    val adapter= UniversalAdapter(vm.datas,R.layout.item_freeze,BR.model)
-
+    val adapter = UniversalAdapter(vm.datas, R.layout.item_freeze, BR.model)
 
 
     private fun getData() {
-        Thread{
-            val enterSucc = ObdManger.getIns().enter()
-            printMessage("entersucc ?= $enterSucc")
-            enterSucc?.trueLet {
+        Thread {
+            var freezeList = ObdManger.getIns().queryFreezeList()
 
-
-                var freezeList = ObdManger.getIns().queryFreezeList()
-
-                freezeList.isNotEmpty().trueLet {
-                    freezeList.forEach {
-                        var element = ds[it.toObdIndex()]
-                        element?.apply {
-                            vm.datas.add(ObdItem(it.toObdPid(), element.first, false, "", element.second, it.toObdIndex()))
-                        }
+            freezeList.isNotEmpty().trueLet {
+                freezeList.forEach {
+                    var element = ds[it.toObdIndex()]
+                    element?.apply {
+                        vm.datas.add(ObdItem(it.toObdPid(), element.first, false, "", element.second, it.toObdIndex()))
                     }
                 }
             }
 
             handler.post {
                 adapter.notifyDataSetChanged()
-                toast("succe ? =" + enterSucc)
                 hud.dismiss()
 
             }
@@ -83,9 +72,9 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
 
     override fun initView() {
 
-        handler=Handler(Looper.getMainLooper())
+        handler = Handler(Looper.getMainLooper())
 
-        hud= KProgressHUD(this).setCancellable(false)
+        hud = KProgressHUD(this).setCancellable(false)
             .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
             .setAnimationSpeed(2)
             .setDimAmount(0.5f)
@@ -94,18 +83,14 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
 
         getData()
 
-        vb.list.adapter=adapter
-        vb.list.layoutManager= LinearLayoutManager(this)
-        adapter.setOnItemClick{
-            bd,item,index->
+        vb.list.adapter = adapter
+        vb.list.layoutManager = LinearLayoutManager(this)
+        adapter.setOnItemClick { bd, item, index ->
 
             readItem(item)
         }
 
     }
-
-
-
 
 
     override fun initData() {
@@ -117,7 +102,7 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
     override fun getBindingId(): Int = BR.model
 
 
-    fun readItem(data:ObdItem){
+    fun readItem(data: ObdItem) {
         Thread {
 
             var value = ObdManger.getIns().readFreezeItem(data)
@@ -131,17 +116,16 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
     }
 
     fun readData(view: View) {
-        Thread{
+        Thread {
 
-            vm.datas.forEach{
-                var value = ObdManger.getIns() .readFreezeItem(it)
-                it.content=value
+            vm.datas.forEach {
+                var value = ObdManger.getIns().readFreezeItem(it)
+                it.content = value
             }
 
-            runOnUiThread{
+            runOnUiThread {
                 adapter.notifyDataSetChanged()
             }
-
 
 
         }.start()

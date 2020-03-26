@@ -25,6 +25,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar">
         <activity android:name=".module.diy.FlowDetailActivity"></activity>
+        <activity android:name=".module.diy.InfoActivity"></activity>
         <activity android:name=".module.diy.FlowListActivity" />
         <activity android:name=".module.dash.DashActivity" />
         <activity android:name=".module.diy.MilActivity" />
@@ -32,15 +33,17 @@
         <activity android:name=".module.diy.FreezeListActivity" />
         <activity android:name=".module.diy.DiyActivity" />
         <activity android:name=".module.account.AccountActivity" />
-        <activity android:name=".module.scan.ScanActivity" />
-        <activity android:name=".module.home.HomeActivity" />
-        <activity android:name=".module.splash.WelcomeActivity" />
-        <activity android:name=".module.splash.SplashActivity">
+        <activity android:name=".module.scan.ScanActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".module.home.HomeActivity" />
+        <activity android:name=".module.splash.WelcomeActivity" />
+        <activity android:name=".module.splash.SplashActivity">
+
         </activity>
     </application>
 

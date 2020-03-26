@@ -16,6 +16,7 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.Handler
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
@@ -23,6 +24,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import com.alibaba.android.arouter.facade.annotation.Route
+import com.alibaba.android.arouter.launcher.ARouter
 import com.kaopiz.kprogresshud.KProgressHUD
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
@@ -275,11 +277,6 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 
        takeIf { deviceAddress.isNotEmpty() }.apply {
            hud.show()
-//           bleConnection=BleConnection(this,true,deviceAddress)
-//           bleConnection.addBleCallback(this)
-//           communication=Communication(bleConnection)
-//           bleConnection.start()
-
            ObdManger.getIns().connect(this@ScanActivity,this@ScanActivity)
 
        }
@@ -292,8 +289,6 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 
     override fun onCharacteristicChanged(p0: ByteArray?) {
         printMessage("接收"+ Utils.debugByteData(p0))
-//        BleManger.getIns().append(p0)
-//        communication?.addByteArray(p0)
 
     }
 
@@ -339,30 +334,10 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
             .show()
     }
 
-    fun clieckEnter(view: View) {
 
-        hud.setLabel("进入"+ nameMap.get(ObdManger.getIns().currProto))
-
-        Thread{
-
-            var success = ObdManger.getIns().enter()
-
-//            var success = communication?.enterPwmVpw(true)
-            vm.status.postValue("enter ${nameMap.get(ObdManger.getIns().currProto)} is $success")
-        }.start()
-
-    }
-
-    fun enterPwm2(view: View) {
-        lifecycleScope.launch {
-            hud.setLabel("进入pwm2")
-            var succ=communication?.enterPwmVpw(true)
-            vm.status.postValue("enter pwm2 is $succ")
-        }
-
-    }
 
     fun onScan(view: View) {
+        hud.show()
         Thread{
             var kind = ObdManger.getIns().scan()
             when(kind){
@@ -373,54 +348,22 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
                 OBD_PWM ->vm.status.postValue("PWM")
                 OBD_VPW ->vm.status.postValue("VPW")
                 OBD_UNKNOWN ->vm.status.postValue("扫描失败")
-
-            }
-        }.start()
-
-    }
-
-    fun readVin(view: View) {
-
-        Thread{
-
-            var readVinCode = ObdManger.getIns().readVin()
-            readVinCode.apply {
-                vm.status.postValue("vin code =$this")
             }
 
-        }.start()
-    }
-
-    fun onFuellevel(view: View) {
-
-        Thread {
-
-            var value = ObdManger.getIns().readFlowItem(ObdItem(0x2f, "燃油液位", false, "", "%", "0x00,0x00,0x2F,0x00"))
-            value.apply {
-                vm.status.postValue("燃油液位 =$this %")
+            handler.post {
+                hud.dismiss()
             }
+
+            if (kind!= OBD_UNKNOWN) {
+                Log.i("Communication","进入"+ nameMap.get(kind))
+                ARouter.getInstance().build(PATH_DIY).navigation()
+            }
+
 
         }.start()
 
     }
 
-    fun clickReadDv(view: View) {
-        Thread{
-            var dvValue= ObdManger.getIns().readDv()
-            dvValue?.apply{
-                vm.status.postValue("电压值  是 $this ")
-            }
-        }.start()
-    }
-
-    fun clickFuelRate(view: View) {
-        Thread{
-            var fuelConsValue= ObdManger.getIns().fuelCons()
-            fuelConsValue?.apply{
-                vm.status.postValue("油耗  是 $this ")
-            }
-        }.start()
-    }
 
 
 }

@@ -44,47 +44,27 @@ class FlowListViewModel : ViewModel() {
 
 data class FlowItem(var kind:Byte,var title:String,var selected:Boolean,var content:String,var symbol:String)
 
-
-
 @Route(path = PATH_DIY_FLOW)
 class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewModel>() {
 
     private lateinit  var  hud: KProgressHUD
     private lateinit var handler: Handler
-
     val adapter= UniversalAdapter(vm.datas,R.layout.item_flow,BR.model)
-
-
-    var maskBuffer = ShortArray(32)
 
     private fun getData() {
         Thread{
-            var enterSucc = ObdManger.getIns().enter()
-            printMessage("entersucc ?= $enterSucc")
-            enterSucc?.trueLet {
 
-
-                var list= ObdManger.getIns().queryFlowList()
-                list.isNotEmpty().trueLet {
-                    list.forEach{
-                        var element = ds[it.toObdIndex()]
-                        element?.apply {
-                            vm.datas.add(ObdItem(it.toObdPid(),element.first,false,"",element.second,it.toObdIndex()))
-                        }
-                    }
+                var list= ObdManger.getIns().queryFlowListItem()
+                list?.apply {
+                    vm.datas.addAll(list.toMutableList())
                 }
-            }
 
             handler.post{
-
                 adapter.notifyDataSetChanged()
                 hud.dismiss()
-
             }
         }.start()
     }
-
-
 
 
     override fun initView() {
@@ -105,10 +85,7 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
         adapter.setOnItemClick{bind,item,index->
             readItem(item)
         }
-
     }
-
-
 
     override fun initData() {
 
@@ -118,9 +95,7 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
 
     override fun getBindingId(): Int = BR.model
 
-
     fun nextStep(view: View) {
-
         FlowListViewModel.setIns(vm)
         ARouter.getInstance().build(PATH_DIY_FLOW_DETAIL).navigation()
 

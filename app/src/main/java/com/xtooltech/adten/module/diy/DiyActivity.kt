@@ -26,7 +26,8 @@ class DiyActivity : BaseVMActivity<ActivityDiyBinding, DiyViewModel>() {
         MenuItem(1,"数据流",R.mipmap.ic_launcher),
         MenuItem(2,"冻结帧",R.mipmap.ic_launcher),
         MenuItem(3,"MIL状态",R.mipmap.ic_launcher),
-        MenuItem(4,"烟雾测试",R.mipmap.ic_launcher)
+        MenuItem(4,"烟雾测试",R.mipmap.ic_launcher),
+        MenuItem(5,"信息查询",R.mipmap.ic_launcher)
     )
 
     val menuAdapter= UniversalAdapter(data,R.layout.item_home,BR.model)
@@ -43,6 +44,7 @@ _,item,_->
                 2-> ARouter.getInstance().build(PATH_DIY_FREEZE).navigation()
                 3->ARouter.getInstance().build(PATH_DIY_MIL).navigation()
                 4->ARouter.getInstance().build(PATH_DIY_SMOKE).navigation()
+                5->ARouter.getInstance().build(PATH_DIY_INFO).navigation()
                 else->""
             }
 

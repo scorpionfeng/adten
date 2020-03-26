@@ -39,49 +39,34 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
 
     lateinit var  adapter:UniversalAdapter<FlowItem>
 
-
-
     override fun initView() {
 
-        val datas=vm.datas.filter { it.selected }
-
-        datas.forEach{
+        datas = vm.datas
+        datas.forEach {
             printMessage("it= ${it.title} + ${it.selected}")
         }
-        adapter=UniversalAdapter(datas,R.layout.item_flow_detail,BR.model)
-        vb.list.adapter=adapter
-        vb.list.layoutManager= LinearLayoutManager(this)
-        adapter.setOnItemClick{
-            _,item,index->
+        adapter = UniversalAdapter(datas, R.layout.item_flow_detail, BR.model)
+        vb.list.adapter = adapter
+        vb.list.layoutManager = LinearLayoutManager(this)
+        adapter.setOnItemClick { _, item, index ->
 
-            request_obd_state(item)
-//            when(item.kind.toInt()){
-//                0x01.toInt()->request_obd_state(item)
-//                0x21.toInt()->request_obd_state1(item)
-//                0x31.toInt()->request_obd_state2(item)
-//                0x4D.toInt()->request_obd_state3(item)
-//                0x4e.toInt()->request_obd_state4(item)
-//                0x1f.toInt()->request_obd_state5(item)
-//
-//            }
+            requestItem(item)
         }
 
-
-
-
+      //  handler.postDelayed(speedRunnable, 1000)
     }
 
-    private fun request_obd_state(item:FlowItem) {
+    private fun requestItem(item:FlowItem) {
         printMessage("request ${item.title}")
         Thread{
 
-            enterSucc?.falseLet {
-                printMessage("entersucc ?= $enterSucc")
-                enterSucc = ObdManger.getIns().enter()
-            }
-
-
-            enterSucc?.trueLet {
+//            enterSucc?.falseLet {
+//                printMessage("entersucc ?= $enterSucc")
+//                enterSucc = ObdManger.getIns().enter()
+//            }
+//
+//
+//            enterSucc?.trueLet {
                 val value = ObdManger.getIns().readCommonRaw(item.kind)
 
 
@@ -90,73 +75,91 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
 
                 when(item.kind){
                     0x01.toByte()->{
-                        var flag = value?.get(2)
-                        var result = flag?.toInt()?.and(0x80)
-//
-                        (result==1).trueLet {
-                            item.content="灯亮"
-                        }.elseLet {
-                             item.content="灯灭"
+                        value.isNotEmpty().trueLet {
+                            var flag = value?.get(2)
+                            var result = flag?.toInt()?.and(0x80)
+                            (result==1).trueLet {
+                                item.content="灯亮"
+                            }.elseLet {
+                                item.content="灯灭"
+                            }
                         }
+
                     }
                     0x21.toByte()->{
-                        var flagA = value?.get(2)
-                        var flagB = value?.get(3)
+                        value.isNotEmpty().trueLet {
+                            var flagA = value?.get(2)
+                            var flagB = value?.get(3)
 
-                        if (flagB!=null) {
-                            if(flagB<0){
-                                flagB = flagB.and(0xff.toByte())
+                            if (flagB!=null) {
+                                if(flagB<0){
+                                    flagB = flagB.and(0xff.toByte())
+                                }
                             }
+
+                            var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
+                            item.content=distance.toString()
                         }
 
-                        var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
-                        item.content=distance.toString()
                     }
                     0x31.toByte()->{
-                        var flagA = value?.get(2)
-                        var flagB = value?.get(3)
-                        if (flagB!=null) {
-                            if(flagB<0){
-                                flagB = flagB.and(0xff.toByte())
+
+                        value.isNotEmpty().trueLet {
+                            var flagA = value?.get(2)
+                            var flagB = value?.get(3)
+                            if (flagB!=null) {
+                                if(flagB<0){
+                                    flagB = flagB.and(0xff.toByte())
+                                }
                             }
+                            var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
+                            item.content=distance.toString()
                         }
-                        var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
-                        item.content=distance.toString()
+
                     }
                     0x4D.toByte()->{
-                        var flagA = value?.get(2)
-                        var flagB = value?.get(3)
-                        if (flagB!=null) {
-                            if(flagB<0){
-                                flagB = flagB.and(0xff.toByte())
+                        value.isNotEmpty().trueLet {
+                            var flagA = value?.get(2)
+                            var flagB = value?.get(3)
+                            if (flagB!=null) {
+                                if(flagB<0){
+                                    flagB = flagB.and(0xff.toByte())
+                                }
                             }
+                            var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
+                            item.content=distance.toString()
                         }
-                        var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
-                        item.content=distance.toString()
+
                     }
                     0x4E.toByte()->{
-                        var flagA = value?.get(2)
-                        var flagB = value?.get(3)
-                        if (flagB!=null) {
-                            if(flagB<0){
-                                flagB = flagB.and(0xff.toByte())
+                        value.isNotEmpty().trueLet {
+                            var flagA = value?.get(2)
+                            var flagB = value?.get(3)
+                            if (flagB!=null) {
+                                if(flagB<0){
+                                    flagB = flagB.and(0xff.toByte())
+                                }
                             }
+
+                            var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
+                            item.content=distance.toString()
                         }
 
-                        var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
-                        item.content=distance.toString()
                     }
                     0x1f.toByte()->{
-                        var flagA = value?.get(2)
-                        var flagB = value?.get(3)
-                        if (flagB!=null) {
-                            if(flagB<0){
-                                flagB = flagB.and(0xff.toByte())
+                        value.isNotEmpty().trueLet {
+                            var flagA = value?.get(2)
+                            var flagB = value?.get(3)
+                            if (flagB!=null) {
+                                if(flagB<0){
+                                    flagB = flagB.and(0xff.toByte())
+                                }
                             }
+
+                            var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
+                            item.content=distance.toString()
                         }
 
-                        var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
-                        item.content=distance.toString()
                     }
                 }
 
@@ -164,24 +167,9 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
                     adapter.notifyDataSetChanged()
                 }
 
-            }
+//            }
 
         }.start()
-    }
-    private fun request_obd_state1(item:FlowItem) {
-        printMessage("request ${item.title}")
-    }
-    private fun request_obd_state2(item:FlowItem) {
-        printMessage("request ${item.title}")
-    }
-    private fun request_obd_state3(item:FlowItem) {
-        printMessage("request ${item.title}")
-    }
-    private fun request_obd_state4(item:FlowItem) {
-        printMessage("request ${item.title}")
-    }
-    private fun request_obd_state5(item:FlowItem) {
-        printMessage("request ${item.title}")
     }
 
 

@@ -66,65 +66,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:onClick="clieckEnter"
-            android:text="Enter"
+            android:onClick="onScan"
+            android:text="scan"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/button5" />
 
-        <Button
-            android:id="@+id/button7"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:text="scan"
-            android:onClick="onScan"
-            app:layout_constraintBaseline_toBaselineOf="@+id/button6"
-            app:layout_constraintEnd_toStartOf="@+id/button6" />
-
-        <Button
-            android:id="@+id/VIN"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="VIN"
-            android:onClick="readVin"
-            app:layout_constraintEnd_toEndOf="@+id/button6"
-            app:layout_constraintStart_toStartOf="@+id/button6"
-            app:layout_constraintTop_toBottomOf="@+id/button6" />
-
-        <Button
-            android:id="@+id/button11"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="液位"
-            android:onClick="onFuellevel"
-            app:layout_constraintBottom_toBottomOf="@+id/button6"
-            app:layout_constraintStart_toEndOf="@+id/button6"
-            app:layout_constraintTop_toTopOf="@+id/button6" />
-
-        <Button
-            android:id="@+id/button13"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="电压"
-            android:onClick="clickReadDv"
-            app:layout_constraintEnd_toEndOf="@+id/VIN"
-            app:layout_constraintStart_toStartOf="@+id/VIN"
-            app:layout_constraintTop_toBottomOf="@+id/VIN" />
-
-        <Button
-            android:id="@+id/button14"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:text="油耗"
-            android:onClick="clickFuelRate"
-            app:layout_constraintBottom_toBottomOf="@+id/button13"
-            app:layout_constraintEnd_toStartOf="@+id/button13"
-            app:layout_constraintTop_toBottomOf="@+id/VIN" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
