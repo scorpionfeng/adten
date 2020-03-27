@@ -145,7 +145,7 @@ public class BleConnection implements Communication.CommunicationInterface {
                     handler.sendEmptyMessage(MSG_CALLBACK_CONNECT_TIMEOUT);
                 }
             }
-        }, 35000);
+        }, 18000);
     }
 
     public boolean isConnecting() {

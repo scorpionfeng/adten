@@ -3,11 +3,13 @@ package com.xtooltech.adtenx.plus;
 import android.os.SystemClock;
 import android.util.Log;
 
+import java.io.File;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -58,7 +60,6 @@ public class Communication {
         return ret;
     }
     private byte[] getBytes(long timeout) {
-
         List<Byte> list = new ArrayList<>();
         short b, b1;
         while (true) {
@@ -192,11 +193,8 @@ public class Communication {
         mSendReceiving = true;
         mInstance.clear();
         mByteQueue.clear();
-
-        sendDataList(dataList); //send
-         List<byte[]> ret = receiveDataList(timeout, expectReceiveCount); //receive
-
-
+        sendDataList(dataList);
+        List<byte[]> ret = receiveDataList(timeout, expectReceiveCount);
         mSendReceiving = false;
         return ret;
     }
@@ -209,6 +207,116 @@ public class Communication {
             return ret.get(0);
         }
         return null;
+    }
+
+    public String readBoxInfo() {
+        byte[] data = new byte[7];
+        data[0] = Utils.int2byte(0x60);
+        data[1] = Utils.int2byte(0x02);
+        data[2] = Utils.int2byte(0x04);
+        data[3] = Utils.int2byte(0x80);
+        data[4] = Utils.int2byte(0x81);
+        data[5] = Utils.int2byte(0x82);
+        data[6] = Utils.int2byte(0x83);
+        byte[] recv = sendReceiveData(data, 5000);
+        if (recv != null && recv.length > 3 && recv[0] == 0x60 && recv[1] == 0x02) {
+            int len = Utils.byte2int(recv[2]), pos = 3;
+            byte[] tmp;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < len; i++) {
+                int kid = Utils.byte2int(recv[pos]);
+                if (kid == 0x80) {
+                    tmp = Arrays.copyOfRange(recv, pos + 1, pos + 3);
+                    sb.append("电压:");
+                    sb.append(String.format(Locale.getDefault(), "%.2f A", Utils.byteArray2int(tmp) * 1.0 / 1000));
+                    sb.append("\n");
+                    pos += 2;
+                } else if (kid == 0x81) {
+                    tmp = Arrays.copyOfRange(recv, pos + 1, pos + 11);
+                    sb.append("固件版本:");
+                    sb.append(new String(tmp));
+                    sb.append("\n");
+                    pos += 10;
+                } else if (kid == 0x82) {
+                    tmp = Arrays.copyOfRange(recv, pos + 1, pos + 21);
+                    sb.append("序列号:");
+                    sb.append(new String(tmp));
+                    sb.append("\n");
+                    pos += 20;
+                } else if (kid == 0x83) {
+                    tmp = Arrays.copyOfRange(recv, pos + 1, pos + 2);
+                    sb.append("状态:");
+                    sb.append(Utils.byte2int(tmp[0]));
+                    sb.append("\n");
+                    pos += 1;
+                }
+                pos += 1;
+            }
+            return sb.toString();
+        }
+        return null;
+    }
+
+    public boolean controlBox(int n) {
+        byte[] data = new byte[4];
+        data[0] = Utils.int2byte(0x60);
+        data[1] = Utils.int2byte(0x03);
+        data[2] = Utils.int2byte(0x01);
+        data[3] = Utils.int2byte(n);
+        byte[] recv = sendReceiveData(data, 3000);
+        if (recv != null && recv.length > 4 && recv[0] == 0x60 && recv[1] == 0x0B) {
+            return recv[4] == 1;
+        }
+        return false;
+    }
+
+    public boolean initFirmwareUpdate(File file) {
+        byte[] fileMd5 = Utils.getFileMD5(file);
+        if (fileMd5 == null) return false;
+
+        List<Byte> list = new ArrayList<>();
+        list.add(Utils.int2byte(0x60));
+        list.add(Utils.int2byte(0x07));
+
+        list.add(Utils.int2byte(fileMd5.length));
+        for (byte b : fileMd5) {
+            list.add(b);
+        }
+
+        String fileName = file.getName();
+        list.add(Utils.int2byte(fileName.length()));
+        for (int i = 0; i < fileName.length(); i++) {
+            list.add(Utils.int2byte(fileName.codePointAt(i)));
+        }
+
+        int fileSize = (int) file.length();
+        list.add(Utils.int2byte((fileSize >> 24) & 0xFF));
+        list.add(Utils.int2byte((fileSize >> 16) & 0xFF));
+        list.add(Utils.int2byte((fileSize >> 8) & 0xFF));
+        list.add(Utils.int2byte(fileSize & 0xFF));
+
+        byte[] data = new byte[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            data[i] = list.get(i);
+        }
+        byte[] recv = sendReceiveData(data, 3500);
+        if (recv != null && recv.length > 4 && recv[0] == 0x60 && recv[1] == 0x0B) {
+            return recv[4] == 1;
+        }
+        return false;
+    }
+
+    public boolean updateOneFrameFirmware(byte[] oneFrame, int offset, int length) {
+        byte[] data = new byte[length + 3];
+        data[0] = Utils.int2byte(0x60);
+        data[1] = Utils.int2byte(0x08);
+        data[2] = Utils.int2byte(length);
+        System.arraycopy(oneFrame, offset, data, 3, length);
+        byte[] recv = sendReceiveData(data, 4000);
+        if (recv != null && recv.length > 4 && recv[0] == 0x60 && recv[1] == 0x0B) {
+            return recv[4] == 1;
+        }
+        return false;
     }
 
     private boolean configPwmVpw(boolean pwm) {
@@ -241,14 +349,12 @@ public class Communication {
         list.add(Utils.int2byte(0x0F));  //过滤帧
         list.add(Utils.int2byte(pwm ? 0x41 : 0x48));
         list.add(Utils.int2byte(0x6B));
-
-
         byte[] data = new byte[list.size()];
         for (int i = 0; i < list.size(); i++) {
             data[i] = list.get(i);
-        }                                                 //60 01 08 01 05 03 00 C8 04 0B B8 05 00 37 06 00 00 0D 00 0E 02 0F 48 6B
-        byte[] recv = sendReceiveData(data, 3000);//60 01 08 01 05 03 00 C8 04 0B B8 05 00 37 06 00 00 0D 00 0E 02 0F 48 6B 13 01 14 03 15 30 00 00
-        if (recv != null && recv.length > 2 && recv[0] == 0x60 && recv[1] == 0x0B) {
+        }
+        byte[] recv = sendReceiveData(data, 3000);
+        if (recv != null && recv.length > 4 && recv[0] == 0x60 && recv[1] == 0x0B) {
             return recv[4] == 1;
         }
         return false;
@@ -271,7 +377,7 @@ public class Communication {
         list.add(Utils.int2byte(0x03));  //P1
         list.add(Utils.int2byte((P1 >> 8) & 0xFF));
         list.add(Utils.int2byte(P1 & 0xFF));
-        int P2 = 1500;
+        int P2 = 3000;
         list.add(Utils.int2byte(0x04));  //P2
         list.add(Utils.int2byte((P2 >> 8) & 0xFF));
         list.add(Utils.int2byte(P2 & 0xFF));
@@ -287,15 +393,12 @@ public class Communication {
             list.add(Utils.int2byte(0x0C));  //5波特率
             list.add(Utils.int2byte(0x33));
         }
-//        list.add(Utils.int2byte(0x07));  //P4
-//        list.add(Utils.int2byte(0x01));
-
         byte[] data = new byte[list.size()];
         for (int i = 0; i < list.size(); i++) {
             data[i] = list.get(i);
         }
         byte[] recv = sendReceiveData(data, 3000);
-        if (recv != null && recv.length > 2 && recv[0] == 0x60 && recv[1] == 0x0B) {
+        if (recv != null && recv.length > 4 && recv[0] == 0x60 && recv[1] == 0x0B) {
             return recv[4] == 1;
         }
         return false;
@@ -318,7 +421,7 @@ public class Communication {
         list.add(Utils.int2byte(0x03));  //P1
         list.add(Utils.int2byte((P1 >> 8) & 0xFF));
         list.add(Utils.int2byte(P1 & 0xFF));
-        int P2 = 1500;
+        int P2 = 1000;
         list.add(Utils.int2byte(0x04));  //P2
         list.add(Utils.int2byte((P2 >> 8) & 0xFF));
         list.add(Utils.int2byte(P2 & 0xFF));
@@ -332,15 +435,12 @@ public class Communication {
         list.add(Utils.int2byte(P4 & 0xFF));
         list.add(Utils.int2byte(0x0C));  //5波特率地址
         list.add(Utils.int2byte(0x33));
-
-//        list.add(Utils.int2byte(0x07));
-//        list.add(Utils.int2byte(0x01));
         byte[] data = new byte[list.size()];
         for (int i = 0; i < list.size(); i++) {
             data[i] = list.get(i);
         }
         byte[] recv = sendReceiveData(data, 3000);
-        if (recv != null && recv.length > 2 && recv[0] == 0x60 && recv[1] == 0x0B) {
+        if (recv != null && recv.length > 4 && recv[0] == 0x60 && recv[1] == 0x0B) {
             return recv[4] == 1;
         }
         return false;
@@ -460,7 +560,7 @@ public class Communication {
 
 
         byte[] recv = sendReceiveData(data, 3500);
-        if (recv != null && recv.length > 2 && recv[0] == 0x60 && recv[1] == 0x0B) {
+        if (recv != null && recv.length > 4 && recv[0] == 0x60 && recv[1] == 0x0B) {
             return recv[4] == 1;
         }
         return false;
@@ -478,7 +578,7 @@ public class Communication {
             data[i] = list.get(i);
         }
         byte[] recv = sendReceiveData(data, 2000);
-        if (recv != null && recv.length > 2 && recv[0] == 0x60 && recv[1] == 0x0B) {
+        if (recv != null && recv.length > 4 && recv[0] == 0x60 && recv[1] == 0x0B) {
             return recv[4] == 1;
         }
         return false;
@@ -528,7 +628,7 @@ public class Communication {
         System.arraycopy(sendData, 0, data, 3, sendData.length);
         List<byte[]> dataList = new ArrayList<>(1);
         dataList.add(data);
-        dataList = sendReceiveDataList(dataList, 3000, 20);
+        dataList = sendReceiveDataList(dataList, 5000, 20);
         if (dataList.size() == 0) return false;
         mEcuIds.clear();
         for (byte[] d : dataList) {
@@ -539,7 +639,7 @@ public class Communication {
             }
         }
         if (mEcuIds.isEmpty()) return false;
-        runKeepLink(sendData, 700);
+        runKeepLink(sendData, 600);
         return true;
     }
 

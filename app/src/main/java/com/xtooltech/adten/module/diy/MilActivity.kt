@@ -119,6 +119,7 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
                     }
                     0x4D.toByte()->{
                         value.isNotEmpty().trueLet {
+                            // 加7f还否定应答判断
                             var flagA = value?.get(2)
                             var flagB = value?.get(3)
                             if (flagB!=null) {

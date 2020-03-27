@@ -10,25 +10,28 @@ import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
+import android.os.Environment
 import android.os.Handler
 import android.provider.Settings
 import android.util.Log
 import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.lifecycleScope
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.alibaba.android.arouter.launcher.ARouter
 import com.kaopiz.kprogresshud.KProgressHUD
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
-import com.xtooltech.adten.common.ble.*
+import com.xtooltech.adten.common.ble.BleListener
 import com.xtooltech.adten.databinding.ActivityScanBinding
 import com.xtooltech.adten.util.*
 import com.xtooltech.adtenx.common.ble.*
@@ -38,7 +41,9 @@ import com.xtooltech.adtenx.plus.Utils
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
-import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 import java.util.*
 
 class ScanViewModel : ViewModel() {
@@ -70,6 +75,8 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
     var deviceAddress by ProxyPreference(BLE_ADDRESS,"")
     var rssiOn by ProxyPreference(DETECT_RSSI,true)
 
+    private val PATH = Environment.getExternalStorageDirectory().path
+
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun initView() {
@@ -88,7 +95,35 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 
         initBle()
 
+         isStoragePermissionGranted()
+
+
     }
+
+
+    private fun isStoragePermissionGranted():Boolean {
+        if (Build.VERSION.SDK_INT >= 23) {
+            val context = getApplicationContext();
+            var readPermissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
+            var writePermissionCheck = ContextCompat.checkSelfPermission(context,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            if (readPermissionCheck == PackageManager.PERMISSION_GRANTED && writePermissionCheck == PackageManager.PERMISSION_GRANTED) {
+                return true;
+            } else {
+                ActivityCompat.requestPermissions(this, arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ), 1);
+                return false;
+            }
+        } else { //permission is automatically granted on sdk<23 upon installation
+            return true;
+        }
+    }
+
+
+
+
 
 
     override fun onResume() {
@@ -203,6 +238,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
                 ObdManger.getIns().deviceAddress=address
                 stopScan()
 
+
             }
             .setNegativeButton("否") { dialog, which ->
                 Thread(Runnable { startScan() }).start()
@@ -243,6 +279,17 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
         } else if (requestCode == REQUEST_EXTERNAL_STORAGE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             }
+        }
+
+        Log.v("juno","onRequestPermissionsResult requestCode ： " + requestCode
+                + " Permission: " + permissions[0] + " was " + grantResults[0]
+                + " Permission: " + permissions[1] + " was " + grantResults[1]
+        );
+        if(grantResults[0]== PackageManager.PERMISSION_GRANTED){
+            //resume tasks needing this permission
+            var directory = File(PATH);
+            var files = directory.listFiles();
+            Log.i("juno", "After PERMISSION_GRANTED files : " + (files?.size ?: 0))
         }
     }
 
@@ -312,7 +359,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 
     override fun onFoundUuid(p0: Int) {
         hud.dismiss()
-        vm.status.value="连接状态:已找到UUID"
+        vm.status.value="连接状态:已找到UUID $p0"
     }
 
     fun showMessageFinish(message: String?) {
@@ -362,6 +409,103 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 
         }.start()
 
+    }
+
+    fun startFirmwareUpdate(v:View) {
+        var mSelectedFilePath=""
+        val array: MutableList<String> = ArrayList()
+        val homeDir = File(Environment.getExternalStorageDirectory().absolutePath + "/AD10")
+        if (homeDir.exists() && homeDir.isDirectory) {
+            val files = homeDir.listFiles()
+            if (files != null) {
+                for (file in files) {
+                    if (file.isFile) {
+                        if (file.name.toLowerCase().endsWith(".bin")) {
+                            array.add(file.name)
+                        } else if (file.name.toLowerCase().endsWith(".zip")) {
+                            array.add(file.name)
+                        }
+                    }
+                }
+            }
+        } else {
+            homeDir.mkdir()
+        }
+        if (array.isEmpty()) {
+            mSelectedFilePath = ""
+            AlertDialog.Builder(this)
+                .setTitle("固件升级")
+                .setMessage("未找到固件!\n请将固件放置于外部存储空间的AD10的文件夹下面")
+                .setPositiveButton("确定", null)
+                .show()
+        } else {
+            var items= arrayOfNulls<String>(array.size)
+            array.forEachIndexed{index, s ->  items[index]=s}
+            var finalItems=array.toTypedArray()
+            mSelectedFilePath = finalItems[0]
+            AlertDialog.Builder(this)
+                .setTitle("AD10下的固件")
+                .setSingleChoiceItems(items, 0
+                ) { dialog, which -> mSelectedFilePath = finalItems[which] }
+                .setPositiveButton("确定") { dialogInterface, i ->
+                    mSelectedFilePath = "$homeDir/$mSelectedFilePath"
+                    hud.setLabel("准备固件升级...").show()
+                        updateFirmware(mSelectedFilePath)
+                }
+                .setNegativeButton("取消", null)
+                .show()
+        }
+    }
+
+    private fun updateFirmware(mSelectedFilePath: String) {
+            Thread(Runnable {
+                val file = File(mSelectedFilePath)
+                if (ObdManger.getIns().initFirmwareUpdate(file)) {
+                    var `in`: FileInputStream? = null
+                    val buffer = ByteArray(252)
+                    val total: Long = if (file.length() % 252 == 0L) file.length() / 252 else file.length() / 252 + 1
+                    var len: Int
+                    var i: Int
+                    var count = 0
+                    var success = true
+                    try {
+                        `in` = FileInputStream(file)
+                        while (`in`.read(buffer, 0, 252).also { len = it } != -1) {
+                            val strProgress =
+                                String.format(Locale.getDefault(), "%.2f%%", count * 1.0 / total)
+                            runOnUiThread { hud.setLabel(strProgress) }
+                            success = ObdManger.getIns().updateOneFrameFirmware(buffer, 0, len)
+                            if (!success) break
+                            count++
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        success = false
+                    } finally {
+                        try {
+                            `in`?.close()
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                        }
+                    }
+                    val finalSuccess = success
+                    runOnUiThread {
+                        hud.dismiss()
+                        AlertDialog.Builder(this@ScanActivity)
+                            .setMessage(if (finalSuccess) "更新固件成功" else "更新固件失败")
+                            .setPositiveButton("确定", null)
+                            .show()
+                    }
+                } else {
+                    runOnUiThread {
+                        hud.dismiss()
+                        AlertDialog.Builder(this@ScanActivity)
+                            .setMessage("初始化固件升级失败")
+                            .setPositiveButton("确定", null)
+                            .show()
+                    }
+                }
+            }).start()
     }
 
 

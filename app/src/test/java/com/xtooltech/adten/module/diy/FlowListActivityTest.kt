@@ -1,15 +1,13 @@
 package com.xtooltech.adten.module.diy
-import com.xtooltech.adten.util.*
+import androidx.customview.widget.ExploreByTouchHelper
+import com.xtooltech.adten.util.calcx
 import com.xtooltech.adtenx.common.ble.ObdItem
-import com.xtooltech.adtenx.common.obd.DataArray
-import com.xtooltech.adtenx.common.obd.DataStream
+import com.xtooltech.adtenx.plus.Utils
 import com.xtooltech.adtenx.util.hexString
 import com.xtooltech.adtenx.util.toHex
-import com.xtooltech.base.util.printMessage
 import org.junit.Assert
 import org.junit.Test
 import kotlin.experimental.and
-import kotlin.reflect.typeOf
 
 internal class FlowListActivityTestt{
 
@@ -158,6 +156,27 @@ internal class FlowListActivityTestt{
 
 
     }
+
+
+    @Test
+    fun getISOCrc(){
+
+        //68 6A F1 01 00 C4
+
+        var data= byteArrayOf(
+           0x68,0x6a,0xf1.toByte(), 0x01,0x00
+        )
+        var sum: Byte = 0.toByte()
+        for (element in data) {
+            sum= sum.plus(element).toByte()
+        }
+        println(hexString(sum))
+
+        Assert.assertEquals(sum,0xc4.toByte())
+
+    }
+
+
 
 
 

@@ -12,6 +12,7 @@ import com.xtooltech.adtenx.plus.BleConnection
 import com.xtooltech.adtenx.plus.Communication
 import com.xtooltech.adtenx.plus.Utils
 import com.xtooltech.adtenx.util.*
+import java.io.File
 import java.util.*
 import kotlin.experimental.and
 
@@ -39,6 +40,7 @@ val nameMap = mapOf(
 class ObdManger : BleCallback {
 
 
+    var deviceName: String=""
     private var communication: Communication? = null
     private lateinit var bleConnection: BleConnection
     var deviceAddress = ""
@@ -63,6 +65,7 @@ class ObdManger : BleCallback {
                 }
 
                 override fun onConnected() {
+                    deviceName="AD10"
                     cb.onConnected()
                 }
 
@@ -172,6 +175,11 @@ class ObdManger : BleCallback {
     }
 
 
+
+
+
+
+
     fun readVin(): String {
         var value = ""
         val command = comboCommand(byteArrayOf(0x09, 0x02))
@@ -183,8 +191,9 @@ class ObdManger : BleCallback {
                     vinHexList.addAll(it2)
                 }
             }
-            vinHexList.isNotEmpty().trueLet {
-                vinHexList.forEach {
+            var dropData = vinHexList.drop(4)
+            dropData.isNotEmpty().trueLet {
+                dropData.forEach {
                     value += String.format("%c", it)
                 }
             }
@@ -355,7 +364,7 @@ class ObdManger : BleCallback {
 
 
     private fun scanSystem(): Boolean {
-        var ret: Boolean = enterCan() ?: false
+        var ret: Boolean = enterCan()
         if (!ret) {
             currProto = OBD_ISO
             Log.i("Communication", "try iso enter....")
@@ -421,7 +430,7 @@ class ObdManger : BleCallback {
             OBD_STD_CAN -> return 4
             OBD_EXT_CAN -> return 6
             OBD_ISO -> return 3
-            OBD_KWP -> return 4
+            OBD_KWP -> return 3
             OBD_PWM -> return 3
             OBD_VPW -> return 3
             else -> return 0
@@ -445,11 +454,20 @@ class ObdManger : BleCallback {
                 value = vinHexList.first().toInt()
             }
         } else {
-            val data = command?.let { sendSingleReceiveSingleCommand(it, 3000) }
-            data?.apply {//41 6B 10 47 01 93 12 33 00 00 0C
-                var biz = parse2BizSingle(data)//47 01 93 12 33 00 00
-                value = biz[2].toInt()
+            val data = command?.let { sendSingleReceiveMultiCommand(it, 3000,10) }
+
+            var dataList= mutableListOf<Byte>()
+            data?.isNotEmpty()?.trueLet {
+                data.forEach{
+
+                    Log.i("xtool", it?.toHex())
+                    it?.apply {
+                        dataList.addAll(parse2BizSingle(this))
+                    }
+                }
+                value=dataList.first().toInt()
             }
+
         }
         return value
     }
@@ -754,6 +772,14 @@ class ObdManger : BleCallback {
         }
 
         return freezeKeyList
+    }
+
+    fun initFirmwareUpdate(file: File): Boolean {
+        return communication?.initFirmwareUpdate(file) ?:false
+    }
+
+    fun updateOneFrameFirmware(buffer: ByteArray, i: Int, len: Int): Boolean {
+        return communication?.updateOneFrameFirmware(buffer,i,len) ?:false
     }
 
 

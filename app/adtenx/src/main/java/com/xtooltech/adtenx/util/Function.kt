@@ -392,6 +392,7 @@ fun parse2BizSingle(obdData:ByteArray):List<Byte>{
     var bizData= arrayListOf<Byte>()
 
     when(ObdManger.getIns().currProto){
+        // TODO: 区分 肯定 应答和 否定应答
         OBD_STD_CAN ->  return obdData.slice(4 .. obdData[3]+3)
         OBD_EXT_CAN -> return obdData.slice(4 .. obdData[3]+3)
         OBD_ISO -> return obdData.slice(3 .. obdData.size-2)

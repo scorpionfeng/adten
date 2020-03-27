@@ -5,6 +5,8 @@ import android.content.pm.PackageManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -16,12 +18,8 @@ public class Utils {
     public static final String DEFAULT_SCAN_RSSI = "-50";              //默认信号强度阈值-50db
 
     public static boolean isValidMac(final String str) {
-        if (str == null) {
-            return false;
-        }
-        if (str.length() != 12) {
-            return false;
-        }
+        if (str == null) return false;
+        if (str.length() != 12) return false;
         boolean ret = true;
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
@@ -133,9 +131,7 @@ public class Utils {
                 crc ^= 0x0e;
                 crc = (byte) ((crc << 1) | 1);
             }
-            else {
-                crc = (byte) (crc << 1);
-            }
+            else crc = (byte) (crc << 1);
             val = (byte) (val << 1);
         }
         return crc;
@@ -219,5 +215,27 @@ public class Utils {
                 inputManager.showSoftInput(editText, 0);
             }
         }
+    }
+
+    public static byte[] getFileMD5(File file) {
+        if (!file.isFile()) {
+            return null;
+        }
+        MessageDigest digest = null;
+        FileInputStream in = null;
+        byte[] buffer = new byte[1024];
+        int len;
+        try {
+            digest = MessageDigest.getInstance("MD5");
+            in = new FileInputStream(file);
+            while ((len = in.read(buffer, 0, 1024)) != -1) {
+                digest.update(buffer, 0, len);
+            }
+            in.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return digest.digest();
     }
 }
