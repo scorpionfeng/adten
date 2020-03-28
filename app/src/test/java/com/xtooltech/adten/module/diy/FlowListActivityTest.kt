@@ -1,8 +1,6 @@
 package com.xtooltech.adten.module.diy
-import androidx.customview.widget.ExploreByTouchHelper
 import com.xtooltech.adten.util.calcx
 import com.xtooltech.adtenx.common.ble.ObdItem
-import com.xtooltech.adtenx.plus.Utils
 import com.xtooltech.adtenx.util.hexString
 import com.xtooltech.adtenx.util.toHex
 import org.junit.Assert
@@ -173,6 +171,20 @@ internal class FlowListActivityTestt{
         println(hexString(sum))
 
         Assert.assertEquals(sum,0xc4.toByte())
+
+    }
+
+    @Test
+    fun parseVin(){
+        var data= byteArrayOf(
+            0x4C,0x53,0x47,0x55,0x44,0x38,0x32,0x43,0x37,0x36,0x45,0x30,0x32,0x36,0x37,0x30,0x35
+        )
+        var buffer=StringBuffer()
+        var format = String.format("%s", data)
+        println(format)
+        data.forEach { buffer.append(String.format("%c",it)) }
+
+        println(buffer.toString())
 
     }
 
@@ -397,6 +409,43 @@ internal class FlowListActivityTestt{
         println(numbers2.slice(0..4 step 2))
         println(numbers2.slice(setOf(3, 5, 0)))
     }
+
+
+    @Test
+    fun parsePosition(){
+        var a=0x01.toByte()
+        var b=0x22.toByte()
+
+        var c=  (a.toInt() shl 8).or(b.toInt())
+        println(Integer.toHexString(c))
+    }
+
+    @Test
+    fun parsetPCBU(){
+        var tempCodeStr=""
+        var codeLists= mutableListOf<String>()
+      var data= listOf<Byte>(
+          0x10,0x24,0x10,0x25,0x10,0x26,0x10,0x27
+      )
+        for (i in data.indices step 2){
+            var codeHex= (data[i].toInt() shl 8).or(data[i+1].toInt())
+            if (codeHex < 0x4000) { // P
+                tempCodeStr = String.format("P%04X", codeHex)
+            } else if (codeHex < 0x8000) { // C
+                tempCodeStr = String.format("C%04X", codeHex - 0x4000)
+            } else if (codeHex < 0xC000) { // B
+                tempCodeStr = String.format("B%04X", codeHex - 0x8000)
+            } else { // U
+                tempCodeStr = String.format("U%04X", codeHex - 0xC000)
+            }
+            codeLists.add(tempCodeStr)
+        }
+
+        println(codeLists.toString())
+
+
+    }
+
 
     @Test
     fun testParseTroble(){

@@ -13,6 +13,7 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.AssetManager
 import android.location.LocationManager
 import android.os.Build
 import android.os.Environment
@@ -43,6 +44,7 @@ import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
 import java.util.*
 
@@ -54,7 +56,6 @@ class ScanViewModel : ViewModel() {
     val status by lazy {
         MutableLiveData<String>()
     }
-
 
 }
 
@@ -164,11 +165,13 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
         (Build.VERSION.SDK_INT<21).trueLet {
             mScanCallback = LeScanCallback { device, rssi, scanRecord ->
                     val name = device.name
-                    if (name != null && name == "AD10" || scanRecord[5] == 0x10.toByte() && scanRecord[6] == 0x01.toByte()
-                    ) {
+                var destDevices="ED:67:17:22:D2:27"
+                    if (name != null && name == "AD10" || scanRecord[5] == 0x10.toByte() && scanRecord[6] == 0x01.toByte()&&destDevices==device.address ) {
                         val mac = device.address
+
+
                         runOnUiThread {
-                            if (rssiOn ) {
+                            if (rssiOn  && device.address=="ED:67:17:22:DD:F2") {
                                 stopScan()
                                 confirmDevice(name,mac)
                             }
@@ -190,8 +193,9 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
                         if (name != null && name == "AD10" || scanRecord[5] == 0x10.toByte() && scanRecord[6] == 0x01.toByte()
                         ) {
                             val mac = result.device.address
+                            Log.i("xtool","mac address= "+mac)
                             runOnUiThread {
-                                if (rssiOn ) {
+                                if (rssiOn && result.device.address=="ED:67:17:22:DD:F2" ) {
                                     stopScan()
                                     confirmDevice(name,mac)
                                 }
@@ -235,6 +239,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
             .setPositiveButton("是") { dialog, which ->
                 vm.deviceName.value=name
                 deviceAddress=address
+                //ED:67:17:22:DD:F2-> 白色
                 ObdManger.getIns().deviceAddress=address
                 stopScan()
 
@@ -332,6 +337,10 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 
     override fun onBleError(content: String) {
         printMessage("ble error= $content")
+        hud.isShowing.trueLet {
+            hud.setLabel("没有地址")
+            hud.dismiss()
+        }
     }
 
     override fun onCharacteristicChanged(p0: ByteArray?) {
@@ -412,6 +421,55 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
     }
 
     fun startFirmwareUpdate(v:View) {
+
+       var copyed= copyApkFromAssets(this,"ble_obd.bin",Environment.getExternalStorageDirectory().absolutePath + "/AD10")
+        copyed.falseLet { return }
+
+        var mSelectedFilePath=""
+        val array: MutableList<String> = ArrayList()
+        val homeDir = File(Environment.getExternalStorageDirectory().absolutePath + "/AD10")
+        if (homeDir.exists() && homeDir.isDirectory) {
+            val files = homeDir.listFiles()
+            if (files != null) {
+                for (file in files) {
+                    if (file.isFile) {
+                        if (file.name.toLowerCase().endsWith(".bin")) {
+                            array.add(file.name)
+                        } else if (file.name.toLowerCase().endsWith(".zip")) {
+                            array.add(file.name)
+                        }
+                    }
+                }
+            }
+        } else {
+            homeDir.mkdir()
+        }
+        if (array.isEmpty()) {
+            mSelectedFilePath = ""
+            AlertDialog.Builder(this)
+                .setTitle("固件升级")
+                .setMessage("未找到固件!\n请将固件放置于外部存储空间的AD10的文件夹下面")
+                .setPositiveButton("确定", null)
+                .show()
+        } else {
+            var items= arrayOfNulls<String>(array.size)
+            array.forEachIndexed{index, s ->  items[index]=s}
+            var finalItems=array.toTypedArray()
+            mSelectedFilePath = finalItems[0]
+            AlertDialog.Builder(this)
+                .setTitle("AD10下的固件")
+                .setSingleChoiceItems(items, 0
+                ) { dialog, which -> mSelectedFilePath = finalItems[which] }
+                .setPositiveButton("确定") { dialogInterface, i ->
+                    mSelectedFilePath = "$homeDir/$mSelectedFilePath"
+                    hud.setLabel("准备固件升级...").show()
+                        updateFirmware(mSelectedFilePath)
+                }
+                .setNegativeButton("取消", null)
+                .show()
+        }
+    }
+    fun startFirmwareUpdate_sd(v:View) {
         var mSelectedFilePath=""
         val array: MutableList<String> = ArrayList()
         val homeDir = File(Environment.getExternalStorageDirectory().absolutePath + "/AD10")
@@ -457,6 +515,30 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
         }
     }
 
+
+     fun copyApkFromAssets(context:Context, fileName:String, path:String):Boolean {
+        var copyIsFinish = false;
+        try {
+            var inputStream = context.resources.assets.open(fileName);
+            var file = File(path+File.separator+fileName);
+            file.createNewFile()
+            var fos = FileOutputStream(file);
+            var temp = ByteArray(1024)
+            var i = 0;
+            while ((inputStream.read(temp)) !=  -1) {
+                fos.write(temp);
+            }
+            fos.close();
+            inputStream.close();
+            copyIsFinish = true;
+        } catch (e:IOException) {
+            e.printStackTrace();
+        }
+        return copyIsFinish;
+    }
+
+
+
     private fun updateFirmware(mSelectedFilePath: String) {
             Thread(Runnable {
                 val file = File(mSelectedFilePath)
@@ -487,6 +569,8 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
                         } catch (e: IOException) {
                             e.printStackTrace()
                         }
+
+                        file.delete()
                     }
                     val finalSuccess = success
                     runOnUiThread {
@@ -507,7 +591,4 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
                 }
             }).start()
     }
-
-
-
 }

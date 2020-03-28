@@ -342,7 +342,7 @@ public class BleConnection implements Communication.CommunicationInterface {
     }
 
     private void onMsgWrite(String data) {
-        if (mBluetoothGatt != null) {
+        if (mBluetoothGatt != null && null!=mWriteCharacteristic) {
             byte[] value = Base64.decode(data, Base64.DEFAULT);
             Log.d(TAG, "发送:" + Utils.debugByteData(value));
             mWriteCharacteristic.setValue(value);

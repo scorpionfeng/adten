@@ -4,7 +4,8 @@ import android.content.Context
 import android.util.Log
 import calculation
 import com.xtooltech.adten.common.ble.BleListener
-import com.xtooltech.adten.util.*
+import com.xtooltech.adten.util.ds
+import com.xtooltech.adten.util.trueLet
 import com.xtooltech.adtenx.common.obd.DataArray
 import com.xtooltech.adtenx.common.obd.DataStream
 import com.xtooltech.adtenx.plus.BleCallback
@@ -186,12 +187,15 @@ class ObdManger : BleCallback {
         var vinHexList: MutableList<Byte> = mutableListOf()
         if (currProto == OBD_STD_CAN) {
             val data = command?.let { sendSingleReceiveMultiCommand(it, 3000, 10) }
+
             data?.forEach {
+                Log.i("Communication","vindata ="+it?.toHex())
                 it?.slice(4 until it.size)?.let { it2 ->
                     vinHexList.addAll(it2)
                 }
             }
             var dropData = vinHexList.drop(4)
+
             dropData.isNotEmpty().trueLet {
                 dropData.forEach {
                     value += String.format("%c", it)
@@ -207,6 +211,7 @@ class ObdManger : BleCallback {
 
         }
 
+        Log.i("Communication","vindata ="+ value )
         return value
     }
 
@@ -438,22 +443,50 @@ class ObdManger : BleCallback {
         }
     }
 
-    fun readTrobleCodeAmount(cmd: Byte): Int {
+    fun readTrobleCodeAmount(cmd: Byte): Pair<Int,List<String>> {
         var value = 0
+        var amount=0
+
+        var codeLists= mutableListOf<String>()
         val command = comboCommand(byteArrayOf(cmd))
         var vinHexList: MutableList<Byte> = mutableListOf()
         if (currProto == OBD_STD_CAN) {
             val data = command?.let { sendSingleReceiveMultiCommand(it, 3000, 10) }
-            //08 07 E8 06 43 02 39 39 33 34 00
             data?.forEach {
-                it?.slice(4 until it.size)?.let { it2 ->
-                    vinHexList.addAll(it2)
+                it?.apply {
+                    var sureAnsIndex = it.indexOf(cmd.plus(0x40.toByte()).toByte())
+                    if (sureAnsIndex > -1) {
+                        amount = it[sureAnsIndex + 1].toInt()
+                        var elements = it.slice((if (sureAnsIndex > 0) sureAnsIndex + 2 else 4) until it.size)
+                        elements = elements.filter { item -> (item != 0xaa.toByte()) and (item != 0x00.toByte()) }
+                        vinHexList.addAll(elements)
+                    } else {
+                        var elements = it.slice(4 until it.size)
+                        elements = elements.filter { item -> (item != 0xaa.toByte()) and (item != 0x00.toByte()) }
+                        vinHexList.addAll(elements)
+                    }
                 }
             }
             vinHexList.isNotEmpty().trueLet {
-                value = vinHexList.first().toInt()
+                var tempCodeStr=""
+                for (i in vinHexList.indices step 2){
+                    var codeHex=(vinHexList[i].toInt() shl 8).or(vinHexList[i+1].toInt())
+                    if (codeHex < 0x4000) { // P
+                        tempCodeStr = String.format("P%04X", codeHex)
+                    } else if (codeHex < 0x8000) { // C
+                        tempCodeStr = String.format("C%04X", codeHex - 0x4000)
+                    } else if (codeHex < 0xC000) { // B
+                        tempCodeStr = String.format("B%04X", codeHex - 0x8000)
+                    } else { // U
+                        tempCodeStr = String.format("U%04X", codeHex - 0xC000)
+                    }
+                    codeLists.add(tempCodeStr)
+                }
             }
+            value=amount
+
         } else {
+
             val data = command?.let { sendSingleReceiveMultiCommand(it, 3000,10) }
 
             var dataList= mutableListOf<Byte>()
@@ -469,7 +502,7 @@ class ObdManger : BleCallback {
             }
 
         }
-        return value
+        return Pair(value,codeLists.toList())
     }
 
     fun clearCode(): Boolean {

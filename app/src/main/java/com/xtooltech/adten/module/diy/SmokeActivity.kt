@@ -81,8 +81,8 @@ class SmokeActivity : BaseVMActivity<ActivityFlowSmokeBinding, SmokeViewModel>()
         Thread {
 
             val amount = ObdManger.getIns().readTrobleCodeAmount(item.kind)
-                item.content = amount.toString()
-                printMessage("kind=${item.kind}>" + amount)
+                item.content = amount.first.toString()
+                printMessage("kind=${item.kind}>" + amount.first+"codes= "+amount.second)
 
                 handler.post {
                     adapter.notifyDataSetChanged()
@@ -100,8 +100,8 @@ class SmokeActivity : BaseVMActivity<ActivityFlowSmokeBinding, SmokeViewModel>()
 
                 datas.forEach {
                     val value = ObdManger.getIns().readTrobleCodeAmount(it.kind)
-                    printMessage("kind= ${it.kind}>" + value)
-                    it.content = value.toString()
+                    printMessage("kind= ${it.kind}>" + value.first)
+                    it.content = value.first.toString()
                 }
 
                 runOnUiThread {
