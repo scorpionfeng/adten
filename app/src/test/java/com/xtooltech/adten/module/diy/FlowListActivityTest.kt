@@ -1,6 +1,7 @@
 package com.xtooltech.adten.module.diy
 import com.xtooltech.adten.util.calcx
 import com.xtooltech.adtenx.common.ble.ObdItem
+import com.xtooltech.adtenx.common.destructu.DestructCanStd
 import com.xtooltech.adtenx.util.hexString
 import com.xtooltech.adtenx.util.toHex
 import org.junit.Assert
@@ -8,6 +9,9 @@ import org.junit.Test
 import kotlin.experimental.and
 
 internal class FlowListActivityTestt{
+
+
+
 
     @Test
     fun test(){
@@ -270,6 +274,19 @@ internal class FlowListActivityTestt{
     }
 
 
+
+    @Test
+    fun hex2Int(){
+        var data= arrayOf(
+            3, 4, 5, 6, 7, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 28, 31, 33, 46, 47, 48, 49, 50, 51, 60, 65, 66, 67, 68, 69, 70, 71, 73, 74, 76
+        )
+
+        data.forEach { print("0x"+Integer.toHexString(it)+",") }
+        println("-0---"+data.size)
+
+    }
+
+
     @Test
     fun testParseCan(){
            /** 08 07 E8 06 41 00 BE 1F A8 13 00  */
@@ -297,6 +314,35 @@ internal class FlowListActivityTestt{
         Assert.assertEquals(flag,0x01.toByte())
 
     }
+
+
+    @Test
+    fun parseVinFull(){
+
+        var destructCan=DestructCanStd()
+
+        var data= listOf<ByteArray>(
+            byteArrayOf(0x08,0x07,0xE8.toByte(),0x10,0x14,0x49,0x02,0x01,0x4C,0x44,0x43),
+            byteArrayOf(0x08,0x07,0xE8.toByte(),0x21,0x31,0x32,0x33,0x34,0x35,0x36,0x37),
+            byteArrayOf(0x08,0x07,0xE8.toByte(),0x22,0x38,0x39,0x30,0x31,0x32,0x33,0x34)
+        )
+
+        var parseVin = destructCan.parseVin(data)
+        println(parseVin)
+
+
+        var data2= listOf<ByteArray>(
+            byteArrayOf(0x08,0x07,0xE8.toByte(),0x10,0x14,0x40,0x02,0x01,0x4C,0x44,0x43),
+            byteArrayOf(0x08,0x07,0xE8.toByte(),0x21,0x31,0x32,0x33,0x34,0x35,0x36,0x37),
+            byteArrayOf(0x08,0x07,0xE8.toByte(),0x22,0x38,0x39,0x30,0x31,0x32,0x33,0x34)
+        )
+
+        var parseVin2 = destructCan.parseVin(data2)
+        println(parseVin2)
+
+
+    }
+
 
 
     /**
@@ -445,6 +491,8 @@ internal class FlowListActivityTestt{
 
 
     }
+
+
 
 
     @Test

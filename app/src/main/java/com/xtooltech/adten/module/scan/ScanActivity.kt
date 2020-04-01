@@ -135,15 +135,11 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
     }
 
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun initBle() {
-        takeIf {  Build.VERSION.SDK_INT>=23 }.apply {
+        takeIf {  Build.VERSION.SDK_INT>=Build.VERSION_CODES.M }?.apply {
             if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 enableLocationPermission = false
-                requestPermissions(
-                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
-                    REQUEST_COARSE_LOCATION
-                )
+                requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), REQUEST_COARSE_LOCATION)
             }
             //判断位置是否开启
             val locationManager =getSystemService(Context.LOCATION_SERVICE) as LocationManager

@@ -1,7 +1,9 @@
 package com.xtooltech.adten
 
 import android.app.Application
+import android.view.WindowManager
 import com.alibaba.android.arouter.launcher.ARouter
+import com.xtooltech.adtenx.BuildConfig
 import kotlin.properties.Delegates
 
 class App  :Application(){
@@ -10,6 +12,11 @@ class App  :Application(){
 
     companion object{
         var instance:App by Delegates.notNull()
+    }
+
+     var wmParams=WindowManager.LayoutParams();
+    fun  getMywmParams(): WindowManager.LayoutParams{
+        return wmParams;
     }
 
 
@@ -22,6 +29,10 @@ class App  :Application(){
             ARouter.openDebug()
             ARouter.openDebug()
         }
+
+
+
+
     }
 
 }

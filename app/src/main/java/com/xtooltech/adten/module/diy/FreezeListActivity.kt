@@ -53,14 +53,10 @@ class FreezeListActivity : BaseVMActivity<ActivityFreezeListBinding, FreezeListV
         Thread {
             var freezeList = ObdManger.getIns().queryFreezeList()
 
-            freezeList.isNotEmpty().trueLet {
-                freezeList.forEach {
-                    var element = ds[it.toObdIndex()]
-                    element?.apply {
-                        vm.datas.add(ObdItem(it.toObdPid(), element.first, false, "", element.second, it.toObdIndex()))
-                    }
-                }
+            freezeList?.apply {
+                vm.datas.addAll(freezeList)
             }
+
 
             handler.post {
                 adapter.notifyDataSetChanged()

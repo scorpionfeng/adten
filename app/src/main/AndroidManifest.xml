@@ -10,6 +10,8 @@
         android:name="android.hardware.bluetooth_le"
         android:required="true" />
 
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -48,6 +50,13 @@
         <activity android:name=".module.splash.SplashActivity">
 
         </activity>
+
+        <service android:name="com.fatangare.logcatviewer.service.LogcatViewerService"
+            android:label="LogcatLoggerService"
+            tools:ignore="WrongManifestParent"></service>
+        <service android:name="com.fatangare.logcatviewer.service.LogcatViewerFloatingView"
+            android:label="LogcatLoggerFloatingView"
+            tools:ignore="WrongManifestParent"> </service>
     </application>
 
 </manifest>

@@ -57,15 +57,7 @@ fun IsRange(raw:Byte,a1:Byte,a2:Byte):Boolean{
 }
 
 fun dataFlow4KeyList(pidData: List<Short>,sid:Byte): List<Short>{
-//[3, 4, 5, 6, 7, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 28, 31, 33, 46, 47, 48, 49, 50, 51, 60, 65, 66, 67, 68, 69, 70, 71, 73, 74, 76]
     var vsTids:MutableList<Short> = mutableListOf()
-    var binFrame: ByteArray= byteArrayOf()
-//        for (k in binPids.size - 1 downTo 0) {
-//            if (SID === 0x02) binFrame =
-//                SendRecvByte(DEFAULT, 3, 0x02, binPids.get(k), 0x00) else binFrame =
-//                SendRecvByte(DEFAULT, 2, 0x01, binPids.get(k))
-//            if (binFrame.IsEmpty() || binFrame.get(0) !== 0x40 + SID) binPids.RemoveAt(k)
-//        }
     var O2S_PID: Byte = 0
     for (j in 0 until pidData.size) {
         val pid: Byte = pidData.get(j).toByte()
@@ -83,20 +75,8 @@ fun dataFlow4KeyList(pidData: List<Short>,sid:Byte): List<Short>{
         if (IsRange(pid, 0x01, 0x01)) { //01
             vsTids.add(0x0110)
             vsTids.add(0x0111)
-            /*			BYTE k;
-        for(k=0x20;k<=0x22;k++)vsTids.Add(0x0100|k);
-        for(k=0x24;k<=0x26;k++)vsTids.Add(0x0100|k);
-        for(k=0x30;k<=0x37;k++)vsTids.Add(0x0100|k);
-        for(k=0x40;k<=0x47;k++)vsTids.Add(0x0100|k);
-*/
         }
         if (IsRange(pid, 0x41, 0x41)) { //41
-/*			BYTE k;
-			for(k=0x20;k<=0x22;k++)vsTids.Add(0x4100|k);
-			for(k=0x24;k<=0x26;k++)vsTids.Add(0x4100|k);
-			for(k=0x30;k<=0x37;k++)vsTids.Add(0x4100|k);
-			for(k=0x40;k<=0x47;k++)vsTids.Add(0x4100|k);
-*/
         } else if (IsRange(pid, 0x03, 0x03)) { //03
             vsTids.add((pid.toInt() shl 8 or 0x00).toShort())
             vsTids.add((pid.toInt() shl 8 or 0x10).toShort())
@@ -478,24 +458,27 @@ fun mergePid(
 ) {
     data.isNotEmpty().trueLet {
         for (index in data.indices) {
-            var inItem = data[index]
-            if (inItem?.get(0 + offset) == 0x41.toByte()) {
-                if (inItem.size > 2) {
-                    maskBuffer[index * 4 + 0] = inItem.get(2 + offset).toShort()
-                }
-                if (inItem.size > 3) {
-                    maskBuffer[index * 4 + 1] = inItem.get(3 + offset).toShort()
-                }
-                if (inItem.size > 4) {
-                    maskBuffer[index * 4 + 2] = inItem.get(4 + offset).toShort()
-                }
-                if (inItem.size > 5) {
-                    maskBuffer[index * 4 + 3] = (inItem.get(5 + offset).toShort() and 0xFE)
-                    if (inItem[5 + offset].toShort() and 0x01 == 0.toShort()) break
+            val inItem = data[index]
+            inItem?.apply {
+                takeIf { this.size>5+offset }?.apply {
+                    if (this[0 + offset] == 0x41.toByte() && this.size>5) {
+                        if (this.size > 2) {
+                            maskBuffer[index * 4 + 0] = this[2 + offset].toShort()
+                        }
+                        if (this.size > 3) {
+                            maskBuffer[index * 4 + 1] = this[3 + offset].toShort()
+                        }
+                        if (this.size > 4) {
+                            maskBuffer[index * 4 + 2] = this[4 + offset].toShort()
+                        }
+                        if (this.size > 5) {
+                            maskBuffer[index * 4 + 3] = (this[5 + offset].toShort() and 0xFE)
+                            if (this[5 + offset].toShort() and 0x01 == 0.toShort()) return
+                        }
+                    }
                 }
             }
         }
-
     }
 }
 

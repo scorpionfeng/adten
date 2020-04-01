@@ -6,6 +6,7 @@ import calculation
 import com.xtooltech.adten.common.ble.BleListener
 import com.xtooltech.adten.util.ds
 import com.xtooltech.adten.util.trueLet
+import com.xtooltech.adtenx.common.destructu.*
 import com.xtooltech.adtenx.common.obd.DataArray
 import com.xtooltech.adtenx.common.obd.DataStream
 import com.xtooltech.adtenx.plus.BleCallback
@@ -14,6 +15,7 @@ import com.xtooltech.adtenx.plus.Communication
 import com.xtooltech.adtenx.plus.Utils
 import com.xtooltech.adtenx.util.*
 import java.io.File
+import java.lang.Exception
 import java.util.*
 import kotlin.experimental.and
 
@@ -46,8 +48,7 @@ class ObdManger : BleCallback {
     private lateinit var bleConnection: BleConnection
     var deviceAddress = ""
 
-    var diagInitSuccess = false
-    var linkConfig = false
+    var destructor:DestructBiz=DestructUnknow()
 
     var currProto = OBD_STD_CAN
     fun connect(context: Context, cb: BleListener) {
@@ -88,29 +89,7 @@ class ObdManger : BleCallback {
 
     }
 
-    fun enter(): Boolean? {
 
-        return when (currProto) {
-            OBD_STD_CAN -> communication?.enterCanStd(500000)
-            OBD_EXT_CAN -> communication?.enterCanExt(500000)
-            OBD_ISO -> communication?.enterIso()
-            OBD_KWP -> communication?.enterKwp()
-            OBD_PWM -> communication?.enterPwmVpw(true)
-            OBD_VPW -> communication?.enterPwmVpw(false)
-            else -> false
-        }
-
-    }
-
-
-    fun sendMultiCommandReceSingle(
-        data: List<ByteArray>,
-        timeout: Long
-    ): ByteArray? {
-        return communication?.sendReceiveCommand(data, timeout, 1)?.let {
-            if (it.size == 1) it[0] else null
-        }
-    }
 
     fun sendSingleReceiveSingleCommand(
         data: ByteArray?,
@@ -143,20 +122,6 @@ class ObdManger : BleCallback {
     }
 
 
-    fun readSpeedByCommon(): String {
-        var speedValue = ""
-        val speedCommand = comboCommand(byteArrayOf(0x01, 0x0D))
-        val data = speedCommand?.let { sendSingleReceiveSingleCommand(it, 3000) }
-        if (data != null) {
-            val dataArray = DataArray()
-            data.filterIndexed { index, _ -> index > 2 }.forEach {
-                dataArray.add(it.toShort())
-            }
-
-            speedValue = DataStream.commonCalcExpress("0x00,0x00,0x00,0x00,0x00,0x0D", dataArray)
-        }
-        return speedValue
-    }
 
 
     fun readCommon(cmd: Byte): String {
@@ -176,67 +141,26 @@ class ObdManger : BleCallback {
     }
 
 
-
-
-
-
-
     fun readVin(): String {
         var value = ""
         val command = comboCommand(byteArrayOf(0x09, 0x02))
-        var vinHexList: MutableList<Byte> = mutableListOf()
         if (currProto == OBD_STD_CAN) {
             val data = command?.let { sendSingleReceiveMultiCommand(it, 3000, 10) }
-
-            data?.forEach {
-                Log.i("Communication","vindata ="+it?.toHex())
-                it?.slice(4 until it.size)?.let { it2 ->
-                    vinHexList.addAll(it2)
-                }
-            }
-            var dropData = vinHexList.drop(4)
-
-            dropData.isNotEmpty().trueLet {
-                dropData.forEach {
-                    value += String.format("%c", it)
-                }
+            data?.apply {
+                value=destructor.parseVin(data)
             }
 
         } else {
             val data = command?.let { sendSingleReceiveSingleCommand(it, 3000) }
             data?.apply {
-                var bizData = parse2BizSingle(data)             //41 6B 10 49 02 01 FF FF FF FF 55
-                bizData.forEach { value += String.format("%c", it) }           //49 02 01 FF FF FF FF
+                var bizData = parse2BizSingle(data)
+                bizData.forEach { value += String.format("%c", it) }
             }
-
         }
-
-        Log.i("Communication","vindata ="+ value )
         return value
     }
 
 
-    fun comboCanCommandStream(stdCan: Boolean, data: ByteArray, ecuid: Byte = -33): ByteArray? {
-        val length = if (data.size > 7) 7 else data.size
-        val ret: ByteArray
-        if (stdCan) {
-            ret = ByteArray(11)
-            ret[0] = 8
-            ret[1] = 7
-            ret[2] = ecuid
-            System.arraycopy(data, 0, ret, 3, length)
-        } else {
-            ret = ByteArray(13)
-            ret[0] = -120
-            ret[1] = 24
-            ret[2] = -37
-            ret[3] = 51 // 替换成 ecuid
-            ret[4] = -15
-            ret[5] = Utils.int2byte(length)
-            System.arraycopy(data, 0, ret, 6, length)
-        }
-        return ret
-    }
 
 
     fun readCommonRaw(cmd: Byte): List<Byte> {
@@ -250,53 +174,6 @@ class ObdManger : BleCallback {
     }
 
 
-    fun readTemperByCommon(): String {
-        var temperValue = ""
-        val temperCommand = comboCommand(byteArrayOf(0x01, 0x05))
-        val data = temperCommand?.let { sendSingleReceiveSingleCommand(it, 3000) }
-        if (data != null) {
-            val dataArray = DataArray()
-            data.filterIndexed { index, _ -> index > 2 }.forEach {
-                dataArray.add(it.toShort())
-            }
-
-            temperValue = DataStream.commonCalcExpress("0x00,0x00,0x00,0x00,0x00,0x05", dataArray)
-        }
-        return temperValue
-    }
-
-
-    fun readSpeed(): String {
-        var speedValue = ""
-        val speedCommand = comboCommand(byteArrayOf(0x01, 0x0D))
-        val data = speedCommand?.let { sendSingleReceiveSingleCommand(it, 3000) }
-        if (data != null) {
-            if (currProto == OBD_STD_CAN && data.size >= 7 && data[4] == 0x41.toByte() && data[5] == 0x0D.toByte()) {
-                speedValue = Utils.byte2int(data.get(6)).toString()
-            } else if (currProto == OBD_EXT_CAN && data.size >= 9 && data.get(6) == 0x41.toByte() && data.get(7) == 0x0D.toByte()) {
-                speedValue = Utils.byte2int(data.get(8)).toString()
-            } else if (data.size >= 6 && data.get(3) == 0x41.toByte() && data.get(4) == 0x0D.toByte()) {
-                speedValue = Utils.byte2int(data.get(5)).toString()
-            }
-        }
-        return speedValue
-    }
-
-    fun readRpm(): String {
-        var rmpValue = ""
-        val rpmCommand = comboCommand(byteArrayOf(0x01, 0x0C))
-        val data = rpmCommand?.let { sendSingleReceiveSingleCommand(it, 3000) }
-        if (data != null) {
-            if (currProto == OBD_STD_CAN && data.size >= 8 && data[4] == 0x41.toByte() && data[5] == 0x0C.toByte()) {
-                rmpValue = Utils.byteArray2int(Arrays.copyOfRange(data, 6, 8)).toString()
-            } else if (currProto == OBD_EXT_CAN && data.size >= 10 && data[6] == 0x41.toByte() && data[7] == 0x0C.toByte()) {
-                rmpValue = Utils.byteArray2int(Arrays.copyOfRange(data, 8, 10)).toString();
-            } else if (data.size >= 7 && data[3] == 0x41.toByte() && data[4] == 0x0C.toByte()) {
-                rmpValue = Utils.byteArray2int(Arrays.copyOfRange(data, 5, 7)).toString();
-            }
-        }
-        return rmpValue
-    }
 
 
     fun readTemper(): String {
@@ -391,7 +268,24 @@ class ObdManger : BleCallback {
             ret = communication?.enterPwmVpw(false) ?: false
         }
         if (!ret) currProto = OBD_UNKNOWN
+
+        takeIf { currProto!= OBD_UNKNOWN }?.apply {
+            destructor=selectDestroctor(currProto)
+        }
+
         return ret
+    }
+
+    private fun selectDestroctor(currProto: Int): DestructBiz {
+        return when (currProto) {
+            OBD_STD_CAN -> DestructCanStd()
+            OBD_EXT_CAN -> DestructCanExt()
+            OBD_ISO     -> DestructIso()
+            OBD_KWP     -> DestructKwp()
+            OBD_PWM     -> DestructPwm()
+            OBD_VPW     -> DestructVpw()
+            else -> DestructUnknow()
+        }
     }
 
 
@@ -419,26 +313,15 @@ class ObdManger : BleCallback {
     }
 
 
-    fun fetObdData(bytes: ByteArray?): ByteArray? {
-        when (currProto) {
-            OBD_STD_CAN -> return parseData_std_can(bytes)
-        }
-        return null
-    }
-
-    private fun parseData_std_can(bytes: ByteArray?): ByteArray? {
-        return null
-    }
-
     fun computerOffset(): Int {
-        when (currProto) {
-            OBD_STD_CAN -> return 4
-            OBD_EXT_CAN -> return 6
-            OBD_ISO -> return 3
-            OBD_KWP -> return 3
-            OBD_PWM -> return 3
-            OBD_VPW -> return 3
-            else -> return 0
+        return when (currProto) {
+            OBD_STD_CAN -> 4
+            OBD_EXT_CAN -> 6
+            OBD_ISO -> 3
+            OBD_KWP -> 3
+            OBD_PWM -> 3
+            OBD_VPW -> 3
+            else -> 0
 
         }
     }
@@ -449,40 +332,53 @@ class ObdManger : BleCallback {
 
         var codeLists= mutableListOf<String>()
         val command = comboCommand(byteArrayOf(cmd))
-        var vinHexList: MutableList<Byte> = mutableListOf()
+        val vinHexList= mutableListOf<Byte>()
         if (currProto == OBD_STD_CAN) {
             val data = command?.let { sendSingleReceiveMultiCommand(it, 3000, 10) }
             data?.forEach {
                 it?.apply {
-                    var sureAnsIndex = it.indexOf(cmd.plus(0x40.toByte()).toByte())
+                    val sureAnsIndex = indexOf(cmd.plus(0x40.toByte()).toByte())
                     if (sureAnsIndex > -1) {
-                        amount = it[sureAnsIndex + 1].toInt()
-                        var elements = it.slice((if (sureAnsIndex > 0) sureAnsIndex + 2 else 4) until it.size)
+                        amount = this[sureAnsIndex + 1].toInt()
+                        var elements = this.slice((if (sureAnsIndex > 0) sureAnsIndex + 2 else 4) until this.size)
                         elements = elements.filter { item -> (item != 0xaa.toByte()) and (item != 0x00.toByte()) }
                         vinHexList.addAll(elements)
                     } else {
-                        var elements = it.slice(4 until it.size)
+                        var elements = this.slice(4 until this.size)
                         elements = elements.filter { item -> (item != 0xaa.toByte()) and (item != 0x00.toByte()) }
                         vinHexList.addAll(elements)
                     }
                 }
             }
-            vinHexList.isNotEmpty().trueLet {
+
+            takeIf { vinHexList.isNotEmpty() }?.apply {
                 var tempCodeStr=""
                 for (i in vinHexList.indices step 2){
-                    var codeHex=(vinHexList[i].toInt() shl 8).or(vinHexList[i+1].toInt())
-                    if (codeHex < 0x4000) { // P
-                        tempCodeStr = String.format("P%04X", codeHex)
-                    } else if (codeHex < 0x8000) { // C
-                        tempCodeStr = String.format("C%04X", codeHex - 0x4000)
-                    } else if (codeHex < 0xC000) { // B
-                        tempCodeStr = String.format("B%04X", codeHex - 0x8000)
-                    } else { // U
-                        tempCodeStr = String.format("U%04X", codeHex - 0xC000)
+                    val codeHex=(vinHexList[i].toInt() shl 8).or(vinHexList[i+1].toInt())
+
+                    try {
+                        tempCodeStr = when {
+                            codeHex < 0x4000 -> { // P
+                                String.format("P%04X", codeHex)
+                            }
+                            codeHex < 0x8000 -> { // C
+                                String.format("C%04X", codeHex - 0x4000)
+                            }
+                            codeHex < 0xC000 -> { // B
+                                String.format("B%04X", codeHex - 0x8000)
+                            }
+                            else -> { // U
+                                String.format("U%04X", codeHex - 0xC000)
+                            }
+                        }
+                        codeLists.add(tempCodeStr)
+                    }catch (e:Exception){
+                        println("format exception")
                     }
-                    codeLists.add(tempCodeStr)
+
                 }
             }
+
             value=amount
 
         } else {
@@ -552,7 +448,7 @@ class ObdManger : BleCallback {
         val data = command?.let { sendSingleReceiveSingleCommand(it, 3000) }
         if (data != null) {
             item.obd = parse2BizSingle(data) // 42 02 00 00 00
-            calc.get(item.index)?.apply {
+            calc[item.index]?.apply {
                 value = calculation(item)
             }
         }
@@ -604,7 +500,7 @@ class ObdManger : BleCallback {
         return value
     }
 
-    fun supportFlowPids(): MutableList<ByteArray?> {
+    private fun supportFlowPids(): MutableList<ByteArray?> {
         var query = true
         var size = 2
         var pid1 = 0x00.toByte()
@@ -615,8 +511,7 @@ class ObdManger : BleCallback {
             obdData[1] = pid1
 
             var comboCommand = getIns().comboCommand(obdData)
-            var data =
-                comboCommand?.let { getIns().sendMultiCommandReceMulti(it, 5000, 10) }
+            var data =comboCommand?.let { getIns().sendSingleReceiveSingleCommand(it, 5000) }
             data?.apply {
 
                 when (getIns().currProto) {
@@ -625,15 +520,17 @@ class ObdManger : BleCallback {
                         if (data.isEmpty()) {
                             query = false
                         } else {
-                            data[0]?.apply {
+                            data.apply {
                                 datas.add(this)
-                                var bizData = parse2BizSingle(this)
+                                val bizData = parse2BizSingle(this)
                                 if ((bizData[0] == 0x41.toByte()) and (bizData[1] == pid1)) {
                                     if (bizData.last().and(0x01) == 0x01.toByte()) {
                                         pid1 = (pid1 + 0x20).toByte()
                                     } else {
                                         query = false
                                     }
+                                }else{
+                                    query = false
                                 }
                             }
 
@@ -643,11 +540,10 @@ class ObdManger : BleCallback {
                         if (data.isEmpty()) {
                             query = false
                         } else {
-                            var item = data[0]
-                            datas.add(item)
-                            item?.let {
+                            datas.add(data)
+                            data?.let {
                                 //41 00  BE 5F B8 11
-                                var bizData = parse2BizSingle(item)
+                                var bizData = parse2BizSingle(it)
                                 if ((bizData[0] == 0x41.toByte()) and (bizData[1] == pid1)) {
                                     if (bizData.last().and(0x01) == 0x01.toByte()) {
                                         pid1 = (pid1 + 0x20).toByte()
@@ -662,10 +558,9 @@ class ObdManger : BleCallback {
                         if (data.isEmpty()) {
                             query = false
                         } else {
-                            var item = data[0]
-                            item?.apply {
-                                datas.add(item)
-                                var bizData = parse2BizSingle(item)
+                            data?.apply {
+                                datas.add(this)
+                                var bizData = parse2BizSingle(this)
                                 if ((bizData[0] == 0x41.toByte()) and (bizData[1] == pid1)) {
                                     var flag = bizData.last()
                                     var result = flag?.and(0x01)
@@ -685,11 +580,9 @@ class ObdManger : BleCallback {
                         if (data.isEmpty()) {
                             query = false
                         } else {
-                            var item = data[0]
-                            datas.add(item)
-                            item?.let {
-                                //86 F1 10 41 00 BE 3E B8 11 8D
-                                var bizData = parse2BizSingle(item)
+                            datas.add(data)
+                            data?.let {
+                                var bizData = parse2BizSingle(it)
                                 bizData.isNotEmpty().trueLet {
                                     if ((bizData[0] == 0x41.toByte()) and (bizData[1] == pid1)) {
                                         if (bizData.last().and(0x01) == 0x01.toByte()) {
@@ -714,39 +607,24 @@ class ObdManger : BleCallback {
     }
 
     /** 查询数据流支持项 */
-    fun queryFlowList(): List<Short> {
-        var maskBuffer = ShortArray(32)
-        var freezeKeyList: List<Short> = mutableListOf()
-        var pids: MutableList<ByteArray?> = supportFlowPids()
-
-        pids?.apply {
-
-            mergePid(pids, maskBuffer, computerOffset())
-            var produPid = produPid(maskBuffer)
-            freezeKeyList = dataFlow4KeyList(produPid, 0x01)
-        }
-        return freezeKeyList
-    }
-
-    /** 查询数据流支持项 */
     fun queryFlowListItem(): List<ObdItem> {
-        var maskBuffer = ShortArray(32)
-        var obdList = mutableListOf<ObdItem>()
+        val maskBuffer = ShortArray(32)
+        val obdList = mutableListOf<ObdItem>()
         var freezeKeyList: List<Short> = mutableListOf()
-        var pids: MutableList<ByteArray?> = supportFlowPids()
+        val pids: MutableList<ByteArray?> = supportFlowPids()
 
-        pids?.apply {
-
+        takeIf { pids.isNotEmpty() }?.apply {
             mergePid(pids, maskBuffer, computerOffset())
-            var produPid = produPid(maskBuffer)
+            val produPid = produPid(maskBuffer)
             freezeKeyList = dataFlow4KeyList(produPid, 0x01)
             Log.i("Communication", "freezeKeyList ${freezeKeyList.size}")
-            freezeKeyList.forEach {
-                var element = ds[it.toObdIndex()]
-                element?.apply {
-                    obdList.add(ObdItem(it.toObdPid(), element.first, false, "", element.second, it.toObdIndex()))
+            takeIf { freezeKeyList.isNotEmpty() }?.apply {
+                freezeKeyList.forEach {
+                    val element = ds[it.toObdIndex()]
+                    element?.apply {
+                        obdList.add(ObdItem(it.toObdPid(), element.first, false, "", element.second, it.toObdIndex()))
+                    }
                 }
-
             }
         }
         return obdList.toList()
@@ -774,12 +652,14 @@ class ObdManger : BleCallback {
                         datas.add(this)
                         var bizData = parse2BizSingle(this)
                         bizData.isNotEmpty().trueLet {
-                            if (bizData[0] == 0x42.toByte()) {
+                            if (bizData[0] == 0x42.toByte() && bizData[1] == pid1 ) {
                                 if (bizData.last().and(0x01) == 0x01.toByte()) {
                                     pid1 = (pid1 + 0x20).toByte()
                                 } else {
                                     query = false
                                 }
+                            }else{
+                                query = false
                             }
 
                         }.elseLet {
@@ -794,7 +674,8 @@ class ObdManger : BleCallback {
     }
 
     /** 查询 冻结帧列表 */
-    fun queryFreezeList(): List<Short> {
+    fun queryFreezeList(): List<ObdItem> {
+        var obditms = mutableListOf<ObdItem>( )
         var maskBuffer = ShortArray(32)
         var freezeKeyList = listOf<Short>()
         var datas: MutableList<ByteArray?> = supportFreeze()
@@ -804,7 +685,17 @@ class ObdManger : BleCallback {
             freezeKeyList = dataFlow4KeyList(pid, 0x02)
         }
 
-        return freezeKeyList
+        freezeKeyList.isNotEmpty().trueLet {
+            freezeKeyList.forEach {
+                    var element = ds[it.toObdIndex()]
+                    element?.apply {
+                        obditms.add(ObdItem(it.toObdPid(), element.first, false, "", element.second, it.toObdIndex()))
+                    }
+                }
+            }
+
+
+        return obditms.toList()
     }
 
     fun initFirmwareUpdate(file: File): Boolean {

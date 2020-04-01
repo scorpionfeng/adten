@@ -447,6 +447,8 @@ public class Communication {
     }
 
     private boolean configCan(boolean stdCan, int bps) {
+        //send: 60 01 0C 01 00 02 00 07 A1 20 03 00 C8 04 00 C8 05 00 37 06 00 05 10 02 11 02 12 00 00 07 00 00 00 00 FF 13 01 14 08 15 30 00 00 00 00 00 00 00
+        //recv: 60 0B 60 01 01
         List<Byte> list = new ArrayList<>();
         list.add(Utils.int2byte(0x60));
         list.add(Utils.int2byte(0x01));
@@ -526,7 +528,17 @@ public class Communication {
                 data[i] = list.get(i);
             }
             byte[] recv = sendReceiveData(data, 3000);
-            return (String.format("%.2f A", Utils.byteArray2int(Arrays.copyOfRange(recv,4,6)) * 1.0 / 1000));
+            String value="";
+            try{
+                if (null!=recv) {
+                    value= (String.format("%.2f A", Utils.byteArray2int(Arrays.copyOfRange(recv,4,6)) * 1.0 / 1000));
+                }
+            }catch (Exception e){
+
+                Log.i("xtool","data is empty");
+            }
+            return  value;
+
         }
     }
 
@@ -707,7 +719,11 @@ public class Communication {
         if (!configCan(true, bps)) return false;
         byte[] sendData = Utils.comboCanCommand(true, new byte[] {0x01, 0x00});
         List<byte[]> dataList = sendSingleReceiveMultiCommand(sendData, 3000, 20);
-        if (dataList.size() == 0) return false;
+        if(dataList.size()==0){
+            byte[] sendDataRetry = Utils.comboCanCommand(true, new byte[] {0x01, 0x00});
+            List<byte[]> dataListRetry = sendSingleReceiveMultiCommand(sendDataRetry, 3000, 20);
+            if(dataListRetry.size()==0) return  false;
+        }
         mEcuIds.clear();
         for (byte[] data : dataList) {
             if (data.length < 6 || data[4] != 0x41) continue;

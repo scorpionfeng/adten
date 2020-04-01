@@ -52,14 +52,12 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
     val adapter= UniversalAdapter(vm.datas,R.layout.item_flow,BR.model)
 
     private fun getData() {
-        Thread{
-
-                var list= ObdManger.getIns().queryFlowListItem()
-                list?.apply {
-                    vm.datas.addAll(list.toMutableList())
-                }
-
-            handler.post{
+        Thread {
+            var list = ObdManger.getIns().queryFlowListItem()
+            list?.apply {
+                vm.datas.addAll(list.toMutableList())
+            }
+            handler.post {
                 adapter.notifyDataSetChanged()
                 hud.dismiss()
             }
