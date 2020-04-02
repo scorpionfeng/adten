@@ -2,6 +2,7 @@ package com.xtooltech.adten.module.diy
 import com.xtooltech.adten.util.calcx
 import com.xtooltech.adtenx.common.ble.ObdItem
 import com.xtooltech.adtenx.common.destructu.DestructCanStd
+import com.xtooltech.adtenx.util.IsRange
 import com.xtooltech.adtenx.util.hexString
 import com.xtooltech.adtenx.util.toHex
 import org.junit.Assert
@@ -283,6 +284,35 @@ internal class FlowListActivityTestt{
 
         data.forEach { print("0x"+Integer.toHexString(it)+",") }
         println("-0---"+data.size)
+
+    }
+
+    @Test
+    fun testOutOfIndex(){
+        val a:ByteArray= byteArrayOf(0x01,0x02,0x03)
+
+        println(a.opt(3))
+    }
+
+      fun ByteArray.opt(index: Int): Byte{
+        println("operator override")
+
+        takeIf { size>index+1 }?.apply {
+            return this[index]
+        } ?:apply { return 0x00 }
+
+        return 0x7f
+    }
+
+
+
+    @Test
+    fun testRange(){
+        var data:Byte=0x03;
+
+        var isRange = IsRange(data, 0x03, 0x03)
+        println("isrange $isRange")
+
 
     }
 

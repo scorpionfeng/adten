@@ -53,10 +53,11 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
 
     private fun getData() {
         Thread {
-            var list = ObdManger.getIns().queryFlowListItem()
-            list?.apply {
+            val list = ObdManger.getIns().queryFlowListItem()
+            list.apply {
                 vm.datas.addAll(list.toMutableList())
             }
+
             handler.post {
                 adapter.notifyDataSetChanged()
                 hud.dismiss()
@@ -74,7 +75,10 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
             .setAnimationSpeed(2)
             .setDimAmount(0.5f)
             .setLabel("正在加载...")
-        hud.show()
+        if (!hud.isShowing) {
+            hud.show()
+        }
+
 
         getData()
 

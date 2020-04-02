@@ -511,97 +511,27 @@ class ObdManger : BleCallback {
             obdData[1] = pid1
 
             var comboCommand = getIns().comboCommand(obdData)
-            var data =comboCommand?.let { getIns().sendSingleReceiveSingleCommand(it, 5000) }
+            var data = comboCommand?.let { getIns().sendSingleReceiveSingleCommand(it, 5000) }
             data?.apply {
-
-                when (getIns().currProto) {
-                    OBD_STD_CAN -> {
-
-                        if (data.isEmpty()) {
-                            query = false
-                        } else {
-                            data.apply {
-                                datas.add(this)
-                                val bizData = parse2BizSingle(this)
-                                if ((bizData[0] == 0x41.toByte()) and (bizData[1] == pid1)) {
-                                    if (bizData.last().and(0x01) == 0x01.toByte()) {
-                                        pid1 = (pid1 + 0x20).toByte()
-                                    } else {
-                                        query = false
-                                    }
-                                }else{
-                                    query = false
-                                }
+                if (data.isEmpty()) {
+                    query = false
+                } else {
+                    data.apply {
+                        datas.add(this)
+                        val bizData = parse2BizSingle(this)
+                        if ((bizData[0] == 0x41.toByte()) and (bizData[1] == pid1)) {
+                            if (bizData.last().and(0x01) == 0x01.toByte()) {
+                                pid1 = (pid1 + 0x20).toByte()
+                            } else {
+                                query = false
                             }
-
-                        }
-                    }
-                    OBD_PWM -> {
-                        if (data.isEmpty()) {
-                            query = false
                         } else {
-                            datas.add(data)
-                            data?.let {
-                                //41 00  BE 5F B8 11
-                                var bizData = parse2BizSingle(it)
-                                if ((bizData[0] == 0x41.toByte()) and (bizData[1] == pid1)) {
-                                    if (bizData.last().and(0x01) == 0x01.toByte()) {
-                                        pid1 = (pid1 + 0x20).toByte()
-                                    } else {
-                                        query = false
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    OBD_VPW -> {
-                        if (data.isEmpty()) {
                             query = false
-                        } else {
-                            data?.apply {
-                                datas.add(this)
-                                var bizData = parse2BizSingle(this)
-                                if ((bizData[0] == 0x41.toByte()) and (bizData[1] == pid1)) {
-                                    var flag = bizData.last()
-                                    var result = flag?.and(0x01)
-                                    if (result == 0x01.toByte()) {
-                                        pid1 = (pid1 + 0x20).toByte()
-                                    } else {
-                                        query = false
-                                    }
-                                }
-
-                            }
-
                         }
                     }
 
-                    else -> {
-                        if (data.isEmpty()) {
-                            query = false
-                        } else {
-                            datas.add(data)
-                            data?.let {
-                                var bizData = parse2BizSingle(it)
-                                bizData.isNotEmpty().trueLet {
-                                    if ((bizData[0] == 0x41.toByte()) and (bizData[1] == pid1)) {
-                                        if (bizData.last().and(0x01) == 0x01.toByte()) {
-                                            pid1 = (pid1 + 0x20).toByte()
-                                        } else {
-                                            query = false
-                                        }
-                                    }
-
-                                }.elseLet {
-                                    query = false
-                                }
-                            }
-                        }
-
-                    }
                 }
-
-            }
+            } ?:apply { query=false }
         }
         return datas
     }
@@ -610,19 +540,20 @@ class ObdManger : BleCallback {
     fun queryFlowListItem(): List<ObdItem> {
         val maskBuffer = ShortArray(32)
         val obdList = mutableListOf<ObdItem>()
-        var freezeKeyList: List<Short> = mutableListOf()
+        var freezeKeyList = listOf<Short>()
         val pids: MutableList<ByteArray?> = supportFlowPids()
 
         takeIf { pids.isNotEmpty() }?.apply {
             mergePid(pids, maskBuffer, computerOffset())
             val produPid = produPid(maskBuffer)
             freezeKeyList = dataFlow4KeyList(produPid, 0x01)
-            Log.i("Communication", "freezeKeyList ${freezeKeyList.size}")
             takeIf { freezeKeyList.isNotEmpty() }?.apply {
                 freezeKeyList.forEach {
                     val element = ds[it.toObdIndex()]
                     element?.apply {
                         obdList.add(ObdItem(it.toObdPid(), element.first, false, "", element.second, it.toObdIndex()))
+                    } ?:apply {
+                        Log.i("Communication", "error")
                     }
                 }
             }

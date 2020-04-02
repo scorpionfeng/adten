@@ -9,6 +9,7 @@ import com.xtooltech.adten.R
 import com.xtooltech.adtenx.common.ble.ObdManger
 import com.xtooltech.adten.databinding.ActivityFlowMilBinding
 import com.xtooltech.adten.util.*
+import com.xtooltech.adtenx.util.isPositive
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.widget.UniversalAdapter
@@ -60,80 +61,82 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
         printMessage("request ${item.title}")
         Thread{
 
-//            enterSucc?.falseLet {
-//                printMessage("entersucc ?= $enterSucc")
-//                enterSucc = ObdManger.getIns().enter()
-//            }
-//
-//
-//            enterSucc?.trueLet {
                 val value = ObdManger.getIns().readCommonRaw(item.kind)
-
-
                 printMessage("kind=${item.kind}>" )
-
 
                 when(item.kind){
                     0x01.toByte()->{
-                        value.isNotEmpty().trueLet {
-                            var flag = value?.get(2)
-                            var result = flag?.toInt()?.and(0x80)
-                            (result==1).trueLet {
-                                item.content="灯亮"
-                            }.elseLet {
-                                item.content="灯灭"
+
+                        takeIf { value.isNotEmpty() && value.isPositive() }?.apply {
+                            takeIf { value.size>3 }?.apply {
+                                val flag = value[2]
+                                val result = flag.toInt().and(0x80)
+                                (result==1).trueLet {
+                                    item.content="灯亮"
+                                }.elseLet {
+                                    item.content="灯灭"
+                                }
                             }
+
                         }
+
 
                     }
                     0x21.toByte()->{
-                        value.isNotEmpty().trueLet {
-                            var flagA = value?.get(2)
-                            var flagB = value?.get(3)
+                        var distance=0
 
-                            if (flagB!=null) {
+                        takeIf { value.isNotEmpty() && value.isPositive() }?.apply {
+
+                            takeIf { value.size>4 }?.apply {
+                                var flagA = value[2]
+                                var flagB = value[3]
+
                                 if(flagB<0){
                                     flagB = flagB.and(0xff.toByte())
                                 }
+                                distance= (flagA?.times(256) ?: 0) + (flagB?:0)
                             }
 
-                            var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
-                            item.content=distance.toString()
                         }
+                        item.content=distance.toString()
 
                     }
                     0x31.toByte()->{
+                        var distance=0
 
-                        value.isNotEmpty().trueLet {
-                            var flagA = value?.get(2)
-                            var flagB = value?.get(3)
-                            if (flagB!=null) {
+                        takeIf { value.isNotEmpty() && value.isPositive() }?.apply {
+                            takeIf { value.size>4 }?.apply {
+                                var flagA = value.get(2)
+                                var flagB = value.get(3)
                                 if(flagB<0){
                                     flagB = flagB.and(0xff.toByte())
                                 }
+                                distance= (flagA.times(256) ?: 0) + (flagB?:0)
                             }
-                            var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
-                            item.content=distance.toString()
                         }
+
+                        item.content=distance.toString()
 
                     }
                     0x4D.toByte()->{
-                        value.isNotEmpty().trueLet {
-                            // 加7f还否定应答判断
-                            var flagA = value?.get(2)
-                            var flagB = value?.get(3)
-                            if (flagB!=null) {
+                        var distance=0
+                        takeIf { value.isNotEmpty() && value.isPositive() }?.apply {
+                            takeIf { value.size>4 }?.apply {
+                                var flagA = value[2]
+                                var flagB = value[3]
                                 if(flagB<0){
                                     flagB = flagB.and(0xff.toByte())
                                 }
+                                 distance= (flagA.times(256) ?: 0) + (flagB?:0)
                             }
-                            var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
-                            item.content=distance.toString()
                         }
+                            item.content=distance.toString()
 
                     }
                     0x4E.toByte()->{
-                        value.isNotEmpty().trueLet {
+
+                        var distance=0
+                        takeIf { value.isNotEmpty() && value.isPositive() }?.apply {
                             var flagA = value?.get(2)
                             var flagB = value?.get(3)
                             if (flagB!=null) {
@@ -142,33 +145,35 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
                                 }
                             }
 
-                            var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
-                            item.content=distance.toString()
+                             distance= (flagA?.times(256) ?: 0) + (flagB?:0)
+
                         }
+                        item.content=distance.toString()
 
                     }
                     0x1f.toByte()->{
-                        value.isNotEmpty().trueLet {
-                            var flagA = value?.get(2)
-                            var flagB = value?.get(3)
-                            if (flagB!=null) {
-                                if(flagB<0){
-                                    flagB = flagB.and(0xff.toByte())
+                        var distance=0
+                        takeIf { value.isNotEmpty() && value.isPositive() }?.apply {
+                            takeIf { value.size>4 }?.apply {
+                                var flagA = value?.get(2)
+                                var flagB = value?.get(3)
+                                if (flagB!=null) {
+                                    if(flagB<0){
+                                        flagB = flagB.and(0xff.toByte())
+                                    }
                                 }
+
+                                 distance= (flagA?.times(256) ?: 0) + (flagB?:0)
+
                             }
-
-                            var distance= (flagA?.times(256) ?: 0) + (flagB?:0)
-                            item.content=distance.toString()
                         }
-
+                        item.content=distance.toString()
                     }
                 }
 
                 runOnUiThread{
                     adapter.notifyDataSetChanged()
                 }
-
-//            }
 
         }.start()
     }

@@ -1,5 +1,7 @@
 package com.xtooltech.adten.util
 
+
+/** 必须大写 */
  val ds=mapOf(
 "0x00,0x00,0x01,0x10" to Pair("ECU中存储的故障码数量",""),
 "0x00,0x00,0x01,0x11" to Pair("MIL(故障指示灯)状态",""),

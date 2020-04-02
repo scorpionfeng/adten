@@ -150,43 +150,44 @@ class SmokeActivity : BaseVMActivity<ActivityFlowSmokeBinding, SmokeViewModel>()
 
     private fun parseReadyState(rawData: List<Byte>) {
 
-        var data= listOf(
-            ReadyItem("MIS_SUP","失火状态 Misfire monitoring",(if(rawData[3].and(bin_zero)>0) "ON" else "OFF"),0),
-            ReadyItem("FUEL_SUP","燃油监视 fuel system monitoring",(if(rawData[3].and(bin_one)>0) "ON" else "OFF"),0),
-            ReadyItem("CCM_SUP","综合部件监视 CCM",(if(rawData[3].and(bin_two)>0) "ON" else "OFF"),0),
-            ReadyItem("TypeIgn","点火类型",(if(rawData[3].and(bin_three)>0) "汽油" else "柴油"),0),
-            ReadyItem("MIS_RDY","失火监视",(if(rawData[3].and(bin_four)>0) "ON" else "OFF"),0),
-            ReadyItem("FUEL_RDY","燃油系统监视",(if(rawData[3].and(bin_five)>0) "ON" else "OFF"),0),
-            ReadyItem("CCM_RDY","综合部件监视",(if(rawData[3].and(bin_six)>0) "ON" else "OFF"),0),
-            ReadyItem("Reserved1","Reserved1",(if(rawData[3].and(bin_seven)>0) "ON" else "OFF"),0),
-            ReadyItem("CAT_SUP","催化器监视",(if(rawData[4].and(bin_zero)>0) "ON" else "OFF"),1),
-            ReadyItem("HCAT_SUP","加热式催化器监视",(if(rawData[4].and(bin_one)>0) "ON" else "OFF"),1),
-            ReadyItem("EVAP_SUP","燃油蒸气系统监视",(if(rawData[4].and(bin_two)>0) "ON" else "OFF"),1),
-            ReadyItem("AIR_SUP","二次空气喷射监视",(if(rawData[4].and(bin_three)>0) "ON" else "OFF"),1),
-            ReadyItem("SIgn.Reserved1","二次空气喷射监视",(if(rawData[4].and(bin_four)>0) "ON" else "OFF"),1),
-            ReadyItem("O2S_SUP","氧传感器监视",(if(rawData[4].and(bin_five)>0) "ON" else "OFF"),1),
-            ReadyItem("HTR_SUP","氧传感器加热监视",(if(rawData[4].and(bin_six)>0) "ON" else "OFF"),1),
-            ReadyItem("EGR_RDY","废气再循环监视",(if(rawData[4].and(bin_seven)>0) "ON" else "OFF"),1),
-            ReadyItem("HCCATSUP","催化剂监视",(if(rawData[4].and(bin_zero)>0) "ON" else "OFF"),2),
-            ReadyItem("NCAT_SUP","氮氧化物后处理监视",(if(rawData[4].and(bin_one)>0) "ON" else "OFF"),2),
-            ReadyItem("CIgn.Reserved1","CIgn.Reserved1",(if(rawData[4].and(bin_two)>0) "ON" else "OFF"),2),
-            ReadyItem("BP_SUP","增压系统监视",(if(rawData[4].and(bin_three)>0) "ON" else "OFF"),2),
-            ReadyItem("CIgn.Reserved2","CIgn.Reserved2",(if(rawData[4].and(bin_four)>0) "ON" else "OFF"),2),
-            ReadyItem("EGS_SUP","废气传感器监视",(if(rawData[4].and(bin_five)>0) "ON" else "OFF"),2),
-            ReadyItem("PM_SUP","颗粒物补集器监视",(if(rawData[4].and(bin_six)>0) "ON" else "OFF"),2),
-            ReadyItem("EGR_SUP","废气再循环监视",(if(rawData[4].and(bin_seven)>0) "ON" else "OFF"),2),
-            ReadyItem("HCCATSUP","NMHC催化剂监视",(if(rawData[5].and(bin_zero)>0) "ON" else "OFF"),2),
-            ReadyItem("NCAT_RDY","氮氧化物后处理监视",(if(rawData[5].and(bin_one)>0) "ON" else "OFF"),2),
-            ReadyItem("CIgn.Reserved3","---",(if(rawData[5].and(bin_two)>0) "ON" else "OFF"),2),
-            ReadyItem("BP_RDY","增压系统监视",(if(rawData[5].and(bin_three)>0) "ON" else "OFF"),2),
-            ReadyItem("CIgn.Reserved4","---",(if(rawData[5].and(bin_four)>0) "ON" else "OFF"),2),
-            ReadyItem("EGS_RDY","废气传感器监视",(if(rawData[5].and(bin_five)>0) "ON" else "OFF"),2),
-            ReadyItem("PM_RDY","颗粒物补集器监视",(if(rawData[5].and(bin_six)>0) "ON" else "OFF"),2),
-            ReadyItem("EGR_RDY","废气再循环监视",(if(rawData[5].and(bin_seven)>0) "ON" else "OFF"),2)
-        )
+        takeIf { rawData.size>6 }?.apply {
+            var data= listOf(
+                ReadyItem("MIS_SUP","失火状态 Misfire monitoring",(if(rawData[3].and(bin_zero)>0) "ON" else "OFF"),0),
+                ReadyItem("FUEL_SUP","燃油监视 fuel system monitoring",(if(rawData[3].and(bin_one)>0) "ON" else "OFF"),0),
+                ReadyItem("CCM_SUP","综合部件监视 CCM",(if(rawData[3].and(bin_two)>0) "ON" else "OFF"),0),
+                ReadyItem("TypeIgn","点火类型",(if(rawData[3].and(bin_three)>0) "汽油" else "柴油"),0),
+                ReadyItem("MIS_RDY","失火监视",(if(rawData[3].and(bin_four)>0) "ON" else "OFF"),0),
+                ReadyItem("FUEL_RDY","燃油系统监视",(if(rawData[3].and(bin_five)>0) "ON" else "OFF"),0),
+                ReadyItem("CCM_RDY","综合部件监视",(if(rawData[3].and(bin_six)>0) "ON" else "OFF"),0),
+                ReadyItem("Reserved1","Reserved1",(if(rawData[3].and(bin_seven)>0) "ON" else "OFF"),0),
+                ReadyItem("CAT_SUP","催化器监视",(if(rawData[4].and(bin_zero)>0) "ON" else "OFF"),1),
+                ReadyItem("HCAT_SUP","加热式催化器监视",(if(rawData[4].and(bin_one)>0) "ON" else "OFF"),1),
+                ReadyItem("EVAP_SUP","燃油蒸气系统监视",(if(rawData[4].and(bin_two)>0) "ON" else "OFF"),1),
+                ReadyItem("AIR_SUP","二次空气喷射监视",(if(rawData[4].and(bin_three)>0) "ON" else "OFF"),1),
+                ReadyItem("SIgn.Reserved1","二次空气喷射监视",(if(rawData[4].and(bin_four)>0) "ON" else "OFF"),1),
+                ReadyItem("O2S_SUP","氧传感器监视",(if(rawData[4].and(bin_five)>0) "ON" else "OFF"),1),
+                ReadyItem("HTR_SUP","氧传感器加热监视",(if(rawData[4].and(bin_six)>0) "ON" else "OFF"),1),
+                ReadyItem("EGR_RDY","废气再循环监视",(if(rawData[4].and(bin_seven)>0) "ON" else "OFF"),1),
+                ReadyItem("HCCATSUP","催化剂监视",(if(rawData[4].and(bin_zero)>0) "ON" else "OFF"),2),
+                ReadyItem("NCAT_SUP","氮氧化物后处理监视",(if(rawData[4].and(bin_one)>0) "ON" else "OFF"),2),
+                ReadyItem("CIgn.Reserved1","CIgn.Reserved1",(if(rawData[4].and(bin_two)>0) "ON" else "OFF"),2),
+                ReadyItem("BP_SUP","增压系统监视",(if(rawData[4].and(bin_three)>0) "ON" else "OFF"),2),
+                ReadyItem("CIgn.Reserved2","CIgn.Reserved2",(if(rawData[4].and(bin_four)>0) "ON" else "OFF"),2),
+                ReadyItem("EGS_SUP","废气传感器监视",(if(rawData[4].and(bin_five)>0) "ON" else "OFF"),2),
+                ReadyItem("PM_SUP","颗粒物补集器监视",(if(rawData[4].and(bin_six)>0) "ON" else "OFF"),2),
+                ReadyItem("EGR_SUP","废气再循环监视",(if(rawData[4].and(bin_seven)>0) "ON" else "OFF"),2),
+                ReadyItem("HCCATSUP","NMHC催化剂监视",(if(rawData[5].and(bin_zero)>0) "ON" else "OFF"),2),
+                ReadyItem("NCAT_RDY","氮氧化物后处理监视",(if(rawData[5].and(bin_one)>0) "ON" else "OFF"),2),
+                ReadyItem("CIgn.Reserved3","---",(if(rawData[5].and(bin_two)>0) "ON" else "OFF"),2),
+                ReadyItem("BP_RDY","增压系统监视",(if(rawData[5].and(bin_three)>0) "ON" else "OFF"),2),
+                ReadyItem("CIgn.Reserved4","---",(if(rawData[5].and(bin_four)>0) "ON" else "OFF"),2),
+                ReadyItem("EGS_RDY","废气传感器监视",(if(rawData[5].and(bin_five)>0) "ON" else "OFF"),2),
+                ReadyItem("PM_RDY","颗粒物补集器监视",(if(rawData[5].and(bin_six)>0) "ON" else "OFF"),2),
+                ReadyItem("EGR_RDY","废气再循环监视",(if(rawData[5].and(bin_seven)>0) "ON" else "OFF"),2)
+            )
 
-        dataReady.addAll(data)
-
+            dataReady.addAll(data)
+        }
 
     }
 

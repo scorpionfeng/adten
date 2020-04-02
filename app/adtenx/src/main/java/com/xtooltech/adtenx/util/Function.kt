@@ -1,5 +1,6 @@
 package com.xtooltech.adtenx.util
 
+import android.text.BoringLayout
 import com.xtooltech.adten.util.trueLet
 import com.xtooltech.adtenx.common.ble.*
 import com.xtooltech.adtenx.common.obd.*
@@ -25,8 +26,7 @@ fun produPid(data: ShortArray): List<Short> {
         for (j in 1..8) {
             if (data[i] and 0x80 != 0.toShort()) {
                 val temp = (i * 8 + j).toShort()
-                if (temp.toInt() != 0x01 && temp.toInt() != 0x20 && temp.toInt() != 0x40
-                    && temp < 0x4F
+                if (temp.toInt() != 0x20 && temp.toInt() != 0x40  && temp < 0x4F
                 ) {
                     array.add(temp)
                 }
@@ -36,6 +36,28 @@ fun produPid(data: ShortArray): List<Short> {
     }
     return array
 }
+
+operator fun Array<Any>.get(i:Int):Int{
+    if (this[i] is Int){
+        return this[i] as Int
+    }else if (this[i] is String){
+        try {
+            return this[i].toString().toInt()
+        }catch (e:Exception){
+
+        }
+    }
+    return 0
+}
+
+fun List<Byte>.isPositive ():Boolean{
+   return  this[0]!=0x7f.toByte()
+}
+
+fun ByteArray.isPositive():Boolean{
+    return this[0]!=0x7f.toByte()
+}
+
 
 fun produFreezePid(data: ShortArray): List<Short> {
     val array = ArrayList<Short>()
@@ -52,14 +74,15 @@ fun produFreezePid(data: ShortArray): List<Short> {
 }
 
 
-fun IsRange(raw:Byte,a1:Byte,a2:Byte):Boolean{
-    return    (raw in (a1 + 1) until a2)
+fun IsRange(x:Byte,x1:Byte,x2:Byte):Boolean{
+    return ((x)>=(x1)&&(x)<=(x2))
+//    return    (raw in (a1 + 1) until a2)
 }
 
 fun dataFlow4KeyList(pidData: List<Short>,sid:Byte): List<Short>{
     var vsTids:MutableList<Short> = mutableListOf()
     var O2S_PID: Byte = 0
-    for (j in 0 until pidData.size) {
+    for (j in pidData.indices) {
         val pid: Byte = pidData.get(j).toByte()
         if (pid == 0x13.toByte()) {
             O2S_PID = 0x13
@@ -70,7 +93,7 @@ fun dataFlow4KeyList(pidData: List<Short>,sid:Byte): List<Short>{
             break
         }
     }
-    for (i in 0 until pidData.size) {
+    for (i in pidData.indices) {
         val pid: Byte = pidData.get(i).toByte()
         if (IsRange(pid, 0x01, 0x01)) { //01
             vsTids.add(0x0110)
@@ -311,9 +334,9 @@ fun List<Byte>.toHex():String{
 }
 
 fun Short.toObdIndex():String{
-    var format = String.format("%04x", this)
-    var first = format.substring(0, 2)
-    var second=format.substring(2,4)
+    val format = String.format("%04x", this)
+    val first = format.substring(0, 2).toUpperCase(Locale.ROOT)
+    val second=format.substring(2,4).toUpperCase(Locale.ROOT)
     return "0x00,0x00,0x$first,0x$second"
 }
 fun Short.toObdPid():Byte{
