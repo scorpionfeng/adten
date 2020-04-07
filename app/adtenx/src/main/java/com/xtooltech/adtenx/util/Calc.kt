@@ -1,8 +1,10 @@
 
 
+import android.R
 import com.xtooltech.adtenx.common.ble.ObdItem
 import com.xtooltech.adtenx.util.b2i
 import kotlin.experimental.and
+
 
 fun calcuEmpty(item:ObdItem):String{ return ""}
 // index= 0x00,0x00,0x01,0x10
@@ -156,6 +158,10 @@ fun calcu24(data: List<Byte>): String {
 // index= 0x00,0x00,0x03,0x00
 // raw =
 fun calcu25(data:List<Byte>):String{
+
+    var index = GetIndexBitOne(if (data[3] == 0.toByte()) data[2] else data[3])
+    if (index > 4) index = 0x0f
+   // strVal = LoadText(BYTE_ID(0x00, 0x07, 0x03, index))
     return  ""
 }
 // index= 0x00,0x00,0x03,0x10
@@ -164,6 +170,19 @@ fun calcu26(data:List<Byte>):String{
 
     return  ""
 }
+
+
+fun GetIndexBitOne(data: Byte): Int {
+   var i = 0
+    while (i < 8) {
+        if (data.and((1 shl i).toByte())>0) break
+        i++
+    }
+    return i
+}
+
+
+
 // index= 0x00,0x00,0x04,0x00
 // raw =data[2].b2i() *100.0/255
 fun calcu27(data:List<Byte>):String{

@@ -167,7 +167,8 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 
 
                         runOnUiThread {
-                            if (rssiOn  && device.address=="ED:67:17:22:DD:F2") {
+//                            if (rssiOn  && device.address=="ED:67:17:22:DD:F2") {
+                            if (rssiOn ) {
                                 stopScan()
                                 confirmDevice(name,mac)
                             }
@@ -191,7 +192,8 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
                             val mac = result.device.address
                             Log.i("xtool","mac address= "+mac)
                             runOnUiThread {
-                                if (rssiOn && result.device.address=="ED:67:17:22:DD:F2" ) {
+                                if (rssiOn ) {
+//                                if (rssiOn && result.device.address=="ED:67:17:22:DD:F2" ) {
                                     stopScan()
                                     confirmDevice(name,mac)
                                 }

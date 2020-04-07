@@ -10,6 +10,7 @@ import com.xtooltech.adten.R
 import com.xtooltech.adten.databinding.ActivityDiyInfoBinding
 import com.xtooltech.adtenx.common.ble.ObdManger
 import com.xtooltech.adten.util.*
+import com.xtooltech.adtenx.common.ble.ObdItem
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.widget.UniversalAdapter
@@ -20,7 +21,8 @@ class InfoViewModel : ViewModel() {
         FlowItem(1,"VIN",true,"",""),
         FlowItem(2,"液位",true,"","%"),
         FlowItem(3,"电压",true,"","mv"),
-        FlowItem(4,"油耗",true,"","%")
+        FlowItem(4,"油耗",true,"","%"),
+        FlowItem(5,"空气流量",true,"","g/s")
     )
 }
 
@@ -68,7 +70,8 @@ class InfoActivity : BaseVMActivity<ActivityDiyInfoBinding, InfoViewModel>() {
                     }
                 }
                 2.toByte()->{
-                    var fuelConsValue= ObdManger.getIns().fuelCons()
+                    var fuelConsValue= ObdManger.getIns().readFlowItem(ObdItem(0x2F,"燃油液位输入",false,"","%","0x00,0x00,0x2F,0x00",
+                        mutableListOf()))
                     fuelConsValue?.apply{
                         item.content=fuelConsValue
                     }
@@ -83,6 +86,13 @@ class InfoActivity : BaseVMActivity<ActivityDiyInfoBinding, InfoViewModel>() {
                     var fuelConsValue= ObdManger.getIns().fuelCons()
                     fuelConsValue?.apply{
                       item.content=fuelConsValue
+                    }
+                }
+                5.toByte()->{
+                    var fuelConsValue= ObdManger.getIns().readFlowItem(ObdItem(0x10,"空气流量",false,"","g/s","0x00,0x00,0x10,0x00",
+                        mutableListOf()))
+                    fuelConsValue?.apply{
+                        item.content=fuelConsValue
                     }
                 }
             }

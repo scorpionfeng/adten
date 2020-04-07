@@ -343,11 +343,11 @@ public class Communication {
         list.add(Utils.int2byte((P4 >> 8) & 0xFF));
         list.add(Utils.int2byte(P4 & 0xFF));
         list.add(Utils.int2byte(0x0D));  //过滤帧偏移
-        list.add(Utils.int2byte(0x00));
-        list.add(Utils.int2byte(0x0E));  //过滤帧长度
+        list.add(Utils.int2byte(0x00)); /** 第几个字节开始比较,默认为0 */
+        list.add(Utils.int2byte(0x0E));  //过滤帧长度   /** 处理过滤帧 */
         list.add(Utils.int2byte(0x02));
         list.add(Utils.int2byte(0x0F));  //过滤帧
-        list.add(Utils.int2byte(pwm ? 0x41 : 0x48));
+        list.add(Utils.int2byte(pwm ? 0x41 : 0x48));  /** 只读取0x41开头的数据  */
         list.add(Utils.int2byte(0x6B));
         byte[] data = new byte[list.size()];
         for (int i = 0; i < list.size(); i++) {
@@ -481,12 +481,12 @@ public class Communication {
         list.add(Utils.int2byte(0x11));  //CAN过滤ID个数
         list.add(Utils.int2byte(0x02));
         list.add(Utils.int2byte(0x12));  //CAN过滤ID
-        int canId1 = stdCan ? 0x0700 : 0x18DAF100;
+        int canId1 = stdCan ? 0x07e8 : 0x18DAF100;
         list.add(Utils.int2byte((canId1 >> 24) & 0xFF));
         list.add(Utils.int2byte((canId1 >> 16) & 0xFF));
         list.add(Utils.int2byte((canId1 >> 8) & 0xFF));
         list.add(Utils.int2byte(canId1 & 0xFF));
-        int canId2 = 0xFF;
+        int canId2 = 0x00;
         list.add(Utils.int2byte((canId2 >> 24) & 0xFF));
         list.add(Utils.int2byte((canId2 >> 16) & 0xFF));
         list.add(Utils.int2byte((canId2 >> 8) & 0xFF));
