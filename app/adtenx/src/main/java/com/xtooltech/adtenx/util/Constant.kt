@@ -1,5 +1,10 @@
 package com.xtooltech.adten.util
 
+
+/**
+ * 应用页面路由
+ */
+
 const val PKG_NAME="com.xtool.ad10"
 
 const val PATH_SCAN="/module/scan"

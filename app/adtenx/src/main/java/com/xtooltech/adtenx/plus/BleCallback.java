@@ -1,5 +1,8 @@
 package com.xtooltech.adtenx.plus;
 
+/**
+ * 蓝牙状态回调
+ */
 public interface BleCallback {
 
     void onConnected();

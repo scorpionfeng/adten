@@ -13,6 +13,9 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+/**
+ * 通讯类,数据调制类
+ */
 public class Communication {
     private static final String TAG = "Communication";
 

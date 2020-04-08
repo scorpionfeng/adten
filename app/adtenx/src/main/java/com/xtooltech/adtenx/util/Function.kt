@@ -1,24 +1,12 @@
 package com.xtooltech.adtenx.util
 
-import android.text.BoringLayout
 import com.xtooltech.adten.util.trueLet
 import com.xtooltech.adtenx.common.ble.*
-import com.xtooltech.adtenx.common.obd.*
 import com.xtooltech.adtenx.plus.Utils
 import java.util.*
-import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 import kotlin.experimental.and
 
-
-const val DS_SUPPORT = 0x01 // ֧�ָ������
-
-// ����������
-private val supportDSItems = HashMap<String, DataStreamItem_DataType_STD>()
-var isSupportAirFlow = false
-var isSuppDataStream = false
-private var dsSupportMap: MutableMap<Short, java.util.ArrayList<DataStreamItem_DataType_STD>> =
-    HashMap()
 
 fun produPid(data: ShortArray): List<Short> {
     val array = ArrayList<Short>()
@@ -50,13 +38,13 @@ operator fun Array<Any>.get(i:Int):Int{
     return 0
 }
 
+/**
+ * 肯定 应答
+ */
 fun List<Byte>.isPositive ():Boolean{
    return  this[0]!=0x7f.toByte()
 }
 
-fun ByteArray.isPositive():Boolean{
-    return this[0]!=0x7f.toByte()
-}
 
 
 fun produFreezePid(data: ShortArray): List<Short> {
@@ -133,198 +121,6 @@ fun dataFlow4KeyList(pidData: List<Short>,sid:Byte): List<Short>{
 }
 
 
-fun dataFlowKeyList(pidData: List<Short>): MutableList<DataStreamItem_DataType_STD> {
-    var result = mutableListOf<DataStreamItem_DataType_STD>()
-    var O2SLocId: Short = 0
-    val pidLength: Int = pidData.size
-    for (p in 0 until pidLength) {
-        if (pidData[p] === 0x13.toShort()) {
-            O2SLocId = 0x13
-            break
-        }
-        if (pidData[p] === 0x1D.toShort()) {
-            O2SLocId = 0x1D
-            break
-        }
-    }
-    // dsidArray init
-    // dsidArray init
-    val length2: Int = pidData.size
-    val dsIDArray = Frame()
-    for (p in 0 until length2) {
-        val pid = (pidData[p] and 0xFF)
-        if (pid >= 0x14 && pid <= 0x1B
-            || pid >= 0x24 && pid <= 0x2B
-            || pid >= 0x34 && pid <= 0x3B
-        ) {
-            if (O2SLocId.toInt() == 0x13) {
-                dsIDArray.add(
-                    String.format(
-                        "0x00,0x00,0x00,0x00,0x00,0x%02X", pid
-                    )
-                )
-            } else if (O2SLocId.toInt() == 0x1D) {
-                dsIDArray.add(
-                    String.format(
-                        "0x00,0x00,0x00,0x00,0x02,0x%02X", pid
-                    )
-                )
-            }
-        } else {
-            dsIDArray.add(
-                String.format(
-                    "0x00,0x00,0x00,0x00,0x00,0x%02X", pid
-                )
-            )
-        }
-        if (pid >= 0x14 && pid <= 0x1B
-            || pid >= 0x24 && pid <= 0x2B
-            || pid >= 0x34 && pid <= 0x3B
-        ) {
-            if (O2SLocId.toInt() == 0x13) {
-                dsIDArray.add(
-                    String.format(
-                        "0x00,0x00,0x00,0x00,0x01,0x%02X", pid
-                    )
-                )
-            } else if (O2SLocId.toInt() == 0x1D) {
-                dsIDArray.add(
-                    String.format(
-                        "0x00,0x00,0x00,0x00,0x03,0x%02X", pid
-                    )
-                )
-            }
-        } else if (pid.toInt() == 0x03) {
-            dsIDArray.add(
-                String.format(
-                    "0x00,0x00,0x00,0x00,0x01,0x%02X", pid
-                )
-            )
-        } else if (pid.toInt() == 0x41) {
-            for (n in 1..21) {
-                dsIDArray.add(
-                    String.format(
-                        "0x00,0x00,0x00,0x00,0x%02X,0x%02X", n + 0x70,
-                        pid
-                    )
-                )
-            }
-        }
-    }
-
-    TimeUnit.SECONDS.sleep(1)
-    // pidData初始化完成
-
-    // pidData初始化完成
-    for (a in 0 until dsIDArray.count()) {
-        val dsIDDataArray = dsIDArray[a]
-        val dsItem = DataStreamItem_DataType_STD(
-            dsIDDataArray
-        )
-        dsItem.supportType = DS_SUPPORT
-        val ds_file = DataBaseBin.searchDS(dsIDDataArray)
-        if (ds_file != null) {
-            dsItem.dsName = ds_file.dsName()
-            val dsUnit = ds_file.dsUnit()
-            dsItem.dsUnit = CurrentData.unitChoose(dsUnit)
-            dsItem.dsCMD = ds_file.dsCommand()
-            result.add(dsItem)
-            result.add(dsItem)
-            supportDSItems.put(dsIDDataArray.binaryToCommand(), dsItem)
-        }
-        if ("0x00,0x00,0x00,0x00,0x00,0x10".equals(
-                dsIDDataArray.binaryToCommand(),
-                ignoreCase = true
-            )
-        ) {
-            isSupportAirFlow = true
-        }
-    }
-    if (result.size > 0) {
-        isSuppDataStream = true
-    }
-
-    return result
-}
-
-
-fun freezeKeyList(pidData: List<Short>): MutableList<Freeze_DataType_STD> {
-
-    var freeseItem: MutableList<Freeze_DataType_STD> = mutableListOf()
-
-    var O2SLocId: Short = 0
-    for (o in 0 until pidData.size) {
-        if (pidData[o] === 0x13.toShort()) {
-            O2SLocId = 0x13
-            break
-        }
-        if (pidData[o] === 0x1D.toShort()) {
-            O2SLocId = 0x1D
-            break
-        }
-    }
-
-    val tempArray = java.util.ArrayList<String>()
-    for (element in pidData) {
-        val tempPidData = element
-        if (tempPidData >= 0x14 && tempPidData <= 0x1B
-            || tempPidData >= 0x24 && tempPidData <= 0x2B
-            || tempPidData >= 0x34 && tempPidData <= 0x3B
-        ) {
-            if (O2SLocId.toInt() == 0x13) {
-                tempArray.add(String.format("0x00,0x00,0x00,0x00,0x00,0x%02X", tempPidData))
-            } else if (O2SLocId.toInt() == 0x1D) {
-                tempArray.add(String.format("0x00,0x00,0x00,0x00,0x02,0x%02X", tempPidData))
-            }
-        } else {
-            tempArray.add(String.format("0x00,0x00,0x00,0x00,0x00,0x%02X", tempPidData))
-        }
-        if (tempPidData >= 0x14 && tempPidData <= 0x1B
-            || tempPidData >= 0x24 && tempPidData <= 0x2B
-            || tempPidData >= 0x34 && tempPidData <= 0x3B
-        ) {
-            if (O2SLocId.toInt() == 0x13) {
-                tempArray.add(String.format("0x00,0x00,0x00,0x00,0x01,0x%02X", tempPidData))
-            }
-            if (O2SLocId.toInt() == 0x1D) {
-                tempArray.add(String.format("0x00,0x00,0x00,0x00,0x03,0x%02X", tempPidData))
-            }
-        } else if (tempPidData.toInt() == 0x03) {
-            tempArray.add(String.format("0x00,0x00,0x00,0x00,0x01,0x%02X", tempPidData))
-        } else if (tempPidData.toInt() == 0x41) {
-            for (pid41 in 1..21) {
-                tempArray.add(
-                    String.format(
-                        "0x00,0x00,0x00,0x00,0x%02X,0x%02X",
-                        pid41 + 0x70,
-                        tempPidData
-                    )
-                )
-            }
-        }
-    }
-    for (ta in tempArray.indices) {
-        val ds: DS_File = DataBaseBin.searchDS(tempArray[ta])
-        if (ds.isSearch()) {
-            val searchData: DataArray = ds.dsCommand()
-            val cmdBuffer = ShortArray(3)
-            cmdBuffer[0] = 0x02
-            cmdBuffer[1] = searchData.get(1)
-            cmdBuffer[2] = 0x00
-            val unit: String = CurrentData.unitChoose(ds.dsUnit())
-            val freezeItem = Freeze_DataType_STD()
-            freezeItem.setFreezeID(tempArray[ta])
-            freezeItem.setFreezeName(ds.dsName())
-            freezeItem.setFreezeUnit(unit)
-            freezeItem.setFreezeCommand(DataArray(cmdBuffer, 3))
-            freeseItem.add(freezeItem)
-        }
-    }
-
-    return freeseItem
-
-}
-
 
 fun ByteArray.toHex():String{
     return  Utils.debugByteData(this)
@@ -345,52 +141,10 @@ fun Short.toObdPid():Byte{
 }
 
 
-
-fun supportFreeze(): MutableList<ByteArray?> {
-    var query = true
-    var pid1 = 0x00.toByte()
-    var datas: MutableList<ByteArray?> = mutableListOf()
-    while (query) {
-        val obdData = ByteArray(3)
-        obdData[0] = 0x02
-        obdData[1] = pid1
-        obdData[2] = 0x00
-
-        var comboCommand = ObdManger.getIns().comboCommand(obdData)
-        var data =
-            comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it, 5000, 10) }
-        data?.apply {
-
-            if (data.isEmpty()) {
-                query = false
-            } else {
-                data[0]?.apply {
-                    datas.add(this)
-                    var bizData = parse2BizSingle(this)
-                    bizData.isNotEmpty().trueLet {
-                        if (bizData[0] == 0x42.toByte()) {
-                            if (bizData.last().and(0x01) == 0x01.toByte()) {
-                                pid1 = (pid1 + 0x20).toByte()
-                            } else {
-                                query = false
-                            }
-                        }
-
-                    }.elseLet {
-                        query=false
-                    }
-                }
-
-            }
-        }
-    }
-    return datas
-}
-
-
+/**
+ * 将数据解构成单帧数据
+ */
 fun parse2BizSingle(obdData:ByteArray):List<Byte>{
-
-
 
     var bizData= arrayListOf<Byte>()
 
@@ -430,50 +184,26 @@ fun parse2BizSingle(obdData:ByteArray):List<Byte>{
     }
 
    return bizData
-    // pwm //41 6B 10 [ 41 00  BE 5F B8 11] 4F
-    // can 08 07 E8 07 [42 20 00 10 05 B0 15]
-    // can 08 07 E8 04 [42 20 00 10] 00 00 00
+
 }
 
-fun supportItem2(flag: Int): MutableList<ByteArray?> {
-    var query: Boolean = true
-    var size = if (flag == 0) 2 else 3
-    var pid1 = 0x00.toByte()
-    var datas: MutableList<ByteArray?> = mutableListOf()
-    while (query) {
-        val obdData = ByteArray(size)
-        obdData[0] = 0x02
-        obdData[1] = pid1
-        if (flag == 1) {
-            obdData[2] = 0x00
-        }
-
-        var comboCommand = ObdManger.getIns().comboCommand(obdData)
-        var data = comboCommand?.let { ObdManger.getIns().sendMultiCommandReceMulti(it, 5000, 10) }
-
-        data?.apply {
-            var item = data[0]
-            datas.add(item)
-            var flag = item?.get(3 + item[3]) //取有效数据的最后一位
-            var result = flag?.and(0x01)
-            if (result == 0x01.toByte()) {
-                pid1 = (pid1 + 0x20).toByte()
-            } else {
-                query = false
-            }
-        }
-    }
-    return datas
-}
-
+/**
+ * 字节输出 16进制字符
+ */
 fun hexString(data: Byte): String {
     return String.format("%02X", data)
 }
 
+/**
+ * 列表转换成 16进制字符
+ */
 fun List<Byte>.hexString():String{
     return this.map { hexString(it) }.toString()
 }
 
+/**
+ * 计算PID
+ */
 fun mergePid(
     data: List<ByteArray?>,
     maskBuffer: ShortArray,
@@ -505,6 +235,9 @@ fun mergePid(
     }
 }
 
+/**
+ * 合并冻结帧PID
+ */
 fun mergeFreezePid(
     data: List<ByteArray?>,
     maskBuffer: ShortArray,
@@ -530,21 +263,10 @@ fun mergeFreezePid(
     }
 }
 
-/**
- *
- *
- * fuelAdjustment, speedAdjustment, weight, displacement;  //油耗系数，速度系数，车辆总重，加速度，排量
- *
- * isSupportAirFlow
- * airFlow
- * fuelUnit
- * engineValue
- * displacement
- * airPressure
- * rpm
- * fuelAdjustment
- * */
 
+/**
+ * 计算瞬时油耗
+ */
 fun calculationWithAirFlow(airFlowValue:Int,engineKind:Int,fuelUnitValue:Int):String{
     var rec=""
     if (engineKind == 0)  //汽油
@@ -569,37 +291,10 @@ fun calculationWithAirFlow(airFlowValue:Int,engineKind:Int,fuelUnitValue:Int):St
     return rec
 }
 
-fun calcSpecialDataItem(isSupportAirFlow:Boolean,airFlow:Int,fuelUnit:Int,engineValue:Int,displacement:Int,airTemperature:Int,airPressure:Int,rpm:Int,fuelAdjustment:Int=1):String{
-    var rec=""
-    if (engineValue == 0)  //汽油
-    {
-        var value:Double=0.0
-        if (isSupportAirFlow)
-            value = fuelAdjustment*(airFlow/14.7/0.725/1000*3600);        //L／h
-        else
-            value = fuelAdjustment*(9.6898/1000*rpm*airPressure/(airTemperature+273.15)*displacement*0.85);    //L／h
-        if (fuelUnit == 1)           //gal(us)/h
-            value = value/3.785;
-        else if (fuelUnit == 2)      //gal(uk)/h
-            value = value/4.546;
-        rec = String.format("%0.2f", value)
-    }
-    else if (engineValue == 1)  //柴油
-    {
-        var value:Double=0.0
-        if (isSupportAirFlow)
-            value = fuelAdjustment*(airFlow/14.3/0.86/1000*3600);        //L／h
-        else
-            value = fuelAdjustment*(8.513/1000*rpm*airPressure/(airTemperature+273.15)*displacement*0.85);    //L／h
-        if (fuelUnit == 1)           //gal(us)/h
-            value = value/3.785;
-        else if (fuelUnit == 2)      //gal(uk)/h
-            value = value/4.546;
-        rec = String.format("%0.2f", value)
-    }
-    return rec
-}
 
+/**
+ * byte转整型
+ */
 fun Byte.b2i():Int{
     return  if (this < 0) {
         256 + this

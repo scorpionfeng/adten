@@ -7,8 +7,6 @@ import com.xtooltech.adten.common.ble.BleListener
 import com.xtooltech.adten.util.ds
 import com.xtooltech.adten.util.trueLet
 import com.xtooltech.adtenx.common.destructu.*
-import com.xtooltech.adtenx.common.obd.DataArray
-import com.xtooltech.adtenx.common.obd.DataStream
 import com.xtooltech.adtenx.plus.BleCallback
 import com.xtooltech.adtenx.plus.BleConnection
 import com.xtooltech.adtenx.plus.Communication
@@ -43,14 +41,26 @@ val nameMap = mapOf(
 class ObdManger : BleCallback {
 
 
+    /** 设备名 */
     var deviceName: String=""
+    /** 通讯层 */
     private var communication: Communication? = null
+    /** 蓝牙连接 */
     private lateinit var bleConnection: BleConnection
+    /** 地址 */
     var deviceAddress = ""
 
+    /** 解构类 */
     var destructor:DestructBiz=DestructUnknow()
 
+    /**
+     * 当前协议类型
+     */
     var currProto = OBD_STD_CAN
+
+    /**
+     * 连接
+     */
     fun connect(context: Context, cb: BleListener) {
         deviceAddress.isEmpty().trueLet {
             cb.onBleError("蓝牙地址为空,无法连接")
@@ -90,8 +100,10 @@ class ObdManger : BleCallback {
     }
 
 
-
-    fun sendSingleReceiveSingleCommand(
+    /**
+     * 发单帧收单帧
+     */
+    private fun sendSingleReceiveSingleCommand(
         data: ByteArray?,
         timeout: Long
     ): ByteArray? {
@@ -100,7 +112,10 @@ class ObdManger : BleCallback {
         }
     }
 
-    fun sendSingleReceiveMultiCommand(
+    /**
+     * 发单帧收多帧
+     */
+    private fun sendSingleReceiveMultiCommand(
         data: ByteArray,
         timeout: Long,
         expectReceiveCount: Int
@@ -111,7 +126,10 @@ class ObdManger : BleCallback {
     }
 
 
-    fun sendMultiCommandReceMulti(
+    /**
+     * 发多收多
+     */
+    private fun sendMultiCommandReceMulti(
         data: ByteArray,
         timeout: Long,
         expectReceiveCount: Int
@@ -122,47 +140,23 @@ class ObdManger : BleCallback {
     }
 
 
-
-
-    fun readCommon(cmd: Byte): String {
-        var value = ""
-        val command = comboCommand(byteArrayOf(0x01, cmd))
-        val data = command?.let { sendSingleReceiveSingleCommand(it, 3000) }
-        if (data != null) {
-            val dataArray = DataArray()
-            data.filterIndexed { index, _ -> index > 2 }.forEach {
-                dataArray.add(it.toShort())
-            }
-            var cmdString = Integer.toHexString(cmd.toInt())
-            (cmdString.length == 1).trueLet { cmdString = "0" + cmdString }
-            value = DataStream.commonCalcExpress("0x00,0x00,0x00,0x00,0x00,0x$cmdString", dataArray)
-        }
-        return value
-    }
-
-
+    /**
+     * 读Vin码
+     */
     fun readVin(): String {
         var value = ""
         val command = comboCommand(byteArrayOf(0x09, 0x02))
-        if (currProto == OBD_STD_CAN) {
             val data = command?.let { sendSingleReceiveMultiCommand(it, 3000, 10) }
             data?.apply {
                 value=destructor.parseVin(data)
             }
-
-        } else {
-            val data = command?.let { sendSingleReceiveSingleCommand(it, 3000) }
-            data?.apply {
-                var bizData = parse2BizSingle(data)
-                bizData.forEach { value += String.format("%c", it) }
-            }
-        }
         return value
     }
 
 
-
-
+    /**
+     * 读取通用数据
+     */
     fun readCommonRaw(cmd: Byte): List<Byte> {
         var list = listOf<Byte>()
         val command = comboCommand(byteArrayOf(0x01, cmd))
@@ -176,23 +170,6 @@ class ObdManger : BleCallback {
 
 
 
-    fun readTemper(): String {
-        var temperValue = ""
-        val temperCommand = comboCommand(byteArrayOf(0x01, 0x05))
-        val data = temperCommand?.let { sendSingleReceiveSingleCommand(it, 3000) }
-        if (data != null) {
-            if (currProto == OBD_STD_CAN && data.size >= 7 && data[4] == 0x41.toByte() && data[5] == 0x05.toByte()
-            ) {
-                temperValue = (Utils.byte2int(data[6]) - 40).toString()
-            } else if (currProto == OBD_EXT_CAN && data.size >= 9 && data[6] == 0x41.toByte() && data[7] == 0x05.toByte()
-            ) {
-                temperValue = (Utils.byte2int(data[8]) - 40).toString()
-            } else if (data.size >= 6 && data[3] == 0x41.toByte() && data[4] == 0x05.toByte()) {
-                temperValue = (Utils.byte2int(data[5]) - 40).toString()
-            }
-        }
-        return temperValue
-    }
 
 
     companion object {
@@ -227,6 +204,9 @@ class ObdManger : BleCallback {
     override fun onFoundUuid(p0: Int) {
     }
 
+    /**
+     * 组装命令
+     */
     fun comboCommand(obdData: ByteArray): ByteArray? {
 
         when (currProto) {
@@ -240,11 +220,16 @@ class ObdManger : BleCallback {
         return null
     }
 
+    /**
+     * 扫描
+     */
     fun scan(): Int {
         return if (scanSystem()) currProto else OBD_UNKNOWN
     }
 
-
+    /**
+     * 扫描操作
+     */
     private fun scanSystem(): Boolean {
         var ret: Boolean = enterCan()
         if (!ret) {
@@ -276,6 +261,9 @@ class ObdManger : BleCallback {
         return ret
     }
 
+    /**
+     * 匹配解构器
+     */
     private fun selectDestroctor(currProto: Int): DestructBiz {
         return when (currProto) {
             OBD_STD_CAN -> DestructCanStd()
@@ -430,6 +418,9 @@ class ObdManger : BleCallback {
         return flag
     }
 
+    /**
+     * 查询 冻结帧状态
+     */
     fun queryMilState(): Pair<Boolean, List<Byte>> {
         var milState = false
         var value = readCommonRaw(0x01)
@@ -442,6 +433,9 @@ class ObdManger : BleCallback {
         return Pair(milState, value)
     }
 
+    /**
+     * 读取冻结帧项
+     */
     fun readFreezeItem(item: ObdItem): String {
         var value = ""
         val command = comboCommand(byteArrayOf(0x02, item.kind, 0x00))
@@ -455,6 +449,9 @@ class ObdManger : BleCallback {
         return value
     }
 
+    /**
+     * 读取数据流项
+     */
     fun readFlowItem(item: ObdItem): String {
         var value = ""
         val command = comboCommand(byteArrayOf(0x01, item.kind))
@@ -469,6 +466,9 @@ class ObdManger : BleCallback {
         return value
     }
 
+    /**
+     * 获取 电压
+     */
     fun readDv(): String {
         return communication?.readDv() ?: "电压读取不到"
     }
@@ -500,6 +500,9 @@ class ObdManger : BleCallback {
         return value
     }
 
+    /**
+     * 获取数据流所有PID
+     */
     private fun supportFlowPids(): MutableList<ByteArray?> {
         var query = true
         var size = 2
@@ -561,6 +564,9 @@ class ObdManger : BleCallback {
         return obdList.toList()
     }
 
+    /**
+     * 冻结帧支持项查询
+     */
     fun supportFreeze(): MutableList<ByteArray?> {
         var query = true
         var pid1 = 0x00.toByte()
@@ -629,10 +635,16 @@ class ObdManger : BleCallback {
         return obditms.toList()
     }
 
+    /**
+     * 初始化固件升级
+     */
     fun initFirmwareUpdate(file: File): Boolean {
         return communication?.initFirmwareUpdate(file) ?:false
     }
 
+    /**
+     * 升级固件
+     */
     fun updateOneFrameFirmware(buffer: ByteArray, i: Int, len: Int): Boolean {
         return communication?.updateOneFrameFirmware(buffer,i,len) ?:false
     }
