@@ -481,16 +481,16 @@ public class Communication {
         list.add(Utils.int2byte((P4 >> 8) & 0xFF));
         list.add(Utils.int2byte(P4 & 0xFF));
         list.add(Utils.int2byte(0x10));  //CAN过滤：标准/扩展/掩码标准/掩码扩展
-        list.add(Utils.int2byte(stdCan ? 0x02 : 0x03));
+        list.add(Utils.int2byte(stdCan ? 0x02 : 0x03)); // 0：标准CAN列表模式   1： 扩展CAN列表模式  2： 标准CAN掩码模式  3： 扩展CAN掩码模式
         list.add(Utils.int2byte(0x11));  //CAN过滤ID个数
         list.add(Utils.int2byte(0x02));
         list.add(Utils.int2byte(0x12));  //CAN过滤ID
-        int canId1 = stdCan ? 0x07e8 : 0x18DAF158;//18 DA F1 0E
+        int canId1 = stdCan ? 0x0700 : 0x18DAF100;//18 DA F1 0E
         list.add(Utils.int2byte((canId1 >> 24) & 0xFF));
         list.add(Utils.int2byte((canId1 >> 16) & 0xFF));
         list.add(Utils.int2byte((canId1 >> 8) & 0xFF));
         list.add(Utils.int2byte(canId1 & 0xFF));
-        int canId2 = 0x00;
+        int canId2 = 0xff;
         list.add(Utils.int2byte((canId2 >> 24) & 0xFF));
         list.add(Utils.int2byte((canId2 >> 16) & 0xFF));
         list.add(Utils.int2byte((canId2 >> 8) & 0xFF));
@@ -721,6 +721,7 @@ public class Communication {
 
     public boolean enterCanStd(int bps) {
         if (!configCan(true, bps)) return false;
+        ecuid_engine=0x07ff;
         byte[] sendData = Utils.comboCanCommand(true, new byte[] {0x01, 0x00});
         List<byte[]> dataList = sendSingleReceiveMultiCommand(sendData, 3000, 20);
         if(dataList.size()==0){
@@ -734,10 +735,46 @@ public class Communication {
             int ecuid_item = Utils.byteArray2int(Arrays.copyOfRange(data, 1, 3));
             Log.i("Communication","ecuid>>>>"+Integer.toHexString(ecuid_item));
             mEcuIds.add(ecuid_item);
+            if(ecuid_item < ecuid_engine){
+                ecuid_engine=ecuid_item;
+            }
         }
         if (mEcuIds.isEmpty()) return false;
+
+        Log.i("Communication","ecuid_engine>>>>"+Integer.toHexString(ecuid_engine));
+        maskCanStd();
         runKeepLink(sendData, 600);
         return true;
+    }
+
+    public boolean maskCanStd(){
+
+        List<Byte> list = new ArrayList<>();
+        list.add(Utils.int2byte(0x60));
+        list.add(Utils.int2byte(0x01));
+        list.add(Utils.int2byte(0x03));  //参数个数
+        list.add(Utils.int2byte(0x10));  //CAN过滤：标准/扩展/掩码标准/掩码扩展
+        list.add(Utils.int2byte( 0x00 )); // 0：标准CAN列表模式   1： 扩展CAN列表模式  2： 标准CAN掩码模式  3： 扩展CAN掩码模式
+        list.add(Utils.int2byte(0x11));  //CAN过滤ID个数
+        list.add(Utils.int2byte(0x01));
+        list.add(Utils.int2byte(0x12));  //CAN过滤ID
+        int canId1 =  ecuid_engine;
+        list.add(Utils.int2byte((canId1 >> 24) & 0xFF));//00
+        list.add(Utils.int2byte((canId1 >> 16) & 0xFF));//00
+        list.add(Utils.int2byte((canId1 >> 8) & 0xFF));//07
+        list.add(Utils.int2byte(canId1 & 0xFF));//e8
+
+        byte[] data = new byte[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            data[i] = list.get(i);
+        }
+        Log.i("Communication","mast command= "+Arrays.toString(data));
+        byte[] recv = sendReceiveData(data, 3000);
+        if (recv != null && recv.length > 2 && recv[0] == 0x60 && recv[1] == 0x0B) {
+            return recv[4] == 1;
+        }
+        return false;
+
     }
 
     public boolean enterCanExt(int bps) {
@@ -758,68 +795,27 @@ public class Communication {
         }
         Log.i("Communication","can_ext_ecuid_engine>>>>"+Integer.toHexString(ecuid_engine));
         if (mEcuIds.isEmpty()) return false;
-        maskEnginecan(false,bps);
+        maskCanExt();
         runKeepLink(sendData, 600);
         return true;
     }
 
-    private boolean maskEnginecan(boolean stdCan,int bps) {
+    private boolean maskCanExt() {
         List<Byte> list = new ArrayList<>();
         list.add(Utils.int2byte(0x60));
         list.add(Utils.int2byte(0x01));
         list.add(Utils.int2byte(0x03));  //参数个数
-//        list.add(Utils.int2byte(0x01));  //协议类型
-//        list.add(Utils.int2byte(0x00));
-//        list.add(Utils.int2byte(0x02));  //设置波特率
-//        list.add(Utils.int2byte((bps >> 24) & 0xFF));
-//        list.add(Utils.int2byte((bps >> 16) & 0xFF));
-//        list.add(Utils.int2byte((bps >> 8) & 0xFF));
-//        list.add(Utils.int2byte(bps & 0xFF));
-//        int P1 = 200;
-//        list.add(Utils.int2byte(0x03));  //P1
-//        list.add(Utils.int2byte((P1 >> 8) & 0xFF));
-//        list.add(Utils.int2byte(P1 & 0xFF));
-//        int P2 = 500;
-//        list.add(Utils.int2byte(0x04));  //P2
-//        list.add(Utils.int2byte((P2 >> 8) & 0xFF));
-//        list.add(Utils.int2byte(P2 & 0xFF));
-//        int P3 = 55;
-//        list.add(Utils.int2byte(0x05));  //P3
-//        list.add(Utils.int2byte((P3 >> 8) & 0xFF));
-//        list.add(Utils.int2byte(P3 & 0xFF));
-//        int P4 = 5;
-//        list.add(Utils.int2byte(0x06));  //P4
-//        list.add(Utils.int2byte((P4 >> 8) & 0xFF));
-//        list.add(Utils.int2byte(P4 & 0xFF));
         list.add(Utils.int2byte(0x10));  //CAN过滤：标准/扩展/掩码标准/掩码扩展
-        list.add(Utils.int2byte(stdCan ? 0x02 : 0x03));
+        list.add(Utils.int2byte( 0x01));// 0：标准CAN列表模式   1： 扩展CAN列表模式  2： 标准CAN掩码模式  3： 扩展CAN掩码模式
         list.add(Utils.int2byte(0x11));  //CAN过滤ID个数
-        list.add(Utils.int2byte(0x02));
+        list.add(Utils.int2byte(0x01));
         list.add(Utils.int2byte(0x12));  //CAN过滤ID
         int canId1 = ecuid_engine;//18 DA F1 0E
         list.add(Utils.int2byte((canId1 >> 24) & 0xFF));
         list.add(Utils.int2byte((canId1 >> 16) & 0xFF));
         list.add(Utils.int2byte((canId1 >> 8) & 0xFF));
         list.add(Utils.int2byte(canId1 & 0xFF));
-        int canId2 = 0x00;
-        list.add(Utils.int2byte((canId2 >> 24) & 0xFF));
-        list.add(Utils.int2byte((canId2 >> 16) & 0xFF));
-        list.add(Utils.int2byte((canId2 >> 8) & 0xFF));
-        list.add(Utils.int2byte(canId2 & 0xFF));
 
-//        list.add(Utils.int2byte(0x13));  //PAFC
-//        list.add(Utils.int2byte(0x01));  //PAFC
-//        list.add(Utils.int2byte(0x14));  //PAFC
-//        list.add(Utils.int2byte(0x08));  //PAFC
-//        list.add(Utils.int2byte(0x15));  //PAFC
-//        list.add(Utils.int2byte(0x30));  //PAFC
-//        list.add(Utils.int2byte(0x00));  //PAFC
-//        list.add(Utils.int2byte(0x00));  //PAFC
-//        list.add(Utils.int2byte(0x00));  //PAFC
-//        list.add(Utils.int2byte(0x00));  //PAFC
-//        list.add(Utils.int2byte(0x00));  //PAFC
-//        list.add(Utils.int2byte(0x00));  //PAFC
-//        list.add(Utils.int2byte(0x00));  //PAFC
         byte[] data = new byte[list.size()];
         for (int i = 0; i < list.size(); i++) {
             data[i] = list.get(i);
