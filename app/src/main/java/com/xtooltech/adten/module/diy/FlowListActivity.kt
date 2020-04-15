@@ -2,7 +2,9 @@ package com.xtooltech.adten.module.diy
 
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.View
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.alibaba.android.arouter.facade.annotation.Route
@@ -57,8 +59,10 @@ class FlowListActivity : BaseVMActivity<ActivityFlowListBinding, FlowListViewMod
             list.apply {
                 vm.datas.addAll(list.toMutableList())
             }
+            Log.i("Communication","数据流共${vm.datas.size}条")
 
             handler.post {
+
                 adapter.notifyDataSetChanged()
                 hud.dismiss()
             }

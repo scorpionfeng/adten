@@ -6,56 +6,47 @@
     <data>
         <variable
             name="model"
-            type="com.xtooltech.adtenx.common.ble.ObdItem" />
+            type="com.xtooltech.adten.module.diy.FlowItem" />
 
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
+        android:padding="30dp"
         android:layout_height="wrap_content">
 
-        <CheckBox
-            android:id="@+id/checked"
+        <TextView
+            android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:clickable="false"
-            android:checked="false"
+            android:text="@{model.title}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@mipmap/ic_launcher" />
 
         <TextView
-            android:id="@+id/textView7"
+            android:id="@+id/content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="@{model.title}"
+            android:textAlignment="textEnd"
+            android:layout_marginEnd="16dp"
+            android:text="@{model.content}"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/checked"
+            app:layout_constraintEnd_toStartOf="@id/sync"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="test" />
 
         <TextView
-            android:id="@+id/value"
+            android:id="@+id/sync"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@{model.content}"
+            android:layout_marginEnd="8dp"
+            android:text="@{model.symbol}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/textView7"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/textView11"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@{model.index}"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/textView7"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="test" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

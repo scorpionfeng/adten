@@ -34,3 +34,6 @@ const val PATH_DIY_MIL="/module/diy/mil"
 const val PATH_DIY_SMOKE="/module/diy/smoke"
 
 const val PATH_DIY_INFO="/module/diy/info"
+
+const val PATH_DIY_FUEL="/module/diy/fuel"
+

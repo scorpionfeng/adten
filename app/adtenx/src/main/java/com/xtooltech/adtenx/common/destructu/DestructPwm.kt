@@ -12,23 +12,18 @@ class DestructPwm :DestructBiz{
         var answer=false
         data.forEachIndexed loop@{index, bytes ->
             bytes?.apply {
-                takeIf { index==0 }?.apply {
                     answer = bytes.contains(0x49.toByte())
                     takeIf { answer }?.apply {
-                        vinList.addAll(bytes.slice(bytes.size-3 until bytes.size))
+                        vinList.addAll(bytes.slice(9 until bytes.size-1))
                     } ?:apply {
                         return@loop
                     }
-                }
-                takeIf { index>0 &&  answer }?.apply {
-                    vinList.addAll(bytes.slice(4 until bytes.size))
-                }
             }
         }
 
         takeIf { vinList.isNotEmpty() }?.apply {
             try {
-                vinList.forEach {
+                vinList.take(17).forEach{
                     vinCode += String.format("%c", it)
                 }
             }catch (e:Exception){

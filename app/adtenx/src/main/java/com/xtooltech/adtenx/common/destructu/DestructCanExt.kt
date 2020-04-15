@@ -21,7 +21,7 @@ class DestructCanExt :DestructBiz{
                     }
                 }
                 takeIf { index>0 &&  answer }?.apply {
-                    vinList.addAll(bytes.slice(4 until bytes.size))
+                    vinList.addAll(bytes.slice(6 until bytes.size))
                 }
             }
         }

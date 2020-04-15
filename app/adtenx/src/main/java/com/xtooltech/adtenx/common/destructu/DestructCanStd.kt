@@ -39,4 +39,9 @@ class DestructCanStd :DestructBiz{
         return vinCode
 
     }
+
+//    override fun parseTrobCode(data: List<ByteArray?>): Pair<Int, List<String>> {
+//
+//        return Pair(0, listOf())
+//    }
 }

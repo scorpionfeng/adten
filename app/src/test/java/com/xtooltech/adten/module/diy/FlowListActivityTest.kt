@@ -520,6 +520,28 @@ internal class FlowListActivityTestt{
         println(codeLists.toString())
 
 
+        var codeLists2= mutableListOf<String>()
+        var data2= byteArrayOf(
+            0x01, 0xA1.toByte(),0x4B,0x42, 0x8D.toByte(), 0xF3.toByte(), 0xC4.toByte(), 0xE4.toByte()
+        )
+
+        for (i in data2.indices step 2){
+            var codeHex2= data2[i].toInt().shl(8).or(data2[i+1].toInt())
+            if (codeHex2 < 0x4000) { // P
+                tempCodeStr = String.format("P%04X", codeHex2)
+            } else if (codeHex2 < 0x8000) { // C
+                tempCodeStr = String.format("C%04X", codeHex2 - 0x4000)
+            } else if (codeHex2 < 0xC000) { // B
+                tempCodeStr = String.format("B%04X", codeHex2 - 0x8000)
+            } else { // U
+                tempCodeStr = String.format("U%04X", codeHex2 - 0xC000)
+            }
+            codeLists2.add(tempCodeStr)
+        }
+
+        //p01a1,c0b42,b0df3,u04e4
+        println(codeLists2.toString())
+
     }
 
 

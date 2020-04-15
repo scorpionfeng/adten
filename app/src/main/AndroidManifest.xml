@@ -36,6 +36,7 @@
         <activity android:name=".module.diy.FlowListActivity" />
         <activity android:name=".module.dash.DashActivity" />
         <activity android:name=".module.diy.MilActivity" />
+        <activity android:name=".module.diy.FuelActivity" />
         <activity android:name=".module.diy.SmokeActivity" />
         <activity android:name=".module.diy.FreezeListActivity" />
         <activity android:name=".module.diy.DiyActivity" />

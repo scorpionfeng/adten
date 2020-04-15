@@ -1,5 +1,7 @@
 package com.xtooltech.adtenx.common.destructu
 
+import android.util.Log
+import com.xtooltech.adtenx.util.toHex
 import java.lang.Exception
 
 
@@ -15,13 +17,13 @@ class DestructVpw :DestructBiz{
                 takeIf { index==0 }?.apply {
                     answer = bytes.contains(0x49.toByte())
                     takeIf { answer }?.apply {
-                        vinList.addAll(bytes.slice(bytes.size-3 until bytes.size))
+                        vinList.addAll(bytes.slice(bytes.size-2 until bytes.size-1))
                     } ?:apply {
                         return@loop
                     }
                 }
                 takeIf { index>0 &&  answer }?.apply {
-                    vinList.addAll(bytes.slice(4 until bytes.size))
+                    vinList.addAll(bytes.slice(6 until bytes.size-1))
                 }
             }
         }

@@ -144,19 +144,11 @@ class ObdManger : BleCallback {
     fun readVin(): String {
         var value = ""
         val command = comboCommand(byteArrayOf(0x09, 0x02))
-        if (currProto == OBD_STD_CAN) {
             val data = command?.let { sendSingleReceiveMultiCommand(it, 3000, 10) }
             data?.apply {
                 value=destructor.parseVin(data)
             }
-
-        } else {
-            val data = command?.let { sendSingleReceiveSingleCommand(it, 3000) }
-            data?.apply {
-                var bizData = parse2BizSingle(data)
-                bizData.forEach { value += String.format("%c", it) }
-            }
-        }
+        Log.i("Communication","vin= "+value+"and size="+value.length)
         return value
     }
 
@@ -333,6 +325,7 @@ class ObdManger : BleCallback {
         var codeLists= mutableListOf<String>()
         val command = comboCommand(byteArrayOf(cmd))
         val vinHexList= mutableListOf<Byte>()
+        Log.i("Communication","读取故障码："+"-> cmd="+command.toString())
         if (currProto == OBD_STD_CAN) {
             val data = command?.let { sendSingleReceiveMultiCommand(it, 3000, 10) }
             data?.forEach {
@@ -354,7 +347,7 @@ class ObdManger : BleCallback {
             takeIf { vinHexList.isNotEmpty() }?.apply {
                 var tempCodeStr=""
                 for (i in vinHexList.indices step 2){
-                    val codeHex=(vinHexList[i].toInt() shl 8).or(vinHexList[i+1].toInt())
+                    val codeHex=(vinHexList[i].toInt().shl(8).and(0xff)).or(vinHexList[i+1].toInt().and(0xff))
 
                     try {
                         tempCodeStr = when {
@@ -398,6 +391,7 @@ class ObdManger : BleCallback {
             }
 
         }
+        Log.i("Communication","读取故障码："+ hexString(cmd) +"value= "+value)
         return Pair(value,codeLists.toList())
     }
 
@@ -466,6 +460,8 @@ class ObdManger : BleCallback {
             }
 
         }
+        item.content=value
+        Log.i("Communication",item.toString())
         return value
     }
 
