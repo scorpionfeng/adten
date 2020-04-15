@@ -15,6 +15,8 @@ import com.xtooltech.adtenx.plus.Communication
 import com.xtooltech.adtenx.plus.Utils
 import com.xtooltech.adtenx.util.*
 import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 import java.lang.Exception
 import java.util.*
 import kotlin.experimental.and
@@ -50,7 +52,7 @@ class ObdManger : BleCallback {
 
     var destructor:DestructBiz=DestructUnknow()
 
-    var currProto = OBD_STD_CAN
+    var currProto = OBD_UNKNOWN
     fun connect(context: Context, cb: BleListener) {
         deviceAddress.isEmpty().trueLet {
             cb.onBleError("蓝牙地址为空,无法连接")
@@ -148,7 +150,7 @@ class ObdManger : BleCallback {
             data?.apply {
                 value=destructor.parseVin(data)
             }
-        Log.i("Communication","vin= "+value+"and size="+value.length)
+        Log.i("Communication","vin= "+value+" and size="+value.length)
         return value
     }
 
@@ -240,22 +242,18 @@ class ObdManger : BleCallback {
     private fun scanSystem(): Boolean {
         var ret: Boolean = enterCan()
         if (!ret) {
-            currProto = OBD_ISO
             Log.i("Communication", "try iso enter....")
             ret = communication?.enterIso() ?: false
         }
         if (!ret) {
-            currProto = OBD_KWP
             Log.i("Communication", "try kwp enter....")
             ret = communication?.enterKwp() ?: false
         }
         if (!ret) {
-            currProto = OBD_PWM
             Log.i("Communication", "try pwm enter....")
             ret = communication?.enterPwmVpw(true) ?: false
         }
         if (!ret) {
-            currProto = OBD_VPW
             Log.i("Communication", "try vpw enter....")
             ret = communication?.enterPwmVpw(false) ?: false
         }
@@ -632,6 +630,48 @@ class ObdManger : BleCallback {
     fun updateOneFrameFirmware(buffer: ByteArray, i: Int, len: Int): Boolean {
         return communication?.updateOneFrameFirmware(buffer,i,len) ?:false
     }
+
+
+
+    fun burnBin(file:File,callback : OnBurnCallBack) {
+        var `in`: FileInputStream? = null
+        val buffer = ByteArray(252)
+        val total: Long = if (file.length() % 252 == 0L) file.length() / 252 else file.length() / 252 + 1
+        var len: Int
+        var i: Int
+        var count = 0
+        var success = false
+        try {
+            `in` = FileInputStream(file)
+            while (`in`.read(buffer, 0, 252).also { len = it } != -1) {
+                val strProgress =
+                    String.format(Locale.getDefault(), "%.2f%%", count * 1.0 / total)
+                callback.progress(count * 1.0 / total)
+                success = ObdManger.getIns().updateOneFrameFirmware(buffer, 0, len)
+                if (!success) break
+                count++
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            success = false
+        } finally {
+            try {
+                `in`?.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+
+            file.delete()
+        }
+        callback.isSuccess(success)
+    }
+
+interface OnBurnCallBack {
+
+    fun progress(progress:Double)
+
+    fun isSuccess(isSucced:Boolean)
+}
 
 
 }

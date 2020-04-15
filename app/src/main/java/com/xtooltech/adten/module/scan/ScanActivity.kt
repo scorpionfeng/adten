@@ -540,44 +540,28 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
     private fun updateFirmware(mSelectedFilePath: String) {
             Thread(Runnable {
                 val file = File(mSelectedFilePath)
+                var finalSuccess = false
                 if (ObdManger.getIns().initFirmwareUpdate(file)) {
-                    var `in`: FileInputStream? = null
-                    val buffer = ByteArray(252)
-                    val total: Long = if (file.length() % 252 == 0L) file.length() / 252 else file.length() / 252 + 1
-                    var len: Int
-                    var i: Int
-                    var count = 0
-                    var success = true
-                    try {
-                        `in` = FileInputStream(file)
-                        while (`in`.read(buffer, 0, 252).also { len = it } != -1) {
-                            val strProgress =
-                                String.format(Locale.getDefault(), "%.2f%%", count * 1.0 / total)
-                            runOnUiThread { hud.setLabel(strProgress) }
-                            success = ObdManger.getIns().updateOneFrameFirmware(buffer, 0, len)
-                            if (!success) break
-                            count++
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        success = false
-                    } finally {
-                        try {
-                            `in`?.close()
-                        } catch (e: IOException) {
-                            e.printStackTrace()
+                    ObdManger.getIns().burnBin(file,object :ObdManger.OnBurnCallBack{
+                        override fun progress(progress: Double) {
+                            runOnUiThread {
+                                hud.setLabel("burning $progress")
+                            }
                         }
 
-                        file.delete()
-                    }
-                    val finalSuccess = success
-                    runOnUiThread {
-                        hud.dismiss()
-                        AlertDialog.Builder(this@ScanActivity)
-                            .setMessage(if (finalSuccess) "更新固件成功" else "更新固件失败")
-                            .setPositiveButton("确定", null)
-                            .show()
-                    }
+                        override fun isSuccess(isSucced: Boolean) {
+                            finalSuccess=isSucced
+                            runOnUiThread {
+                                hud.dismiss()
+                                AlertDialog.Builder(this@ScanActivity)
+                                    .setMessage(if (finalSuccess) "更新固件成功" else "更新固件失败")
+                                    .setPositiveButton("确定", null)
+                                    .show()
+                            }
+                        }
+
+                    })
+
                 } else {
                     runOnUiThread {
                         hud.dismiss()

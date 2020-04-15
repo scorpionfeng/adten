@@ -13,6 +13,8 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import static java.sql.DriverManager.println;
+
 public class Communication {
     private static final String TAG = "Communication";
 
@@ -24,6 +26,7 @@ public class Communication {
     private boolean mSendReceiving = false;
 
     private Set<Integer> mEcuIds = new HashSet<>();
+    public int ecuid_engine=0xffffffff;
 
     public Communication(CommunicationInterface instance) {
         mInstance = instance;
@@ -194,6 +197,7 @@ public class Communication {
         mInstance.clear();
         mByteQueue.clear();
         sendDataList(dataList);
+        mByteQueue.clear();
         List<byte[]> ret = receiveDataList(timeout, expectReceiveCount);
         mSendReceiving = false;
         return ret;
@@ -727,7 +731,9 @@ public class Communication {
         mEcuIds.clear();
         for (byte[] data : dataList) {
             if (data.length < 6 || data[4] != 0x41) continue;
-            mEcuIds.add(Utils.byteArray2int(Arrays.copyOfRange(data, 1, 3)));
+            int ecuid_item = Utils.byteArray2int(Arrays.copyOfRange(data, 1, 3));
+            Log.i("Communication","ecuid>>>>"+Integer.toHexString(ecuid_item));
+            mEcuIds.add(ecuid_item);
         }
         if (mEcuIds.isEmpty()) return false;
         runKeepLink(sendData, 600);
@@ -736,17 +742,93 @@ public class Communication {
 
     public boolean enterCanExt(int bps) {
         if (!configCan(false, bps)) return false;
+        ecuid_engine=0x18DAF1FF;
         byte[] sendData = Utils.comboCanCommand(false, new byte[] {0x01, 0x00});
         List<byte[]> dataList = sendSingleReceiveMultiCommand(sendData, 3000, 20);
         if (dataList.size() == 0) return false;
         mEcuIds.clear();
         for (byte[] data : dataList) {
             if (data.length < 8 || data[6] != 0x41) continue;
-            mEcuIds.add(Utils.byteArray2int(Arrays.copyOfRange(data, 1, 5)));
+            int ecuid_item = Utils.byteArray2int(Arrays.copyOfRange(data, 1, 5));
+            Log.i("Communication","can_ext_ecuid>>>>"+Integer.toHexString(ecuid_item));
+            mEcuIds.add(ecuid_item);
+            if(ecuid_item<ecuid_engine){
+                ecuid_engine=ecuid_item;
+            }
         }
+        Log.i("Communication","can_ext_ecuid_engine>>>>"+Integer.toHexString(ecuid_engine));
         if (mEcuIds.isEmpty()) return false;
+        maskEnginecan(false,bps);
         runKeepLink(sendData, 600);
         return true;
+    }
+
+    private boolean maskEnginecan(boolean stdCan,int bps) {
+        List<Byte> list = new ArrayList<>();
+        list.add(Utils.int2byte(0x60));
+        list.add(Utils.int2byte(0x01));
+        list.add(Utils.int2byte(0x03));  //参数个数
+//        list.add(Utils.int2byte(0x01));  //协议类型
+//        list.add(Utils.int2byte(0x00));
+//        list.add(Utils.int2byte(0x02));  //设置波特率
+//        list.add(Utils.int2byte((bps >> 24) & 0xFF));
+//        list.add(Utils.int2byte((bps >> 16) & 0xFF));
+//        list.add(Utils.int2byte((bps >> 8) & 0xFF));
+//        list.add(Utils.int2byte(bps & 0xFF));
+//        int P1 = 200;
+//        list.add(Utils.int2byte(0x03));  //P1
+//        list.add(Utils.int2byte((P1 >> 8) & 0xFF));
+//        list.add(Utils.int2byte(P1 & 0xFF));
+//        int P2 = 500;
+//        list.add(Utils.int2byte(0x04));  //P2
+//        list.add(Utils.int2byte((P2 >> 8) & 0xFF));
+//        list.add(Utils.int2byte(P2 & 0xFF));
+//        int P3 = 55;
+//        list.add(Utils.int2byte(0x05));  //P3
+//        list.add(Utils.int2byte((P3 >> 8) & 0xFF));
+//        list.add(Utils.int2byte(P3 & 0xFF));
+//        int P4 = 5;
+//        list.add(Utils.int2byte(0x06));  //P4
+//        list.add(Utils.int2byte((P4 >> 8) & 0xFF));
+//        list.add(Utils.int2byte(P4 & 0xFF));
+        list.add(Utils.int2byte(0x10));  //CAN过滤：标准/扩展/掩码标准/掩码扩展
+        list.add(Utils.int2byte(stdCan ? 0x02 : 0x03));
+        list.add(Utils.int2byte(0x11));  //CAN过滤ID个数
+        list.add(Utils.int2byte(0x02));
+        list.add(Utils.int2byte(0x12));  //CAN过滤ID
+        int canId1 = ecuid_engine;//18 DA F1 0E
+        list.add(Utils.int2byte((canId1 >> 24) & 0xFF));
+        list.add(Utils.int2byte((canId1 >> 16) & 0xFF));
+        list.add(Utils.int2byte((canId1 >> 8) & 0xFF));
+        list.add(Utils.int2byte(canId1 & 0xFF));
+        int canId2 = 0x00;
+        list.add(Utils.int2byte((canId2 >> 24) & 0xFF));
+        list.add(Utils.int2byte((canId2 >> 16) & 0xFF));
+        list.add(Utils.int2byte((canId2 >> 8) & 0xFF));
+        list.add(Utils.int2byte(canId2 & 0xFF));
+
+//        list.add(Utils.int2byte(0x13));  //PAFC
+//        list.add(Utils.int2byte(0x01));  //PAFC
+//        list.add(Utils.int2byte(0x14));  //PAFC
+//        list.add(Utils.int2byte(0x08));  //PAFC
+//        list.add(Utils.int2byte(0x15));  //PAFC
+//        list.add(Utils.int2byte(0x30));  //PAFC
+//        list.add(Utils.int2byte(0x00));  //PAFC
+//        list.add(Utils.int2byte(0x00));  //PAFC
+//        list.add(Utils.int2byte(0x00));  //PAFC
+//        list.add(Utils.int2byte(0x00));  //PAFC
+//        list.add(Utils.int2byte(0x00));  //PAFC
+//        list.add(Utils.int2byte(0x00));  //PAFC
+//        list.add(Utils.int2byte(0x00));  //PAFC
+        byte[] data = new byte[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            data[i] = list.get(i);
+        }
+        byte[] recv = sendReceiveData(data, 3000);
+        if (recv != null && recv.length > 2 && recv[0] == 0x60 && recv[1] == 0x0B) {
+            return recv[4] == 1;
+        }
+        return false;
     }
 
     public interface CommunicationInterface {
