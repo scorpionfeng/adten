@@ -336,7 +336,7 @@ class ObdManger : BleCallback {
                         vinHexList.addAll(elements)
                     } else {
                         var elements = this.slice(4 until this.size)
-                        elements = elements.filter { item -> (item != 0xaa.toByte()) and (item != 0x00.toByte()) }
+                        elements = elements.filter { item -> (item != 0xaa.toByte()) }
                         vinHexList.addAll(elements)
                     }
                 }
@@ -385,7 +385,7 @@ class ObdManger : BleCallback {
                         dataList.addAll(parse2BizSingle(this))
                     }
                 }
-                value=dataList.first().toInt()
+                value=dataList[1].toInt()
             }
 
         }

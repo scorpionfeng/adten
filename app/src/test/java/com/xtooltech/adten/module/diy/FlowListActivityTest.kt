@@ -2,6 +2,7 @@ package com.xtooltech.adten.module.diy
 import com.xtooltech.adten.util.calcx
 import com.xtooltech.adtenx.common.ble.ObdItem
 import com.xtooltech.adtenx.common.destructu.DestructCanStd
+import com.xtooltech.adtenx.plus.Utils
 import com.xtooltech.adtenx.util.IsRange
 import com.xtooltech.adtenx.util.hexString
 import com.xtooltech.adtenx.util.toHex
@@ -542,6 +543,13 @@ internal class FlowListActivityTestt{
         //p01a1,c0b42,b0df3,u04e4
         println(codeLists2.toString())
 
+    }
+
+
+    @Test
+    fun testQuit(){
+        var comboKwpCommand = Utils.comboKwpCommand(byteArrayOf(0x82.toByte()))
+        println(comboKwpCommand.toHex())
     }
 
 
