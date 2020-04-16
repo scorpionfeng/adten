@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Gradle: com.phoenix:base:1.0.0@aar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/f48a2bd3184f0810d617b8b9818acab0/jetified-base-1.0.0/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/f48a2bd3184f0810d617b8b9818acab0/jetified-base-1.0.0/res" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

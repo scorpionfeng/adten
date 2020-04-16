@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../../adten.iml" filepath="$PROJECT_DIR$/../../adten.iml" group="adten" />
+      <module fileurl="file://$PROJECT_DIR$/adtenx.iml" filepath="$PROJECT_DIR$/adtenx.iml" group="adten/app/adtenx" />
+      <module fileurl="file://$PROJECT_DIR$/../app.iml" filepath="$PROJECT_DIR$/../app.iml" group="adten/app" />
+    </modules>
+  </component>
+</project>
