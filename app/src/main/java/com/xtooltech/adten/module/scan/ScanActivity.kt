@@ -39,13 +39,11 @@ import com.xtooltech.adtenx.common.ble.*
 import com.xtooltech.adtenx.plus.BleConnection
 import com.xtooltech.adtenx.plus.Communication
 import com.xtooltech.adtenx.plus.Utils
+import com.xtooltech.adtenx.util.toHex
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.base.util.toast
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
+import java.io.*
 import java.util.*
 
 class ScanViewModel : ViewModel() {
@@ -420,7 +418,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
 
     fun startFirmwareUpdate(v:View) {
 
-       var copyed= copyApkFromAssets(this,"ble_obd.bin",Environment.getExternalStorageDirectory().absolutePath + "/AD10")
+       var copyed= copyApkFromAssets(this,"AD10_BLE_OBD_V01.05.bin",Environment.getExternalStorageDirectory().absolutePath + "/AD10")
         copyed.falseLet { return }
 
         var mSelectedFilePath=""
@@ -572,5 +570,23 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
                     }
                 }
             }).start()
+    }
+
+    fun click_readBinVersion(view: View) {
+        Thread Thread@{
+            var dir=File(Environment.getExternalStorageDirectory().absolutePath + "/AD10")
+            takeUnless { dir.exists() }?.apply { dir.mkdir() }
+            var copyed= copyApkFromAssets(this,"AD10_BLE_OBD_V01.05.bin",Environment.getExternalStorageDirectory().absolutePath + "/AD10")
+            copyed.falseLet { return@Thread }
+            var mSelectedFilePath=""
+            val array: MutableList<String> = ArrayList()
+            val binFile=File(dir,"AD10_BLE_OBD_V01.05.bin")
+
+          var version=  ObdManger.getIns().readBinFileVersion(binFile.absolutePath)
+            //AD10_BLE_OBD V01.05
+
+            Log.i("Communication","file version=["+version+"]")
+        }.start()
+
     }
 }

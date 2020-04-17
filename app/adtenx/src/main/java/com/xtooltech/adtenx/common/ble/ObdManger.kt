@@ -6,6 +6,7 @@ import calculation
 import com.xtooltech.adten.common.ble.BleListener
 import com.xtooltech.adten.util.ds
 import com.xtooltech.adten.util.trueLet
+import com.xtooltech.adtenx.common.BoxInfo
 import com.xtooltech.adtenx.common.destructu.*
 import com.xtooltech.adtenx.common.obd.DataArray
 import com.xtooltech.adtenx.common.obd.DataStream
@@ -17,6 +18,7 @@ import com.xtooltech.adtenx.util.*
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
+import java.io.RandomAccessFile
 import java.lang.Exception
 import java.util.*
 import kotlin.experimental.and
@@ -467,6 +469,10 @@ class ObdManger : BleCallback {
         return communication?.readDv() ?: "电压读取不到"
     }
 
+    fun readBoxInfo(): BoxInfo {
+        return communication?.readBinVersion() ?:BoxInfo("","","","")
+    }
+
     /** 读油耗 */
     fun fuelCons(): String {
         var value = ""
@@ -666,7 +672,19 @@ class ObdManger : BleCallback {
         callback.isSuccess(success)
     }
 
-interface OnBurnCallBack {
+    fun readBinFileVersion(absolutePath: String): String {
+        var raf = RandomAccessFile(absolutePath, "rw");
+        var data=ByteArray(19)
+        for (i in 348L .. 366L){
+            raf.seek(i)
+            var readByte = raf.readByte()
+            data[i.toInt()-348]=readByte
+        }
+        return String(data)
+    }
+
+
+    interface OnBurnCallBack {
 
     fun progress(progress:Double)
 

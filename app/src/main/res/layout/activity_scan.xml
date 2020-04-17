@@ -83,6 +83,17 @@
             app:layout_constraintStart_toStartOf="@+id/button6"
             app:layout_constraintTop_toBottomOf="@+id/button6" />
 
+        <Button
+            android:id="@+id/button11"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="bin文件版本"
+            android:onClick="click_readBinVersion"
+            app:layout_constraintEnd_toEndOf="@+id/button7"
+            app:layout_constraintStart_toStartOf="@+id/button7"
+            app:layout_constraintTop_toBottomOf="@+id/button7" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

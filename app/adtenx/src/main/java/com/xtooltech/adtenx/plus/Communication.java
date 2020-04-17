@@ -3,6 +3,10 @@ package com.xtooltech.adtenx.plus;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.xtooltech.adtenx.common.BoxInfo;
+
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -12,6 +16,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import kotlin.coroutines.jvm.internal.Boxing;
 
 import static java.sql.DriverManager.println;
 
@@ -521,7 +527,6 @@ public class Communication {
     }
 
     public String readDv(){
-        {
             List<Byte> list = new ArrayList<>();
             list.add(Utils.int2byte(0x60));
             list.add(Utils.int2byte(0x02));
@@ -543,7 +548,6 @@ public class Communication {
             }
             return  value;
 
-        }
     }
 
 
@@ -826,6 +830,53 @@ public class Communication {
         }
         return false;
     }
+
+    @Nullable
+    public BoxInfo readBinVersion() {
+        BoxInfo boxinfo= new BoxInfo("","","","");
+        byte[] data = new byte[7];
+        data[0] = Utils.int2byte(0x60);
+        data[1] = Utils.int2byte(0x02);
+        data[2] = Utils.int2byte(0x04);
+        data[3] = Utils.int2byte(0x80);
+        data[4] = Utils.int2byte(0x81);
+        data[5] = Utils.int2byte(0x82);
+        data[6] = Utils.int2byte(0x83);
+        String dv="";
+        String version="";
+        String sn="";
+        String statu="";
+        byte[] recv = sendReceiveData(data, 5000);
+        if (recv != null && recv.length > 3 && recv[0] == 0x60 && recv[1] == 0x02) {
+            int len = Utils.byte2int(recv[2]), pos = 3;
+            byte[] tmp;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < len; i++) {
+                int kid = Utils.byte2int(recv[pos]);
+                if (kid == 0x80) {
+                    tmp = Arrays.copyOfRange(recv, pos + 1, pos + 3);
+                    boxinfo.setDv(String.format(Locale.getDefault(), "%.2f A", Utils.byteArray2int(tmp) * 1.0 / 1000));
+                    pos += 2;
+                } else if (kid == 0x81) {
+                    tmp = Arrays.copyOfRange(recv, pos + 1, pos + 11);
+                    boxinfo.setVersion(new String(tmp));
+                    pos += 10;
+                } else if (kid == 0x82) {
+                    tmp = Arrays.copyOfRange(recv, pos + 1, pos + 21);
+                    boxinfo.setSn(new String(tmp));
+                    pos += 20;
+                } else if (kid == 0x83) {
+                    tmp = Arrays.copyOfRange(recv, pos + 1, pos + 2);
+                    boxinfo.setStatue(String.valueOf(Utils.byte2int(tmp[0])));
+                    pos += 1;
+                }
+                pos += 1;
+            }
+        }
+        return  boxinfo;
+
+    }
+
 
     public interface CommunicationInterface {
         void clear();

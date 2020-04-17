@@ -14,6 +14,7 @@ import com.xtooltech.adtenx.common.ble.ObdItem
 import com.xtooltech.base.BaseVMActivity
 import com.xtooltech.base.util.printMessage
 import com.xtooltech.widget.UniversalAdapter
+import java.io.File
 
 
 class InfoViewModel : ViewModel() {
@@ -22,7 +23,8 @@ class InfoViewModel : ViewModel() {
         FlowItem(2,"液位",true,"","%"),
         FlowItem(3,"电压",true,"","mv"),
         FlowItem(4,"油耗",true,"","%"),
-        FlowItem(5,"进气流量",true,"","g/s")
+        FlowItem(5,"进气流量",true,"","g/s"),
+        FlowItem(6,"固件版本",true,"","")
     )
 }
 
@@ -93,6 +95,13 @@ class InfoActivity : BaseVMActivity<ActivityDiyInfoBinding, InfoViewModel>() {
                       item.content=airValue
                     }
                 }
+                6.toByte()->{
+                    var info= ObdManger.getIns().readBoxInfo()
+                    info?.apply{
+                        item.content=info.version
+                    }
+                }
+
             }
 
                 runOnUiThread{
