@@ -10,6 +10,9 @@ import com.xtooltech.adtenx.common.obd.TextString;
 import java.io.InputStream;
 import java.util.Locale;
 
+/**
+ * 语言工具
+ */
 public class Language {
 
 	public static int language = 0;

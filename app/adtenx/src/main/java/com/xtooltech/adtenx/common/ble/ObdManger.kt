@@ -33,6 +33,10 @@ const val OBD_VPW = 6
 const val OBD_UNKNOWN = 7
 
 
+enum class InitState{
+    UPDATE,RESUME,TIMEOUT
+}
+
 val nameMap = mapOf(
     OBD_STD_CAN to "标准CAN",
     OBD_EXT_CAN to "扩展CAN",
@@ -47,11 +51,16 @@ val nameMap = mapOf(
 class ObdManger : BleCallback {
 
 
+    /** 设备名 */
     var deviceName: String=""
+    /** 通讯层 */
     private var communication: Communication? = null
+    /** 蓝牙连接 */
     private lateinit var bleConnection: BleConnection
+    /** 地址 */
     var deviceAddress = ""
 
+    /** 解构类 */
     var destructor:DestructBiz=DestructUnknow()
 
     var currProto = OBD_UNKNOWN
@@ -94,8 +103,10 @@ class ObdManger : BleCallback {
     }
 
 
-
-    fun sendSingleReceiveSingleCommand(
+    /**
+     * 发单帧收单帧
+     */
+    private fun sendSingleReceiveSingleCommand(
         data: ByteArray?,
         timeout: Long
     ): ByteArray? {
@@ -104,7 +115,10 @@ class ObdManger : BleCallback {
         }
     }
 
-    fun sendSingleReceiveMultiCommand(
+    /**
+     * 发单帧收多帧
+     */
+    private fun sendSingleReceiveMultiCommand(
         data: ByteArray,
         timeout: Long,
         expectReceiveCount: Int
@@ -115,7 +129,10 @@ class ObdManger : BleCallback {
     }
 
 
-    fun sendMultiCommandReceMulti(
+    /**
+     * 发多收多
+     */
+     fun sendMultiCommandReceMulti(
         data: ByteArray,
         timeout: Long,
         expectReceiveCount: Int
@@ -157,8 +174,9 @@ class ObdManger : BleCallback {
     }
 
 
-
-
+    /**
+     * 读取通用数据
+     */
     fun readCommonRaw(cmd: Byte): List<Byte> {
         var list = listOf<Byte>()
         val command = comboCommand(byteArrayOf(0x01, cmd))
@@ -223,6 +241,9 @@ class ObdManger : BleCallback {
     override fun onFoundUuid(p0: Int) {
     }
 
+    /**
+     * 组装命令
+     */
     fun comboCommand(obdData: ByteArray): ByteArray? {
 
         when (currProto) {
@@ -236,26 +257,35 @@ class ObdManger : BleCallback {
         return null
     }
 
+    /**
+     * 扫描
+     */
     fun scan(): Int {
         return if (scanSystem()) currProto else OBD_UNKNOWN
     }
 
-
+    /**
+     * 扫描操作
+     */
     private fun scanSystem(): Boolean {
         var ret: Boolean = enterCan()
         if (!ret) {
+            currProto = OBD_ISO
             Log.i("Communication", "try iso enter....")
             ret = communication?.enterIso() ?: false
         }
         if (!ret) {
+            currProto = OBD_KWP
             Log.i("Communication", "try kwp enter....")
             ret = communication?.enterKwp() ?: false
         }
         if (!ret) {
+            currProto = OBD_PWM
             Log.i("Communication", "try pwm enter....")
             ret = communication?.enterPwmVpw(true) ?: false
         }
         if (!ret) {
+            currProto = OBD_VPW
             Log.i("Communication", "try vpw enter....")
             ret = communication?.enterPwmVpw(false) ?: false
         }
@@ -268,6 +298,9 @@ class ObdManger : BleCallback {
         return ret
     }
 
+    /**
+     * 匹配解构器
+     */
     private fun selectDestroctor(currProto: Int): DestructBiz {
         return when (currProto) {
             OBD_STD_CAN -> DestructCanStd()
@@ -319,60 +352,18 @@ class ObdManger : BleCallback {
     }
 
     fun readTrobleCodeAmount(cmd: Byte): Pair<Int,List<String>> {
-        var value = 0
         var amount=0
-
-        var codeLists= mutableListOf<String>()
+        var codeLists= listOf<String>()
         val command = comboCommand(byteArrayOf(cmd))
-        val vinHexList= mutableListOf<Byte>()
         Log.i("Communication","读取故障码："+"-> cmd="+command.toString())
         if (currProto == OBD_STD_CAN) {
             val data = command?.let { sendSingleReceiveMultiCommand(it, 3000, 10) }
-            data?.forEach {
-                it?.apply {
-                    val sureAnsIndex = indexOf(cmd.plus(0x40.toByte()).toByte())
-                    if (sureAnsIndex > -1) {
-                        amount = this[sureAnsIndex + 1].toInt()
-                        var elements = this.slice((if (sureAnsIndex > 0) sureAnsIndex + 2 else 4) until this.size)
-                        elements = elements.filter { item -> (item != 0xaa.toByte()) and (item != 0x00.toByte()) }
-                        vinHexList.addAll(elements)
-                    } else {
-                        var elements = this.slice(4 until this.size)
-                        elements = elements.filter { item -> (item != 0xaa.toByte()) }
-                        vinHexList.addAll(elements)
-                    }
-                }
+
+            data?.apply {
+                var trobleCode = destructor.parseTrobCode(cmd, data)
+                amount=trobleCode.first
+                codeLists=trobleCode.second
             }
-
-            takeIf { vinHexList.isNotEmpty() }?.apply {
-                var tempCodeStr=""
-                for (i in vinHexList.indices step 2){
-                    val codeHex=(vinHexList[i].toInt().shl(8).and(0xff)).or(vinHexList[i+1].toInt().and(0xff))
-
-                    try {
-                        tempCodeStr = when {
-                            codeHex < 0x4000 -> { // P
-                                String.format("P%04X", codeHex)
-                            }
-                            codeHex < 0x8000 -> { // C
-                                String.format("C%04X", codeHex - 0x4000)
-                            }
-                            codeHex < 0xC000 -> { // B
-                                String.format("B%04X", codeHex - 0x8000)
-                            }
-                            else -> { // U
-                                String.format("U%04X", codeHex - 0xC000)
-                            }
-                        }
-                        codeLists.add(tempCodeStr)
-                    }catch (e:Exception){
-                        println("format exception")
-                    }
-
-                }
-            }
-
-            value=amount
 
         } else {
 
@@ -387,12 +378,11 @@ class ObdManger : BleCallback {
                         dataList.addAll(parse2BizSingle(this))
                     }
                 }
-                value=dataList[1].toInt()
+                amount=dataList[1].toInt()
             }
-
         }
-        Log.i("Communication","读取故障码："+ hexString(cmd) +"value= "+value)
-        return Pair(value,codeLists.toList())
+        Log.i("Communication","读取故障码："+ hexString(cmd) +"amount= "+amount)
+        return Pair(amount,codeLists.toList())
     }
 
     fun clearCode(): Boolean {
@@ -424,6 +414,9 @@ class ObdManger : BleCallback {
         return flag
     }
 
+    /**
+     * 查询 冻结帧状态
+     */
     fun queryMilState(): Pair<Boolean, List<Byte>> {
         var milState = false
         var value = readCommonRaw(0x01)
@@ -436,6 +429,9 @@ class ObdManger : BleCallback {
         return Pair(milState, value)
     }
 
+    /**
+     * 读取冻结帧项
+     */
     fun readFreezeItem(item: ObdItem): String {
         var value = ""
         val command = comboCommand(byteArrayOf(0x02, item.kind, 0x00))
@@ -449,6 +445,9 @@ class ObdManger : BleCallback {
         return value
     }
 
+    /**
+     * 读取数据流项
+     */
     fun readFlowItem(item: ObdItem): String {
         var value = ""
         val command = comboCommand(byteArrayOf(0x01, item.kind))
@@ -465,6 +464,9 @@ class ObdManger : BleCallback {
         return value
     }
 
+    /**
+     * 获取 电压
+     */
     fun readDv(): String {
         return communication?.readDv() ?: "电压读取不到"
     }
@@ -500,6 +502,9 @@ class ObdManger : BleCallback {
         return value
     }
 
+    /**
+     * 获取数据流所有PID
+     */
     private fun supportFlowPids(): MutableList<ByteArray?> {
         var query = true
         var size = 2
@@ -561,6 +566,9 @@ class ObdManger : BleCallback {
         return obdList.toList()
     }
 
+    /**
+     * 冻结帧支持项查询
+     */
     fun supportFreeze(): MutableList<ByteArray?> {
         var query = true
         var pid1 = 0x00.toByte()
@@ -629,10 +637,16 @@ class ObdManger : BleCallback {
         return obditms.toList()
     }
 
-    fun initFirmwareUpdate(file: File): Boolean {
-        return communication?.initFirmwareUpdate(file) ?:false
+    /**
+     * 初始化固件升级
+     */
+    fun initFirmwareUpdate(file: File): InitState {
+        return communication?.initFirmwareUpdate(file) ?:InitState.RESUME
     }
 
+    /**
+     * 升级固件
+     */
     fun updateOneFrameFirmware(buffer: ByteArray, i: Int, len: Int): Boolean {
         return communication?.updateOneFrameFirmware(buffer,i,len) ?:false
     }
@@ -681,6 +695,10 @@ class ObdManger : BleCallback {
             data[i.toInt()-348]=readByte
         }
         return String(data)
+    }
+
+    fun reset() {
+        communication?.controlBox(3)
     }
 
 

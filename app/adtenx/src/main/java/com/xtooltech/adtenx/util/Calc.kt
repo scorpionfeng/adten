@@ -5,6 +5,9 @@ import com.xtooltech.adtenx.common.ble.ObdItem
 import com.xtooltech.adtenx.util.b2i
 import kotlin.experimental.and
 
+/**
+ * À„∑® µœ÷
+ */
 
 fun calcuEmpty(item:ObdItem):String{ return ""}
 // index= 0x00,0x00,0x01,0x10

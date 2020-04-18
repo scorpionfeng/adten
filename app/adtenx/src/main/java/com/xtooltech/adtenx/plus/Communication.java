@@ -4,6 +4,7 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import com.xtooltech.adtenx.common.BoxInfo;
+import com.xtooltech.adtenx.common.ble.InitState;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -219,53 +220,6 @@ public class Communication {
         return null;
     }
 
-    public String readBoxInfo() {
-        byte[] data = new byte[7];
-        data[0] = Utils.int2byte(0x60);
-        data[1] = Utils.int2byte(0x02);
-        data[2] = Utils.int2byte(0x04);
-        data[3] = Utils.int2byte(0x80);
-        data[4] = Utils.int2byte(0x81);
-        data[5] = Utils.int2byte(0x82);
-        data[6] = Utils.int2byte(0x83);
-        byte[] recv = sendReceiveData(data, 5000);
-        if (recv != null && recv.length > 3 && recv[0] == 0x60 && recv[1] == 0x02) {
-            int len = Utils.byte2int(recv[2]), pos = 3;
-            byte[] tmp;
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < len; i++) {
-                int kid = Utils.byte2int(recv[pos]);
-                if (kid == 0x80) {
-                    tmp = Arrays.copyOfRange(recv, pos + 1, pos + 3);
-                    sb.append("电压:");
-                    sb.append(String.format(Locale.getDefault(), "%.2f A", Utils.byteArray2int(tmp) * 1.0 / 1000));
-                    sb.append("\n");
-                    pos += 2;
-                } else if (kid == 0x81) {
-                    tmp = Arrays.copyOfRange(recv, pos + 1, pos + 11);
-                    sb.append("固件版本:");
-                    sb.append(new String(tmp));
-                    sb.append("\n");
-                    pos += 10;
-                } else if (kid == 0x82) {
-                    tmp = Arrays.copyOfRange(recv, pos + 1, pos + 21);
-                    sb.append("序列号:");
-                    sb.append(new String(tmp));
-                    sb.append("\n");
-                    pos += 20;
-                } else if (kid == 0x83) {
-                    tmp = Arrays.copyOfRange(recv, pos + 1, pos + 2);
-                    sb.append("状态:");
-                    sb.append(Utils.byte2int(tmp[0]));
-                    sb.append("\n");
-                    pos += 1;
-                }
-                pos += 1;
-            }
-            return sb.toString();
-        }
-        return null;
-    }
 
     public boolean controlBox(int n) {
         byte[] data = new byte[4];
@@ -280,9 +234,9 @@ public class Communication {
         return false;
     }
 
-    public boolean initFirmwareUpdate(File file) {
+    public InitState initFirmwareUpdate(File file) {
         byte[] fileMd5 = Utils.getFileMD5(file);
-        if (fileMd5 == null) return false;
+        if (fileMd5 == null) return InitState.RESUME;
 
         List<Byte> list = new ArrayList<>();
         list.add(Utils.int2byte(0x60));
@@ -309,11 +263,12 @@ public class Communication {
         for (int i = 0; i < list.size(); i++) {
             data[i] = list.get(i);
         }
-        byte[] recv = sendReceiveData(data, 3500);
+        byte[] recv = sendReceiveData(data, 5000);
         if (recv != null && recv.length > 4 && recv[0] == 0x60 && recv[1] == 0x0B) {
-            return recv[4] == 1;
+            return (recv[4] == 1)?InitState.UPDATE:InitState.RESUME;
+        }else{
+            return InitState.TIMEOUT;
         }
-        return false;
     }
 
     public boolean updateOneFrameFirmware(byte[] oneFrame, int offset, int length) {

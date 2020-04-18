@@ -1,6 +1,9 @@
 package com.xtooltech.adten.util
 
 
+/**
+ * 链式语法支持工具
+ */
 inline infix fun Boolean.trueLet(trueBlock: Boolean.() -> Unit): Else {
     if (this) {
         trueBlock()

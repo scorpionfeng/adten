@@ -1,5 +1,8 @@
 package com.xtooltech.adtenx.util
 
+/**
+ * Ëã·¨×Öµä
+ */
 val calc= mapOf(
     "0x00,0x00,0x01,0x10" to 	Pair("%d",	"BYTE[2]&0x7F;"),
     "0x00,0x00,0x01,0x11" to 	Pair("MIL ON|MIL OFF",	"(BYTE[2]&0x80)?0:1;"),

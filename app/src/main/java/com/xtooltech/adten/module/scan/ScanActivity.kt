@@ -539,7 +539,7 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
             Thread(Runnable {
                 val file = File(mSelectedFilePath)
                 var finalSuccess = false
-                if (ObdManger.getIns().initFirmwareUpdate(file)) {
+                if (ObdManger.getIns().initFirmwareUpdate(file)== InitState.UPDATE) {
                     ObdManger.getIns().burnBin(file,object :ObdManger.OnBurnCallBack{
                         override fun progress(progress: Double) {
                             runOnUiThread {
@@ -588,5 +588,9 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
             Log.i("Communication","file version=["+version+"]")
         }.start()
 
+    }
+
+    fun click_reset(view: View) {
+        ObdManger.getIns().reset()
     }
 }

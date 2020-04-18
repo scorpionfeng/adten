@@ -50,6 +50,9 @@ operator fun Array<Any>.get(i:Int):Int{
     return 0
 }
 
+/**
+ * 肯定 应答
+ */
 fun List<Byte>.isPositive ():Boolean{
    return  this[0]!=0x7f.toByte()
 }
@@ -395,7 +398,6 @@ fun parse2BizSingle(obdData:ByteArray):List<Byte>{
     var bizData= arrayListOf<Byte>()
 
     when(ObdManger.getIns().currProto){
-        // TODO: 区分 肯定 应答和 否定应答
         OBD_STD_CAN ->  return obdData.slice(4 .. obdData[3]+3)
         OBD_EXT_CAN -> return obdData.slice(6 .. obdData[5]+5)
         OBD_ISO -> return obdData.slice(3 .. obdData.size-2)
@@ -470,10 +472,16 @@ fun hexString(data: Byte): String {
     return String.format("%02X", data)
 }
 
+/**
+ * 列表转换成 16进制字符
+ */
 fun List<Byte>.hexString():String{
     return this.map { hexString(it) }.toString()
 }
 
+/**
+ * 计算PID
+ */
 fun mergePid(
     data: List<ByteArray?>,
     maskBuffer: ShortArray,
@@ -505,6 +513,9 @@ fun mergePid(
     }
 }
 
+/**
+ * 合并冻结帧PID
+ */
 fun mergeFreezePid(
     data: List<ByteArray?>,
     maskBuffer: ShortArray,

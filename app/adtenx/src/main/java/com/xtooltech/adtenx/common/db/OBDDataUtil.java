@@ -6,6 +6,10 @@ import com.xtooltech.adtenx.common.obd.TextString;
 
 import java.util.HashMap;
 
+
+/**
+ * obd工具类,支持6位码表
+ */
 public class OBDDataUtil {
 	public static String[] commandIDs = new String[] {//
 	"0x00,0x00,0x00,0x00,0x00,0x01", "0x00,0x00,0x00,0x00,0x00,0x02",

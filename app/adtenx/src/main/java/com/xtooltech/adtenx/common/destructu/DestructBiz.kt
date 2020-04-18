@@ -7,5 +7,5 @@ interface DestructBiz {
     fun parseVin(data:List<ByteArray?>):String
 
     /** 解析故障码 */
-//    fun parseTrobCode(data:List<ByteArray?>):Pair<Int,List<String>>
+    fun parseTrobCode(cmd:Byte,data:List<ByteArray?>):Pair<Int,List<String>>
 }

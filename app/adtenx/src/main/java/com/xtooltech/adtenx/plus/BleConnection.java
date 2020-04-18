@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 蓝牙连接管理
+ */
 public class BleConnection implements Communication.CommunicationInterface {
     public static final String TAG = "BleConnection";
 
