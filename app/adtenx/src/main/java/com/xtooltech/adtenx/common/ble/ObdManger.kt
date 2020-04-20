@@ -355,33 +355,36 @@ class ObdManger : BleCallback {
         var amount=0
         var codeLists= listOf<String>()
         val command = comboCommand(byteArrayOf(cmd))
-        Log.i("Communication","读取故障码："+"-> cmd="+command.toString())
-        if (currProto == OBD_STD_CAN) {
-            val data = command?.let { sendSingleReceiveMultiCommand(it, 3000, 10) }
+        Log.i("Communication","读取故障码："+"-> cmd="+command?.toHex())
 
-            data?.apply {
-                var trobleCode = destructor.parseTrobCode(cmd, data)
-                amount=trobleCode.first
-                codeLists=trobleCode.second
-            }
+        when(currProto){
+            OBD_STD_CAN, OBD_KWP->{
+                val data = command?.let { sendSingleReceiveMultiCommand(it, 3000, 10) }
 
-        } else {
-
-            val data = command?.let { sendSingleReceiveMultiCommand(it, 3000,10) }
-
-            var dataList= mutableListOf<Byte>()
-            data?.isNotEmpty()?.trueLet {
-                data.forEach{
-
-                    Log.i("xtool", it?.toHex())
-                    it?.apply {
-                        dataList.addAll(parse2BizSingle(this))
-                    }
+                data?.apply {
+                    var trobleCode = destructor.parseTrobCode(cmd, data)
+                    amount=trobleCode.first
+                    codeLists=trobleCode.second
                 }
-                amount=dataList[1].toInt()
+            }
+            else->{
+                val data = command?.let { sendSingleReceiveMultiCommand(it, 3000,10) }
+                var dataList= mutableListOf<Byte>()
+                data?.isNotEmpty()?.trueLet {
+                    data.forEach{
+
+
+                        it?.apply {
+                            var elements = parse2BizSingle(this)
+                            Log.i("Communication", elements.toHex())
+                            dataList.addAll(elements)
+                        }
+                    }
+                    amount=dataList[1].toInt()
+                }
             }
         }
-        Log.i("Communication","读取故障码："+ hexString(cmd) +"amount= "+amount)
+        Log.i("Communication","读取故障码："+ amount +"codeLists= "+codeLists.toString())
         return Pair(amount,codeLists.toList())
     }
 

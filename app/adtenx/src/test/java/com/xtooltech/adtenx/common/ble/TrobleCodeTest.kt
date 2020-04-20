@@ -2,6 +2,8 @@ package com.xtooltech.adtenx.common.ble
 
 import android.text.TextUtils.indexOf
 import com.xtooltech.adtenx.common.destructu.DestructCanStd
+import com.xtooltech.adtenx.common.destructu.DestructIso
+import com.xtooltech.adtenx.common.destructu.DestructKwp
 import com.xtooltech.adtenx.util.toHex
 import org.junit.Assert.*
 import org.junit.Test
@@ -33,5 +35,28 @@ class TrobleCodeTest{
     @Test
     fun readStdExt(){
         //60 0A 0D 88 18 DA F1 58 04 41 03 00 00 AA AA AA
+    }
+
+    @Test
+    fun readKwp(){
+        /**
+        req=C1 33 F1 07 EC
+        res=87 F1 10 47 06 38 01 13 06 86 AD
+        res=87 F1 10 47 C1 55 01 08 01 08 F7"""
+
+**/
+
+        var cmd:Byte=0x07
+        ObdManger.getIns().currProto= OBD_KWP
+        var data= listOf<ByteArray>(
+            byteArrayOf(0x87.toByte(), 0xF1.toByte(),0x10,0x47,0x06,0x38,0x01,0x13,0x06, 0x86.toByte(), 0xAD.toByte()),
+            byteArrayOf(0x87.toByte(), 0xF1.toByte(),0x10,0x47, 0xC1.toByte(),0x55,0x01,0x08,0x01,0x08, 0xF7.toByte())
+        )
+        var deser= DestructKwp()
+        var result = deser.parseTrobCode(cmd, data)
+        println(result.first.toString() +">>>"+result.second.toString())
+        assertEquals(result.first,6)
+
+
     }
 }

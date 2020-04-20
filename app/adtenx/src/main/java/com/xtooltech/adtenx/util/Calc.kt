@@ -6,7 +6,7 @@ import com.xtooltech.adtenx.util.b2i
 import kotlin.experimental.and
 
 /**
- * 算法实现
+ * 锟姐法实锟斤拷
  */
 
 fun calcuEmpty(item:ObdItem):String{ return ""}
@@ -254,6 +254,9 @@ fun calcu39(data:List<Byte>):String{
 // index= 0x00,0x00,0x0D,0x00
 // raw =data[2].b2i()
 fun calcu40(data:List<Byte>):String{
+    if( data[2]==0xff.toByte()){
+        return "0"
+    }
     return  String.format("%d", data[2].b2i() )
 }
 // index= 0x00,0x00,0x0E,0x00

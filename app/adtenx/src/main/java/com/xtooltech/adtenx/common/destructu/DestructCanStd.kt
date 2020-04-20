@@ -82,7 +82,7 @@ class DestructCanStd :DestructBiz{
         var codeArrays = troCodeDataList.toList().take(amount_code * 2)
         var tempCodeStr=""
         for( i in codeArrays.indices step 2){
-            val codeHex=(codeArrays[i].toInt().shl(8).and(0xff)).or(codeArrays[i+1].toInt().and(0xff))
+            val codeHex=(codeArrays[i].toInt().shl(8).and(0xffff)).or(codeArrays[i+1].toInt().and(0xff))
 
             try {
                 tempCodeStr = when {
