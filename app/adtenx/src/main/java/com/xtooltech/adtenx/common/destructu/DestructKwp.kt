@@ -53,7 +53,7 @@ class DestructKwp :DestructBiz{
         var list_raw= mutableListOf<Byte>()
         var list_code= mutableListOf<String>()
         var data_temp=""
-        data.forEach {
+        data.distinct().forEach {
             it?.apply {
                 var data_parsed= parse2BizSingle(it)
                 flag_andwer=  data_parsed.contains((0x40.toByte()+cmd).toByte())
@@ -64,7 +64,15 @@ class DestructKwp :DestructBiz{
 
         takeIf { list_raw.isNotEmpty() }?.apply {
             for(i in list_raw.indices step 2){
-                val codeHex=(list_raw[i].toInt().shl(8).and(0xffff)).or(list_raw[i+1].toInt().and(0xff))
+                if(list_raw.size <=i+1){
+                    continue
+                }
+                var data_head = list_raw[i].toInt()
+                var data_end = list_raw[i+1].toInt()
+                if(data_head==0x00 &&  data_end==0x00){
+                    continue
+                }
+                val codeHex=(data_head.shl(8).and(0xffff)).or(data_end.and(0xff))
                 try {
                     data_temp = when {
                         codeHex < 0x4000 -> { // P

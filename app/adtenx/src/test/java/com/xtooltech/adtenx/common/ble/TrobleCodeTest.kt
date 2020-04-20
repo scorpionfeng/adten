@@ -1,9 +1,7 @@
 package com.xtooltech.adtenx.common.ble
 
 import android.text.TextUtils.indexOf
-import com.xtooltech.adtenx.common.destructu.DestructCanStd
-import com.xtooltech.adtenx.common.destructu.DestructIso
-import com.xtooltech.adtenx.common.destructu.DestructKwp
+import com.xtooltech.adtenx.common.destructu.*
 import com.xtooltech.adtenx.util.toHex
 import org.junit.Assert.*
 import org.junit.Test
@@ -38,6 +36,75 @@ class TrobleCodeTest{
     }
 
     @Test
+    fun readIso(){
+        //48 6B 10 43 18 47 00 00 00 00
+        var cmd:Byte=0x03
+        ObdManger.getIns().currProto= OBD_ISO
+        var data= listOf<ByteArray>(
+            // 47 01 93 12 33 00 00
+            byteArrayOf(0x48,0x6B,0x10,0x43,0x18,0x47,0x00,0x00,0x00,0x00)
+        )
+        var deser= DestructIso()
+        var result = deser.parseTrobCode(cmd, data)
+        println(result.first.toString() +">>>"+result.second.toString())
+        assertEquals(result.first,1)
+
+
+
+    }
+
+    @Test
+    fun readVpw(){
+        //48 6B 10 47 01 02 03 04 05 06 D9
+        var cmd:Byte=0x07
+        ObdManger.getIns().currProto= OBD_VPW
+        var data= listOf<ByteArray>(
+            // 47 01 93 12 33 00 00
+            byteArrayOf(0x48,0x6B,0x10,0x47,0x01,0x02,0x03,0x04,0x05,0x06, 0xD9.toByte())
+        )
+        var deser= DestructVpw()
+        var result = deser.parseTrobCode(cmd, data)
+        println(result.first.toString() +">>>"+result.second.toString())
+        assertEquals(result.first,3)
+
+        var cmd2:Byte=0x03
+
+
+        val data2= listOf<ByteArray>(
+            byteArrayOf(0x48,0x6B,0x10,0x43,0x01,0x07,0x03,0x04,0x05,0x06, 0xD9.toByte()),
+            byteArrayOf(0x48,0x6B,0x10,0x43,0x02,0x08,0x07,0x02,0x00,0x31,0x69),
+            byteArrayOf(0x48,0x6B,0x10,0x43,0x03,0x09,0x47,0x4B,0x46,0x4B, 0x83.toByte()),
+            byteArrayOf(0x48,0x6B,0x10,0x43,0x04,0x0A,0x36,0x36,0x55,0x34, 0xC0.toByte()),
+            byteArrayOf(0x48,0x6B,0x10,0x43,0x05,0x0B,0x32,0x4A,0x31,0x30,0x01),
+            byteArrayOf(0x48,0x6B,0x10,0x43,0x06,0x0C,0x37,0x30,0x36,0x38, 0xEE.toByte())
+        )
+
+        var result2 = deser.parseTrobCode(cmd2, data2)
+        println(result2.first.toString() +">>>"+result2.second.toString())
+        assertEquals(result2.first,18)
+    }
+
+    @Test
+    fun readPwm(){
+        /**
+         *
+        send: 60 09 05 61 6A F1 07 B8
+        recv: 60 0A 0B 41 6B 10 47 01 93 12 33 00 00 0C
+         */
+        var cmd:Byte=0x07
+        ObdManger.getIns().currProto= OBD_PWM
+        var data= listOf<ByteArray>(
+            // 47 01 93 12 33 00 00
+            byteArrayOf(0x41,0x6B,0x10,0x47,0x01, 0x93.toByte(),0x12,0x33,0x00,0x00,0x0C)
+        )
+        var deser= DestructPwm()
+        var result = deser.parseTrobCode(cmd, data)
+        println(result.first.toString() +">>>"+result.second.toString())
+        assertEquals(result.first,2)
+
+    }
+
+    @Test
     fun readKwp(){
         /**
         req=C1 33 F1 07 EC
@@ -56,7 +123,5 @@ class TrobleCodeTest{
         var result = deser.parseTrobCode(cmd, data)
         println(result.first.toString() +">>>"+result.second.toString())
         assertEquals(result.first,6)
-
-
     }
 }

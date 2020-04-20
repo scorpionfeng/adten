@@ -355,10 +355,6 @@ class ObdManger : BleCallback {
         var amount=0
         var codeLists= listOf<String>()
         val command = comboCommand(byteArrayOf(cmd))
-        Log.i("Communication","读取故障码："+"-> cmd="+command?.toHex())
-
-        when(currProto){
-            OBD_STD_CAN, OBD_KWP->{
                 val data = command?.let { sendSingleReceiveMultiCommand(it, 3000, 10) }
 
                 data?.apply {
@@ -366,25 +362,7 @@ class ObdManger : BleCallback {
                     amount=trobleCode.first
                     codeLists=trobleCode.second
                 }
-            }
-            else->{
-                val data = command?.let { sendSingleReceiveMultiCommand(it, 3000,10) }
-                var dataList= mutableListOf<Byte>()
-                data?.isNotEmpty()?.trueLet {
-                    data.forEach{
-
-
-                        it?.apply {
-                            var elements = parse2BizSingle(this)
-                            Log.i("Communication", elements.toHex())
-                            dataList.addAll(elements)
-                        }
-                    }
-                    amount=dataList[1].toInt()
-                }
-            }
-        }
-        Log.i("Communication","读取故障码："+ amount +"codeLists= "+codeLists.toString())
+        Log.i("Communication","读取故障码："+ amount +" codeLists= "+codeLists.toString())
         return Pair(amount,codeLists.toList())
     }
 
