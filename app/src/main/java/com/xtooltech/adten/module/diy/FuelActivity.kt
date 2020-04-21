@@ -1,17 +1,12 @@
 package com.xtooltech.adten.module.diy
 
-import android.app.backup.FullBackupDataOutput
 import android.os.Handler
-import androidx.annotation.WorkerThread
-import androidx.core.os.postAtTime
-import androidx.core.os.postDelayed
 import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.alibaba.android.arouter.facade.annotation.Route
 import com.xtooltech.adten.BR
 import com.xtooltech.adten.R
 import com.xtooltech.adten.databinding.ActivityDiyFuelBinding
-import com.xtooltech.adten.databinding.ActivityDiyInfoBinding
 import com.xtooltech.adtenx.common.ble.ObdManger
 import com.xtooltech.adten.util.*
 import com.xtooltech.adtenx.common.ble.ObdItem
@@ -22,10 +17,16 @@ import com.xtooltech.widget.UniversalAdapter
 
 class FuelViewModel : ViewModel() {
     var datas= mutableListOf<FlowItem>(
-        FlowItem(1,"时间",true,"",""),
-        FlowItem(2,"平时速度",true,"","km"),
+        FlowItem(1,"总时间",true,"","秒"),
+        FlowItem(2,"平均速度",true,"","km/h"),
         FlowItem(3,"行驶里程",true,"","M"),
-        FlowItem(4,"平均油耗",true,"","%")
+        FlowItem(4,"平均油耗",true,"","%"),
+        FlowItem(5,"速度",true,"","km/h"),
+        FlowItem(6,"区间距离",true,"","km"),
+        FlowItem(7,"瞬间油耗",true,"","conn"),
+        FlowItem(8,"总油耗",true,"","conn"),
+        FlowItem(9,"平均油耗",true,"","conn"),
+        FlowItem(10,"区间时间",true,"","秒")
     )
 }
 
@@ -33,15 +34,18 @@ class FuelViewModel : ViewModel() {
 @Route(path = PATH_DIY_FUEL)
 class FuelActivity : BaseVMActivity<ActivityDiyFuelBinding, FuelViewModel>() {
 
+    private var totalDuration: Float=0.0f
     private var totalCons: Float =0f
-    private var totalDistance: Float=0f
+    private var totalDistance: Float=0.0f
+    private var totoalTime:Float=0f
     val handler: Handler= Handler()
     lateinit var  datas:MutableList<FlowItem>
+    var amount=0
 
     var show=true
 
      var startTime:Long=0L
-    var lastTime:Long =0L
+    var preTime:Long =0L
     var speedUnit=1
     var currSpeed=0f
 
@@ -65,38 +69,62 @@ class FuelActivity : BaseVMActivity<ActivityDiyFuelBinding, FuelViewModel>() {
         vb.list.adapter=adapter
         vb.list.layoutManager= LinearLayoutManager(this)
 
-
+        startTime=System.currentTimeMillis()
+        preTime=startTime
         start()
 
     }
 
     fun process() {
 
-        takeIf { startTime == 0L }?.apply { startTime = System.currentTimeMillis() }
-//99
         var speedData = ObdManger.getIns().readFlowItem(ObdItem(0x0D, "车速", false, "", "RPM", "0x00,0x00,0x0D,0x00"))
+        //99
+//        var speedData=93f
+//        currSpeed=93f
         takeIf { speedData.isNotEmpty() }?.apply { currSpeed = speedData.toFloat() }
-//4.36=99*
-        lastDistance = currSpeed * (System.currentTimeMillis() - lastTime) / 1000.0f / 3600.0f
+        //4.36=99*
+        var duration=(System.currentTimeMillis()-preTime)/1000L
+        lastDistance = currSpeed *duration/3600
         totalDistance += lastDistance
-        // 384
-        val flowData = ObdManger.getIns().readFlowItem(ObdItem(0x10, "空气流量", false, "", "g/s", "0x00,0x00,0x10,0x00"))
-        takeIf { flowData.isNotEmpty() }?.apply {
-            val trend = 1.0f * flowData.toFloat() * 33.77903f / currSpeed     // 131 = 384*33.77903 / 99
-            val fuelCons = trend * (lastDistance / 100) //-> 5=131 *4.3/100
+        totalDuration+=duration
+       // 535
+        val airflow =ObdManger.getIns().readFlowItem(ObdItem(0x10, "空气流量", false, "", "g/s", "0x00,0x00,0x10,0x00"))
+        var trend=0.0f
+        takeIf { airflow.isNotEmpty() &&  airflow.toFloat()>0}?.apply {
+             trend = 1.0f * airflow.toFloat() * 33.77903f / currSpeed     // 131 = 384*33.77903 / 99
+            val fuelCons = trend * lastDistance / 100 //-> 5=131 *4.3/100
             totalCons += fuelCons   // 5
         }
-
-        lastTime = System.currentTimeMillis()
+        preTime=System.currentTimeMillis()
 
         handler.post(Runnable {
-            vm.datas[0].content = lastTime.toString()
-            vm.datas[1].content = (totalDistance / (lastTime - startTime)).toString()
+            /** 总时间*/
+            vm.datas[0].content = ((preTime-startTime)/1000L).toString()
+            /** 平均速度 */
+            vm.datas[1].content = (totalDistance / (totalDuration/3600f)).toString()
+            /** 行驶里程 */
             vm.datas[2].content = totalDistance.toString()
+            /** 平均油耗 */
             vm.datas[3].content = totalCons.toString()
+            /** 速度 */
+            vm.datas[4].content = currSpeed.toString()
+            /** 区间距离 */
+            vm.datas[5].content = lastDistance.toString()
+            /** 瞬间油耗 */
+            vm.datas[6].content = lastDistance.toString()
+            /** 总油耗 */
+            vm.datas[7].content = totalCons.toString()
+            /** 平均油耗 */
+            vm.datas[8].content = (totalCons/totalDistance*100).toString()
+            /** 区间时间 */
+            vm.datas[9].content = duration.toString()
+            printMessage(vm.datas.toString())
             adapter.notifyDataSetChanged()
 
         })
+
+
+
 
     }
 
@@ -106,6 +134,7 @@ class FuelActivity : BaseVMActivity<ActivityDiyFuelBinding, FuelViewModel>() {
         var task=object :Runnable{
             override fun run() {
                 Thread{
+                    amount++
                     process()
                     handler.postDelayed(this,2000)
                 }.start()

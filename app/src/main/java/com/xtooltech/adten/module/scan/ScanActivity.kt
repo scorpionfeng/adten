@@ -593,4 +593,8 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
     fun click_reset(view: View) {
         ObdManger.getIns().reset()
     }
+
+    fun click_avgful(view: View) {
+        ARouter.getInstance().build(PATH_DIY_FUEL).navigation()
+    }
 }
