@@ -459,6 +459,7 @@ class ObdManger : BleCallback {
     /** 读油耗 */
     fun fuelCons(): String {
         var value = ""
+        var fuelAdj=1.0
         var bizWind = listOf<Byte>()
         val command = comboCommand(byteArrayOf(0x01, 0x10))
         val data = command?.let { sendSingleReceiveSingleCommand(it, 3000) }
@@ -474,11 +475,15 @@ class ObdManger : BleCallback {
             }
             value = calculationWithAirFlow(airFlow, 0, 1)
         } else {
-            val press = comboCommand(byteArrayOf(0x01, 0x12))
-            val preData = press?.let { sendSingleReceiveSingleCommand(it, 3000) }
-            preData?.apply {
-                var bizPress = parse2BizSingle(preData)
-            }
+            var displace=2.0 /** 排量 */
+            val airPress = readFlowItem(ObdItem(0x0b,"进气压力",false,"","pa","", listOf()))
+            val airTemp = readFlowItem(ObdItem(0x0f,"空气温度",false,"","c","", listOf()))
+            val engineRpm = readFlowItem(ObdItem(0x0c,"转速",false,"","","", listOf()))
+
+            var valueAirPress=airPress.toFloat()
+            var valueAirTemp:Float=airTemp.toFloat()
+            var valueRpm:Float=engineRpm.toFloat()
+            value= (fuelAdj*8.513/1000*valueRpm*valueAirPress/(valueAirTemp+273.15)*displace*0.85).toString()
         }
         return value
     }
