@@ -39,7 +39,7 @@ class FuelViewModel : ViewModel() {
 class FuelActivity : BaseVMActivity<ActivityDiyFuelBinding, FuelViewModel>() {
 
     private var totalDuration: Float=0.0f
-    private var totalCons: Float =0f
+    private var totalCons: Float =0.0f
     private var totalDistance: Float=0.0f
     private var totoalTime:Float=0f
     val handler: Handler= Handler()
@@ -59,10 +59,7 @@ class FuelActivity : BaseVMActivity<ActivityDiyFuelBinding, FuelViewModel>() {
 
     var model=false
 
-
     lateinit var  adapter:UniversalAdapter<FlowItem>
-
-
 
     override fun initView() {
 
@@ -86,15 +83,13 @@ class FuelActivity : BaseVMActivity<ActivityDiyFuelBinding, FuelViewModel>() {
             start()
         }
 
-
-
     }
 
     fun  process() {
 
         var speedData = ObdManger.getIns().readFlowItem(ObdItem(0x0D, "车速", false, "", "RPM", "0x00,0x00,0x0D,0x00"))
         takeIf { speedData.isNotEmpty() }?.apply { currSpeed = speedData.toFloat() }
-        var duration=(System.currentTimeMillis()-preTime)/1000L
+        var duration=(System.currentTimeMillis()-preTime)/1000.0f
         lastDistance = currSpeed *duration/3600
         totalDistance += lastDistance
         totalDuration+=duration
@@ -109,7 +104,7 @@ class FuelActivity : BaseVMActivity<ActivityDiyFuelBinding, FuelViewModel>() {
             totalCons += trend
 
         }?:apply {
-            var displace=1.6
+            var displace=2.0
             var fuelAdj=1.0
             val airPress =ObdManger.getIns().readFlowItem(ObdItem(0x0b,"进气压力",false,"","pa","0x00,0x00,0x0B,0x00", listOf()))
             val airTemp =ObdManger.getIns(). readFlowItem(ObdItem(0x0f,"空气温度",false,"","c","0x00,0x00,0x0F,0x00", listOf()))
@@ -121,9 +116,27 @@ class FuelActivity : BaseVMActivity<ActivityDiyFuelBinding, FuelViewModel>() {
 //                trend= (fuelAdj*8.513/1000*valueRpm*valueAirPress/(valueAirTemp+273.15)*displace*0.85).toFloat()
 //                val fuelCons = trend * lastDistance / 100
 //                totalCons += fuelCons
-                trend= (fuelAdj*8.513/1000*valueRpm*valueAirPress/(valueAirTemp+273.15)*displace*0.85).toFloat()*(duration/3600f)
-                totalCons += trend
+//                trend= (fuelAdj*8.513/1000*valueRpm*valueAirPress/(valueAirTemp+273.15)*displace*0.85).toFloat()*(duration/3600f)
+//                totalCons += trend
 
+                printMessage("airpress:"+valueAirPress)
+                printMessage("空气温度:"+valueAirTemp)
+                printMessage("转速:"+valueRpm)
+                printMessage("车速:"+currSpeed)
+
+                //1.549617602*RPM*MAP/(IAT+233)/VSS
+               // trend= (1.549617602*valueRpm*valueAirPress/(valueAirTemp+233)/currSpeed).toFloat()/ 100.0f
+                //  9.6898/1000*rpm*airpress/airtemp*displace*0.85f
+
+                trend= (9.6898/1000f*valueRpm*valueAirPress/(valueAirTemp+273.15)*displace*0.85f).toFloat()/3600.0f*duration
+                totalCons += trend
+                //----------------------------------end
+
+                printMessage("瞬间油耗:"+trend)
+                printMessage("总油耗:"+totalCons)
+
+            }else{
+                printMessage("empty")
             }
             //MAP 进气压力 0x0B
             //IAT   进气温度  0x0F
@@ -148,6 +161,12 @@ class FuelActivity : BaseVMActivity<ActivityDiyFuelBinding, FuelViewModel>() {
             vm.datas[6].content = totalCons.toString()
             /** 平均油耗 */
             vm.datas[7].content = (totalCons/totalDistance*100).toString()
+            printMessage("区间时间:"+duration)
+            printMessage("区间距离:"+lastDistance)
+            printMessage("总距离:"+totalDistance)
+            printMessage("总时间:"+totalDuration)
+            printMessage("平均油耗:"+totalCons/totalDistance*100.0f)
+
             /** 区间时间 */
             vm.datas[8].content = duration.toString()
             printMessage(vm.datas.toString())

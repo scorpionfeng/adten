@@ -510,7 +510,7 @@ class ObdManger : BleCallback {
                     data.apply {
                         datas.add(this)
                         val bizData = parse2BizSingle(this)
-                        if ((bizData[0] == 0x41.toByte()) and (bizData[1] == pid1)) {
+                        if ((bizData.size>=2)&&(bizData[0] == 0x41.toByte()) and (bizData[1] == pid1)) {
                             if (bizData.last().and(0x01) == 0x01.toByte()) {
                                 pid1 = (pid1 + 0x20).toByte()
                             } else {
