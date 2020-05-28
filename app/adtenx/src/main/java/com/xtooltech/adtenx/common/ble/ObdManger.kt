@@ -143,7 +143,9 @@ class ObdManger : BleCallback {
         return communication?.sendReceiveCommand(dataList, timeout, expectReceiveCount)
     }
 
-
+    fun disConnect(){
+        bleConnection?.stop()
+    }
 
 
     fun readCommon(cmd: Byte): String {
