@@ -597,4 +597,18 @@ class ScanActivity : BaseVMActivity<ActivityScanBinding, ScanViewModel>(), BleLi
     fun click_avgful(view: View) {
         ARouter.getInstance().build(PATH_DIY_FUEL).navigation()
     }
+
+    fun click_entercan(view: View) {
+        Thread{
+            var status= ObdManger.getIns().enterByKind(OBD_STD_CAN)
+            Log.i("Communication","进入标准 can状态: status = "+status);
+        }.start()
+
+    }
+    fun click_enterpwm(view: View) {
+        Thread{
+            var status= ObdManger.getIns().enterByKind(OBD_PWM)
+            Log.i("Communication","进入pwm协议状态: status = "+status);
+        }.start()
+    }
 }

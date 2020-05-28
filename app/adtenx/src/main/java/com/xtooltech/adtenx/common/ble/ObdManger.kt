@@ -6,6 +6,7 @@ import calculation
 import com.xtooltech.adten.common.ble.BleListener
 import com.xtooltech.adten.util.ds
 import com.xtooltech.adten.util.trueLet
+import com.xtooltech.adtenx.BuildConfig
 import com.xtooltech.adtenx.common.BoxInfo
 import com.xtooltech.adtenx.common.destructu.*
 import com.xtooltech.adtenx.common.obd.DataArray
@@ -264,6 +265,23 @@ class ObdManger : BleCallback {
         return if (scanSystem()) currProto else OBD_UNKNOWN
     }
 
+    /** enter obd system by kind */
+    fun enterByKind(kind:Int):Boolean{
+        return when(kind){
+            OBD_STD_CAN ->enterCanStd()
+            OBD_EXT_CAN ->enterCanExt()
+            OBD_ISO -> communication?.enterIso() ?: false
+            OBD_KWP -> communication?.enterKwp() ?: false
+            OBD_PWM ->  communication?.enterPwmVpw(true) ?: false
+            OBD_VPW ->  communication?.enterPwmVpw(false) ?: false
+            else -> false
+        }
+    }
+
+    fun getVersion():Int{
+        return BuildConfig.VERSION_CODE
+    }
+
     /**
      * 扫描操作
      */
@@ -311,6 +329,31 @@ class ObdManger : BleCallback {
             OBD_VPW     -> DestructVpw()
             else -> DestructUnknow()
         }
+    }
+
+    private fun enterCanStd():Boolean{
+        currProto = OBD_STD_CAN
+        Log.i("Communication", "try can std 500000 enter....")
+        var ret: Boolean = communication?.enterCanStd(500000) ?: false
+        if (!ret) {
+            currProto = OBD_STD_CAN
+            Log.i("Communication", "try can std 250000 enter....")
+            ret = communication?.enterCanStd(250000) ?: false
+        }
+        if (!ret) currProto = OBD_UNKNOWN
+        return ret
+    }
+
+    private fun enterCanExt():Boolean{
+        currProto = OBD_EXT_CAN
+       var ret = communication?.enterCanExt(500000) ?: false
+        if (!ret) {
+            currProto = OBD_EXT_CAN
+            Log.i("Communication", "try can ext 250000 enter....")
+            ret = communication?.enterCanExt(250000) ?: false
+        }
+        if (!ret) currProto = OBD_UNKNOWN
+        return ret
     }
 
 
