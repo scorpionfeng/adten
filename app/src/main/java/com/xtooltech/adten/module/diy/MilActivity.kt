@@ -179,28 +179,6 @@ class MilActivity : BaseVMActivity<ActivityFlowMilBinding, MilViewModel>() {
     }
 
 
-    private var speedRunnable= object :Runnable {
-
-
-        override fun run() {
-            Thread {
-
-                while (show) {
-                    datas.forEach {
-                        val value = ObdManger.getIns().readCommon(it.kind)
-                        printMessage("kind= ${it.kind}>" + value)
-                        it.content = value
-                    }
-
-                    runOnUiThread {
-                        adapter.notifyDataSetChanged()
-                        handler.postDelayed(this, 500)
-
-                    }
-                }
-            }.start()
-        }
-    }
 
     override fun onDestroy() {
         super.onDestroy()

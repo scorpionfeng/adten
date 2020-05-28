@@ -1,7 +1,7 @@
 package com.xtooltech.adtenx.util
 
 /**
- * Ëã·¨×Öµä
+ * ï¿½ã·¨ï¿½Öµï¿½
  */
 val calc= mapOf(
     "0x00,0x00,0x01,0x10" to 	Pair("%d",	"BYTE[2]&0x7F;"),
